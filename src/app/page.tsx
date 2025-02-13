@@ -2,7 +2,8 @@
 export default function Home() {
   return (
    <div>
-    Love you rupal
+    Tu bohot buri hai but meri jaan hai
+    I Love you sooo much
    </div>
   );
 }
