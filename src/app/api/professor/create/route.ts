@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Professor from '@/models/Professor';
 import { dbConnect } from '@/lib/mongodb';
 
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
   try {
     await dbConnect();
     const data = await req.json();
