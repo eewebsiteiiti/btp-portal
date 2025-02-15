@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("student"); // Default role
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -39,7 +41,7 @@ export default function Login() {
     setLoading(true);
     setError("");
     
-    const result = await signIn("credentials", { email, password, redirect: false });
+    const result = await signIn("credentials", { email, password, role, redirect: false });
     if (result?.error) {
       setError("Invalid credentials, please try again.");
       setLoading(false);
@@ -68,6 +70,41 @@ export default function Login() {
               placeholder="Password" 
               required 
             />
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium">Select Role:</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    name="role" 
+                    value="student" 
+                    checked={role === "student"} 
+                    onChange={(e) => setRole(e.target.value)} 
+                  />
+                  <span>Student</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    name="role" 
+                    value="professor" 
+                    checked={role === "professor"} 
+                    onChange={(e) => setRole(e.target.value)} 
+                  />
+                  <span>Professor</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    name="role" 
+                    value="admin" 
+                    checked={role === "admin"} 
+                    onChange={(e) => setRole(e.target.value)} 
+                  />
+                  <span>Admin</span>
+                </label>
+              </div>
+            </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="animate-spin" /> : "Login"}
