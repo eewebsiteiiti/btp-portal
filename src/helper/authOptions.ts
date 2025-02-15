@@ -10,7 +10,7 @@ interface Student {
   email: string;
   password: string;
   cpi: number;
-  preference: Array<Object>;
+  preference: Array<object>;
 }
 interface Professor {
   _id: string;
@@ -18,7 +18,7 @@ interface Professor {
   name: string;
   email: string;
   password: string;
-  preference: Array<Object>;
+  preference: Array<object>;
 }
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -31,6 +31,13 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         console.log(credentials);
+        if(credentials?.role === "admin"){
+          if(credentials?.email !== process.env.ADMIN_EMAIL || credentials?.password !== process.env.ADMIN_PASSWORD){
+            throw new Error("Invalid email or password");
+          }
+
+          return { id: "admin", name: "Admin", email: "", role: "admin" };
+        }
         if (credentials?.role === "student") {
           await dbConnect();
           const user = (await Student.findOne({
