@@ -18,9 +18,18 @@ interface User {
         credentials: {
           email: { label: "Email", type: "text" },
           password: { label: "Password", type: "password" },
+          role: { label: "Role", type: "text" },
         },
+
         async authorize(credentials) {
           console.log(credentials);
+          if(credentials?.role === "admin"){
+            if(credentials?.email !== process.env.ADMIN_EMAIL || credentials?.password !== process.env.ADMIN_PASSWORD){
+              throw new Error("Invalid email or password");
+            }
+
+            return { id: "admin", name: "Admin", email: "", role: "admin" };
+          }
           
           await dbConnect();
           
