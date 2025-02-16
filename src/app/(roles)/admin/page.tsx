@@ -8,7 +8,11 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 
 export default function AdminUpload() {
   interface User {
-    [key: string]: string | number | boolean;
+    "roll_no": string;
+    "name": string;
+    "email": string;
+    "password": string;
+    "cpi": number;
   }
 
   const [users, setUsers] = useState<User[]>([]);
@@ -36,7 +40,7 @@ export default function AdminUpload() {
   const handleUpload = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/users/upload", {
+      const response = await fetch("/api/project/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ users }),
