@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import LogoutButton from "@/components/LogoutButton";
 
 const dummyProjects = Array.from({ length: 10 }, (_, i) => ({
@@ -50,7 +49,7 @@ export default function ProfessorPage() {
             {/* <ScrollArea className="border rounded-md p-2 w-full overflow-y-auto h-96"> */}
               <div className="space-y-4">
                 {project.students
-                  .sort((a, b) => a.preferenceOrder - b.preferenceOrder || b.cpi - a.cpi)
+                  .sort((a, b) => Number(a.preferenceOrder) - Number(b.preferenceOrder) || Number(b.cpi) - Number(a.cpi))
                   .map((student) => (
                     <Card key={student.roll_no} className="p-4 w-full">
                       <CardContent>
