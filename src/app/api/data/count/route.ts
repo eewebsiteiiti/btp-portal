@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import {  NextResponse } from "next/server";
 import Student from "@/models/Student";
 import Professor from "@/models/Professor";
 import Project from "@/models/Project";
 import { dbConnect } from "@/lib/mongodb";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
     const students = await Student.countDocuments({});

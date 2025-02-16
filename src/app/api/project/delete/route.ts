@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import {  NextResponse } from "next/server";
 import Project from "@/models/Project";
 import { dbConnect } from "@/lib/mongodb";
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE() {
   try {
     await dbConnect();
     const projects = await Project.deleteMany({});

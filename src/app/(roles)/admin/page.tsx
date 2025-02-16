@@ -1,27 +1,27 @@
 "use client";
-import { ChangeEvent, JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import Professor from "@/models/Professor";
+import LogoutButton from "@/components/LogoutButton";
+import Link from "next/link";
 
-interface Professor  {
+interface Professor {
   faculty_id: string;
   name: string;
   email: string;
   password: string;
-
 }
-interface Student  {
+interface Student {
   roll_no: string;
   name: string;
   email: string;
   password: string;
   cpi: number;
 }
-interface Project  {
+interface Project {
+  id: string;
   title: string;
   domain: string;
   description: string;
@@ -35,8 +35,29 @@ export default function AdminUpload() {
   const [students, setStudents] = useState<Student[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  const [counts, setCounts] = useState({
+    professors: 0,
+    students: 0,
+    projects: 0,
+  });
 
-  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>, type: string) => {
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const res = await fetch("/api/data/count");
+        const data = await res.json();
+        setCounts(data);
+      } catch (error) {
+        console.error("Error fetching counts:", error);
+      }
+    };
+    fetchCounts();
+  }, []);
+
+  const handleFileUpload = (
+    event: ChangeEvent<HTMLInputElement>,
+    type: string
+  ) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
     const file = files[0];
@@ -50,36 +71,46 @@ export default function AdminUpload() {
         const sheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json(sheet);
 
-        if (type === "professor") {
-          setProfessors(parsedData as Professor[]);
-        } else if (type === "student") {
-          setStudents(parsedData as Student[]);
-        } else if (type === "project") {
-          setProjects(parsedData as Project[]);
-        }
+        if (type === "professor") setProfessors(parsedData as Professor[]);
+        else if (type === "student") setStudents(parsedData as Student[]);
+        else if (type === "project") setProjects(parsedData as Project[]);
       }
     };
     reader.readAsArrayBuffer(file);
   };
 
-  const handleRemoveFile = (type: string) => {
-    if (type === "professor") setProfessors([]);
-    if (type === "student") setStudents([]);
-    if (type === "project") setProjects([]);
-  };
-
-  const handleUpload = async (type: string, data: Professor[] | Student[] | Project[]) => {
+  const handleUpload = async (
+    type: string,
+    data: Professor[] | Student[] | Project[]
+  ) => {
+    if (data.length === 0) {
+      alert(`No ${type} data to upload`);
+      return;
+    }
     setLoading(true);
     try {
-      const endpoint = type === "professor" ? "/api/professor/create" : type === "student" ? "/api/student/create" : "/api/project/create";
+      const endpoint = `/api/${type}/create`;
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data }),
       });
       if (response.ok) {
-        alert(`${type.charAt(0).toUpperCase() + type.slice(1)} data uploaded successfully`);
-        handleRemoveFile(type);
+        alert(
+          `${
+            type.charAt(0).toUpperCase() + type.slice(1)
+          } data uploaded successfully`
+        );
+        const fetchCounts = async () => {
+          try {
+            const res = await fetch("/api/data/count");
+            const updatedData = await res.json();
+            setCounts(updatedData);
+          } catch (error) {
+            console.error("Error fetching updated counts:", error);
+          }
+        };
+        fetchCounts();
       } else {
         alert(`Failed to upload ${type} data`);
       }
@@ -89,16 +120,21 @@ export default function AdminUpload() {
     }
     setLoading(false);
   };
-  const handleRemoveData = async (type: string) => {
-    setLoading(true);
+
+  const handleClearDatabase = async (type: string) => {
     try {
-      const endpoint = type === "professor" ? "/api/professor/delete" : type === "student" ? "/api/student/delete" : "/api/project/delete";
+      const endpoint = `/api/${type}/delete`;
       const response = await fetch(endpoint, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
       });
       if (response.ok) {
-        alert(`${type.charAt(0).toUpperCase() + type.slice(1)} data cleared successfully`);
-        handleRemoveFile(type);
+        alert(
+          `${
+            type.charAt(0).toUpperCase() + type.slice(1)
+          } data cleared successfully`
+        );
+        setCounts((prev) => ({ ...prev, [type]: 0 }));
       } else {
         alert(`Failed to clear ${type} data`);
       }
@@ -106,67 +142,74 @@ export default function AdminUpload() {
       console.error(`Error clearing ${type} data:`, error);
       alert(`Error clearing ${type} data`);
     }
-    setLoading(false);
-    
-  }
-
-  const renderTable = (data: Professor[] | Student[] | Project[], title: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<unknown>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<unknown>> | Iterable<ReactNode> | null | undefined> | null | undefined, type: string) => (
-    data.length > 0 && (
-      <div className="mt-4">
-        <h3 className="font-bold mb-2">{title}</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {Object.keys(data[0]).map((key) => (
-                <TableHead key={key}>{key}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item, index) => (
-              <TableRow key={index}>
-                {Object.values(item as Professor | Student | Project).map((value, i) => (
-                  <TableCell key={i}>{value as ReactNode}</TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Button className="mt-4 mr-2" onClick={() => handleUpload(type, data)} disabled={loading}>
-          {loading ? `Uploading ${title}...` : `Upload ${title}`}
-        </Button>
-        <Button className="mt-4 bg-red-500" onClick={() => handleRemoveFile(type)}>Remove {title}</Button>
-      </div>
-    )
-  );
+  };
 
   return (
-    <Card className="p-4 w-full max-w-2xl mx-auto mt-6">
-      <CardContent>
-        <div className="mb-4">
-          <label className="block mb-2">Upload Professor Data</label>
-          <Input type="file" accept=".xlsx,.xls" onChange={(e) => handleFileUpload(e, "professor")} />
+    <div className="flex flex-col w-full h-screen p-4">
+      <Card className="p-6 w-full md:w-2/3 mx-auto relative">
+        <h2 className="text-4xl font-bold text-center mb-6">Welcome Admin</h2>
+        <div className="absolute top-4 right-4 bg-red-500">
+          <LogoutButton />
         </div>
-        <div className="mb-4">
-          <label className="block mb-2">Upload Student Data</label>
-          <Input type="file" accept=".xlsx,.xls" onChange={(e) => handleFileUpload(e, "student")} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 w-full mx-auto mb-4">
+          {[
+            {
+              label: "Professors",
+              count: counts.professors,
+              type: "professor",
+            },
+            { label: "Students", count: counts.students, type: "student" },
+            { label: "Projects", count: counts.projects, type: "project" },
+          ].map(({ label, count, type }) => (
+            <>
+              <Link href={`/admin/${type}s`}>
+                <div
+                  key={type}
+                  className="p-6 bg-primary shadow-md rounded-lg flex flex-col items-center text-center"
+                >
+                  <span className="text-secondary text-xl font-semibold">
+                    {label}
+                  </span>
+                  <span className="text-secondary text-2xl font-bold">
+                    {count}
+                  </span>
+                  <Button
+                    className="mt-4 bg-red-600"
+                    onClick={() => handleClearDatabase(type)}
+                  >
+                    Clear {label}
+                  </Button>
+                </div>
+              </Link>
+            </>
+          ))}
         </div>
-        <div className="mb-4">
-          <label className="block mb-2">Upload Project Data</label>
-          <Input type="file" accept=".xlsx,.xls" onChange={(e) => handleFileUpload(e, "project")} />
-        </div>
-        <div>
-        {renderTable(professors, "Professor Data", "professor")}
-        {renderTable(students, "Student Data", "student")}
-        {renderTable(projects, "Project Data", "project")}
-        </div>
-        <div className="mt-4 text-center">
-          <p className="mb-4 font-semibold">To clear database</p>
-          <Button onClick={()=>handleRemoveData("professor")} variant="destructive" className="mr-2">Clear Professor</Button>
-          <Button onClick={()=>handleRemoveData("professor")} variant="destructive" className="mr-2">Clear Student</Button>
-          <Button onClick={()=>handleRemoveData("professor")} variant="destructive" className="mr-2">Clear Project</Button>
-        </div>
-      </CardContent>
-    </Card>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4">
+            {[
+              { label: "Professor", type: "professor", data: professors },
+              { label: "Student", type: "student", data: students },
+              { label: "Project", type: "project", data: projects },
+            ].map(({ label, type, data }) => (
+              <div key={type} className="border p-4 rounded-lg">
+                <label className="block mb-2">Upload {label} Data</label>
+                <Input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(e) => handleFileUpload(e, type)}
+                />
+                <Button
+                  className="mt-4"
+                  onClick={() => handleUpload(type, data)}
+                  disabled={loading}
+                >
+                  {loading ? `Uploading ${label}...` : `Upload ${label}`}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
