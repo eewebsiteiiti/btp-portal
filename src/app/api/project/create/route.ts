@@ -5,11 +5,9 @@ import { dbConnect } from '@/lib/mongodb';
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    let data = await req.json();
-    data = data.users;
-    data = Object.setPrototypeOf(data, Array.prototype);
-    console.log(data);
-    
+    let data = await req.json(); 
+    data = data.data;    
+    data = Object.setPrototypeOf(data, Array.prototype);    
     const projects = await Project.insertMany(data);
     return NextResponse.json({ message: 'POST request received', projects }, {status: 201});
   } catch (error) {
