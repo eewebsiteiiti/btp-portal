@@ -89,6 +89,26 @@ export default function AdminUpload() {
     }
     setLoading(false);
   };
+  const handleRemoveData = async (type: string) => {
+    setLoading(true);
+    try {
+      const endpoint = type === "professor" ? "/api/professor/delete" : type === "student" ? "/api/student/delete" : "/api/project/delete";
+      const response = await fetch(endpoint, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        alert(`${type.charAt(0).toUpperCase() + type.slice(1)} data cleared successfully`);
+        handleRemoveFile(type);
+      } else {
+        alert(`Failed to clear ${type} data`);
+      }
+    } catch (error) {
+      console.error(`Error clearing ${type} data:`, error);
+      alert(`Error clearing ${type} data`);
+    }
+    setLoading(false);
+    
+  }
 
   const renderTable = (data: Professor[] | Student[] | Project[], title: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<unknown>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<unknown>> | Iterable<ReactNode> | null | undefined> | null | undefined, type: string) => (
     data.length > 0 && (
@@ -139,6 +159,12 @@ export default function AdminUpload() {
         {renderTable(professors, "Professor Data", "professor")}
         {renderTable(students, "Student Data", "student")}
         {renderTable(projects, "Project Data", "project")}
+        </div>
+        <div className="mt-4 text-center">
+          <p className="mb-4 font-semibold">To clear database</p>
+          <Button onClick={()=>handleRemoveData("professor")} variant="destructive" className="mr-2">Clear Professor</Button>
+          <Button onClick={()=>handleRemoveData("professor")} variant="destructive" className="mr-2">Clear Student</Button>
+          <Button onClick={()=>handleRemoveData("professor")} variant="destructive" className="mr-2">Clear Project</Button>
         </div>
       </CardContent>
     </Card>
