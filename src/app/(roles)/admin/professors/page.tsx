@@ -32,7 +32,7 @@ const ProfessorPage = () => {
         const response = await fetch("/api/professor/get");
         if (!response.ok) throw new Error("Failed to fetch professor");
         const data = await response.json();
-        setProfessor(data.professor);
+        setProfessor(data.professors);
       } catch (error) {
         setError((error as Error).message);
       } finally {

@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { dbConnect } from "@/lib/mongodb";
 import Student from "@/models/Student";
+import Professor from "@/models/Professor";
 
 interface Student {
   _id: string;
@@ -61,7 +62,7 @@ export const authOptions: NextAuthOptions = {
         if (credentials?.role === "professor") {
           await dbConnect();
 
-          const user = (await Student.findOne({
+          const user = (await Professor.findOne({
             email: credentials?.email,
           }).lean()) as unknown as Professor;
           console.log(user);
