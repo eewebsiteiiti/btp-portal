@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,10 +10,11 @@ interface Project {
   id: string;
   title: string;
   domain: string;
-  professor: string;
+  supervisor: string;
   cosupervisor: string;
   description: string;
   capacity: number;
+
 }
 interface Group {
   isGroup: boolean;
@@ -65,25 +66,30 @@ export default function StudentPage() {
     });
   };
 
-  const validateSelection = () => {
-    const selectedProfessors = new Set(
-      selectedPreferences.map((p) => p.project.professor)
-    );
-    const requiredProfessors = new Set(
-      Object.values(order)
-        .flat()
-        .map((p) => p.professor)
-    );
-
-    if (selectedProfessors.size < requiredProfessors.size) {
-      setError("You must select at least one project from each professor.");
-      return false;
-    }
-
-    setError("");
-    return true;
-  };
-
+  const validateSelection = useCallback(() => {
+      const requiredProfessors = new Set(Object.keys(order));
+      const selectedProfessors = new Set(
+        selectedPreferences.map((p) => p.project.supervisor)
+      );
+  
+      if (selectedPreferences.length !== 30) {
+        setError("You must select exactly 30 projects.");
+        return false;
+      }
+      console.log(selectedProfessors);
+  
+      if (
+        !Array.from(requiredProfessors).every((prof) =>
+          selectedProfessors.has(prof)
+        )
+      ) {
+        setError("You must select at least one project from each professor.");
+        return false;
+      }
+      setError("");
+      return true;
+  }, [selectedPreferences, order]);
+  
   const submitPreferences = async () => {
     if (!session?.user || !validateSelection()) return;
 
@@ -164,7 +170,7 @@ export default function StudentPage() {
                           {project.title}
                         </h3>
                         <p className="text-xs text-gray-500">
-                          Supervisor: {project.professor}
+                          Supervisor: {project.supervisor}
                         </p>
                         <p className="text-xs text-gray-500">
                           Co-Supervisor: {project.cosupervisor}
@@ -241,13 +247,16 @@ export default function StudentPage() {
         <p className="text-xs text-gray-600">
           Selected: {selectedPreferences.length}/30
         </p>
-        <Button
-          disabled={selectedPreferences.length !== 30 || error !== ""}
-          onClick={submitPreferences}
-          className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
-        >
-          Submit
-        </Button>
+        <div className="space-x-2">
+          <Button variant="destructive" onClick={()=>{setSelectedPreferences([])}}>Clear Selection</Button>
+          <Button
+            disabled={selectedPreferences.length !== 30 || error !== ""}
+            onClick={submitPreferences}
+            className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
+          >
+            Submit
+          </Button>
+        </div>
       </div>
     </div>
   );
