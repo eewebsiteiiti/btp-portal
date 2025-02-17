@@ -79,7 +79,14 @@ export default function StudentPage() {
       setError("You must select at least one project from each professor.");
       return false;
     }
-
+    const profs = new Set(Object.keys(order));
+    let selectedProfs = new Set(
+      selectedPreferences.map((p) => p.project.professor)
+    );
+    if (selectedProfs.size < profs.size) {
+      setError("You must select at least one project from each professor.");
+      return false;
+    }
     setError("");
     return true;
   };
@@ -87,16 +94,13 @@ export default function StudentPage() {
   const submitPreferences = async () => {
     if (!session?.user || !validateSelection()) return;
 
-    const response = await fetch("/api/save-preferences", {
-      method: "POST",
+    const response = await fetch("/api/student/preference/put", {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        studentId: session.user.email,
-        preferences: selectedPreferences.map((p, index) => ({
-          projectId: p.project.id,
-          preferenceOrder: index + 1,
-          group: p.group,
-        })),
+        email: session.user.email,
+        name: session.user.name,
+        preference: selectedPreferences,
       }),
     });
 
@@ -106,7 +110,7 @@ export default function StudentPage() {
       alert("Error saving preferences");
     }
   };
-
+  console.log(selectedPreferences);
   return (
     <div className="space-y-4 h-screen w-full flex flex-col p-4 bg-gray-100 text-sm">
       {/* Student Info Card */}
