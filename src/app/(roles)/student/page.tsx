@@ -15,12 +15,22 @@ interface Project {
   description: string;
   capacity: number;
 }
+interface Group {
+  isGroup: boolean;
+  roll_no: string;
+}
+interface Preferences {
+  project: Project;
+  group: Group;
+}
 
 export default function StudentPage() {
   const { data: session } = useSession();
   const [order, setOrder] = useState<Record<string, Project[]>>({});
-  const [selectedProjects, setSelectedProjects] = useState<Project[]>([]);
-  const [roll, setRoll] = useState("");
+  const [selectedPreferences, setSelectedPreferences] = useState<Preferences[]>(
+    []
+  );
+  const [rollNumbers, setRollNumbers] = useState<Record<string, string>>({});
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
@@ -37,19 +47,19 @@ export default function StudentPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedProjects.length > 30) {
-      setSelectedProjects((prev) => prev.slice(0, 30));
+    if (selectedPreferences.length > 30) {
+      setSelectedPreferences((prev) => prev.slice(0, 30));
     }
-  }, [selectedProjects]);
+  }, [selectedPreferences]);
 
-  const toggleProjectSelection = (project: Project) => {
-    setSelectedProjects((prev) => {
-      const existingIndex = prev.findIndex((p) => p.id === project.id);
+  const toggleProjectSelection = (project: Project, group: Group) => {
+    setSelectedPreferences((prev) => {
+      const existingIndex = prev.findIndex((p) => p.project.id === project.id);
       if (existingIndex !== -1) {
-        return prev.filter((p) => p.id !== project.id);
+        return prev.filter((p) => p.project.id !== project.id);
       }
       if (prev.length < 30) {
-        return [...prev, project];
+        return [...prev, { project, group }];
       }
       return prev;
     });
@@ -57,34 +67,39 @@ export default function StudentPage() {
 
   const validateSelection = () => {
     const selectedProfessors = new Set(
-      selectedProjects.map((p) => p.professor)
+      selectedPreferences.map((p) => p.project.professor)
     );
     const requiredProfessors = new Set(
       Object.values(order)
         .flat()
         .map((p) => p.professor)
     );
+
     if (selectedProfessors.size < requiredProfessors.size) {
       setError("You must select at least one project from each professor.");
       return false;
     }
+
     setError("");
     return true;
   };
 
   const submitPreferences = async () => {
     if (!session?.user || !validateSelection()) return;
+
     const response = await fetch("/api/save-preferences", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         studentId: session.user.email,
-        preferences: selectedProjects.map((p, index) => ({
-          projectId: p.id,
+        preferences: selectedPreferences.map((p, index) => ({
+          projectId: p.project.id,
           preferenceOrder: index + 1,
+          group: p.group,
         })),
       }),
     });
+
     if (response.ok) {
       alert("Preferences saved successfully!");
     } else {
@@ -93,125 +108,125 @@ export default function StudentPage() {
   };
 
   return (
-    <div className="space-y-4 h-screen w-full flex flex-col">
-      <Card className="w-full">
-        <CardContent className="p-4">
-          <h2 className="text font-semibold">Student Information</h2>
-          <p>Name: {session?.user?.name}</p>
-          <p>Email: {session?.user?.email}</p>
+    <div className="space-y-4 h-screen w-full flex flex-col p-4 bg-gray-100 text-sm">
+      {/* Student Info Card */}
+      <Card className="w-full bg-white shadow-md rounded-lg p-3">
+        <CardContent>
+          <h2 className="text-base font-semibold text-gray-800">
+            Student Information
+          </h2>
+          <p className="text-gray-600">Name: {session?.user?.name}</p>
+          <p className="text-gray-600">Email: {session?.user?.email}</p>
           <LogoutButton />
         </CardContent>
       </Card>
 
-      <h2 className="text-lg font-semibold m-4">
-        Select Your 30 Preferred Projects (Order Matters)
+      {/* Project Selection Section */}
+      <h2 className="text-base font-semibold text-gray-800">
+        Select Your 30 Preferred Projects
       </h2>
-      {error && <p className="text-red-400">{error}</p>}
-      <ScrollArea className="flex-1 border rounded-md p-2 w-full overflow-y-auto">
-        <div className="space-y-4">
+      {error && <p className="text-red-500 font-medium">{error}</p>}
+
+      <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2 overflow-y-auto">
+        <div className="space-y-3">
           {Object.keys(order).map((key) => (
-            <Card key={key} className="p-4 w-full">
-              <CardTitle className="m-4">{key}</CardTitle>
-              <CardContent className="space-y-5">
+            <Card key={key} className="bg-gray-50 shadow-sm p-3 rounded-lg">
+              <CardTitle className="text-sm font-semibold text-gray-700">
+                {key}
+              </CardTitle>
+              <CardContent className="space-y-2">
                 {order[key].map((project) => {
-                  // const selected = selectedProjects.find(
-                  //   (p) => p.project.id === project.id
-                  // );
+                  const selectedProject = selectedPreferences.find(
+                    (p) => p.project.id === project.id
+                  );
                   return (
                     <Card
                       key={project.id}
-                      onClick={() => {
-                        project.capacity == 1
-                          ? toggleProjectSelection(project)
-                          : {};
+                      onClick={(e) => {
+                        if (
+                          (e.target as HTMLElement).tagName !== "INPUT" &&
+                          (e.target as HTMLElement).tagName !== "BUTTON"
+                        ) {
+                          toggleProjectSelection(project, {
+                            isGroup: false,
+                            roll_no: "",
+                          });
+                        }
                       }}
-                      className={`flex justify-between cursor-pointer p-4 w-full border ${
-                        selectedProjects.find((p) => p.id === project.id)
-                          ? "border-blue-500 bg-blue-100"
-                          : ""
+                      className={`flex justify-between cursor-pointer p-3 rounded-md border transition-all duration-200 ${
+                        selectedProject
+                          ? "border-blue-500 bg-blue-50"
+                          : "hover:bg-gray-100"
                       }`}
                     >
-                      <div className="col-8">
-                        <h3 className="text-lg font-medium">{project.title}</h3>
-                        <p className="text-sm text-gray-500">
+                      <div className="w-3/4">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {project.title}
+                        </h3>
+                        <p className="text-xs text-gray-500">
                           Supervisor: {project.professor}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs text-gray-500">
                           Co-Supervisor: {project.cosupervisor}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs text-gray-500 truncate">
                           {project.description}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs text-gray-500">
                           Capacity: {project.capacity}
                         </p>
-                        {project.capacity == 1 ||
-                        selectedProjects.indexOf(project) ||
-                        selectedProjects.indexOf(project) === 0 ? (
-                          selectedProjects.find((p) => p.id === project.id) && (
-                            <p className="text-sm font-bold">
-                              Preference #
-                              {selectedProjects.findIndex(
-                                (p) => p.id === project.id
-                              ) + 1}
-                            </p>
-                          )
-                        ) : (
-                          <></>
+
+                        {selectedProject && (
+                          <p className="text-xs font-semibold text-blue-600 mt-1">
+                            Preference #
+                            {selectedPreferences.findIndex(
+                              (p) => p.project.id === project.id
+                            ) + 1}
+                          </p>
+                        )}
+                        {selectedProject?.group.isGroup && (
+                          <p className="text-xs font-semibold text-red-500">
+                            Partner Roll: {selectedProject.group.roll_no}
+                          </p>
                         )}
                       </div>
-                      <div className="col-4">
-                        {project.capacity == 2 ? (
-                          <>
-                            <input
-                              type="text"
-                              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                              placeholder="Enter pair roll number"
-                              value={roll}
-                              onChange={(e) => setRoll(e.target.value)}
-                            />
-                            <div className="mt-2">
-                              <Button
-                                disabled={roll.length !== 9}
-                                onClick={() => {
-                                  // updateGroupInfo(
-                                  //   project.id,
-                                  //   "Group Memeber"
-                                  // );
-                                  // Todo: queue with group info add.
-                                  toggleProjectSelection(project);
-                                  setRoll("");
-                                }}
-                                className="mr-5"
-                              >
-                                Submit
-                              </Button>
-                              {/* <input
-                                type="text"
-                                placeholder="Enter group member roll number(s)"
-                                // value={selected.groupInfo}
-                                onChange={(e) =>
-                                  updateGroupInfo(project.id, e.target.value)
-                                }
-                                className="w-full p-2 border rounded-md"
-                              /> */}
-                              <Button
-                                // onClick={() =>
-                                //   updateGroupInfo(project.id, "No Group Member")
-                                // }
-                                onClick={() => {
-                                  toggleProjectSelection(project);
-                                  setRoll("");
-                                }}
-                              >
-                                Individual
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <></>
-                        )}
-                      </div>
+
+                      {project.capacity === 2 && (
+                        <div className="flex flex-col space-y-1 w-1/6">
+                          <input
+                            type="text"
+                            className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-blue-400 focus:border-blue-400"
+                            placeholder="Partner Roll"
+                            value={rollNumbers[project.id] || ""}
+                            onChange={(e) =>
+                              setRollNumbers((prev) => ({
+                                ...prev,
+                                [project.id]: e.target.value,
+                              }))
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <Button
+                            disabled={
+                              (rollNumbers[project.id] || "").length !== 9
+                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleProjectSelection(project, {
+                                isGroup: true,
+                                roll_no: rollNumbers[project.id] || "",
+                              });
+                              setRollNumbers((prev) => ({
+                                ...prev,
+                                [project.id]: "",
+                              }));
+                            }}
+                            className=" text-white text-xs px-3 py-1 rounded-md  transition-all"
+                          >
+                            Add
+                          </Button>
+                        </div>
+                      )}
                     </Card>
                   );
                 })}
@@ -221,13 +236,17 @@ export default function StudentPage() {
         </div>
       </ScrollArea>
 
-      <div className="p-4 bg-white shadow-md w-full flex justify-between items-center">
-        <p className="text-gray-500">Selected: {selectedProjects.length}/30</p>
+      {/* Submit Button */}
+      <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
+        <p className="text-xs text-gray-600">
+          Selected: {selectedPreferences.length}/30
+        </p>
         <Button
-          disabled={selectedProjects.length !== 30 || error !== ""}
+          disabled={selectedPreferences.length !== 30 || error !== ""}
           onClick={submitPreferences}
+          className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
         >
-          Submit Preferences
+          Submit
         </Button>
       </div>
     </div>
