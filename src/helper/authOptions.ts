@@ -10,12 +10,10 @@ interface Student {
   name: string;
   email: string;
   password: string;
-  cpi: number;
   preference: Array<object>;
 }
 interface Professor {
   _id: string;
-  faculty_id: string;
   name: string;
   email: string;
   password: string;

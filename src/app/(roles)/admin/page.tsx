@@ -8,7 +8,6 @@ import LogoutButton from "@/components/LogoutButton";
 import Link from "next/link";
 
 interface Professor {
-  faculty_id: string;
   name: string;
   email: string;
   password: string;
@@ -18,7 +17,6 @@ interface Student {
   name: string;
   email: string;
   password: string;
-  cpi: number;
 }
 interface Project {
   id: string;
@@ -40,19 +38,27 @@ export default function AdminUpload() {
     students: 0,
     projects: 0,
   });
-
+  const fetchCounts = async () => {
+    try {
+      const res = await fetch("/api/data/count");
+      const updatedData = await res.json();
+      setCounts(updatedData);
+    } catch (error) {
+      console.error("Error fetching updated counts:", error);
+    }
+  };
   useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const res = await fetch("/api/data/count");
-        const data = await res.json();
-        setCounts(data);
-      } catch (error) {
-        console.error("Error fetching counts:", error);
-      }
-    };
+    // const fetchCounts = async () => {
+    //   try {
+    //     const res = await fetch("/api/data/count");
+    //     const data = await res.json();
+    //     setCounts(data);
+    //   } catch (error) {
+    //     console.error("Error fetching counts:", error);
+    //   }
+    // };
     fetchCounts();
-  }, []);
+  }, [setCounts]);
 
   const handleFileUpload = (
     event: ChangeEvent<HTMLInputElement>,
@@ -101,15 +107,15 @@ export default function AdminUpload() {
             type.charAt(0).toUpperCase() + type.slice(1)
           } data uploaded successfully`
         );
-        const fetchCounts = async () => {
-          try {
-            const res = await fetch("/api/data/count");
-            const updatedData = await res.json();
-            setCounts(updatedData);
-          } catch (error) {
-            console.error("Error fetching updated counts:", error);
-          }
-        };
+        // const fetchCounts = async () => {
+        //   try {
+        //     const res = await fetch("/api/data/count");
+        //     const updatedData = await res.json();
+        //     setCounts(updatedData);
+        //   } catch (error) {
+        //     console.error("Error fetching updated counts:", error);
+        //   }
+        // };
         fetchCounts();
       } else {
         alert(`Failed to upload ${type} data`);
@@ -138,6 +144,16 @@ export default function AdminUpload() {
       } else {
         alert(`Failed to clear ${type} data`);
       }
+      // const fetchCounts = async () => {
+      //   try {
+      //     const res = await fetch("/api/data/count");
+      //     const updatedData = await res.json();
+      //     setCounts(updatedData);
+      //   } catch (error) {
+      //     console.error("Error fetching updated counts:", error);
+      //   }
+      // };
+      fetchCounts();
     } catch (error) {
       console.error(`Error clearing ${type} data:`, error);
       alert(`Error clearing ${type} data`);
@@ -162,25 +178,27 @@ export default function AdminUpload() {
             { label: "Projects", count: counts.projects, type: "project" },
           ].map(({ label, count, type }) => (
             <>
-              <Link href={`/admin/${type}s`}>
-                <div
-                  key={type}
-                  className="p-6 bg-primary shadow-md rounded-lg flex flex-col items-center text-center"
-                >
+              <div
+                key={type}
+                className="p-6 bg-primary shadow-md rounded-lg flex flex-col items-center text-center"
+              >
+                <Link href={`/admin/${type}s`}>
                   <span className="text-secondary text-xl font-semibold">
                     {label}
                   </span>
-                  <span className="text-secondary text-2xl font-bold">
-                    {count}
-                  </span>
-                  <Button
-                    className="mt-4 bg-red-600"
-                    onClick={() => handleClearDatabase(type)}
-                  >
-                    Clear {label}
-                  </Button>
-                </div>
-              </Link>
+                </Link>
+                <span className="text-secondary text-2xl font-bold">
+                  {count}
+                </span>
+                <Button
+                  className="mt-4 bg-red-600"
+                  onClick={() => {
+                    handleClearDatabase(type);
+                  }}
+                >
+                  Clear {label}
+                </Button>
+              </div>
             </>
           ))}
         </div>

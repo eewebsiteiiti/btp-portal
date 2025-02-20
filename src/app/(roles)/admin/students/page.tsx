@@ -19,7 +19,6 @@ interface Student {
   name: string;
   email: string;
   password?: string; // Excluded from frontend
-  cpi: number;
 }
 
 const StudentsPage = () => {
@@ -73,9 +72,6 @@ const StudentsPage = () => {
                   <TableHead className="font-bold py-3 text-gray-700">
                     Email
                   </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
-                    CPI
-                  </TableHead>
                   <TableHead className="font-bold py-3 text-gray-700 text-center">
                     Actions
                   </TableHead>
@@ -100,9 +96,6 @@ const StudentsPage = () => {
                       </TableCell>
                       <TableCell className="py-2 text-gray-600">
                         {student.email}
-                      </TableCell>
-                      <TableCell className="py-2 text-gray-800 font-semibold">
-                        {student.cpi.toFixed(2)}
                       </TableCell>
                       <TableCell className="py-2 text-center">
                         <Button variant="outline" size="icon" className="mr-2">

@@ -12,7 +12,6 @@ const dummyProjects = Array.from({ length: 10 }, (_, i) => ({
     roll_no: `S${i + 1}${j + 1}`,
     name: `Student ${i + 1}${j + 1}`,
     email: `student${i + 1}${j + 1}@example.com`,
-    cpi: (Math.random() * 2 + 8).toFixed(2),
     preferenceOrder: j + 1,
   })),
 }));
@@ -49,13 +48,11 @@ export default function ProfessorPage() {
             {/* <ScrollArea className="border rounded-md p-2 w-full overflow-y-auto h-96"> */}
               <div className="space-y-4">
                 {project.students
-                  .sort((a, b) => Number(a.preferenceOrder) - Number(b.preferenceOrder) || Number(b.cpi) - Number(a.cpi))
                   .map((student) => (
                     <Card key={student.roll_no} className="p-4 w-full">
                       <CardContent>
                         <h3 className="text-lg font-medium">{student.name} ({student.roll_no})</h3>
                         <p className="text-sm text-gray-500">Email: {student.email}</p>
-                        <p className="text-sm text-gray-500">CPI: {student.cpi}</p>
                         <p className="text-sm font-bold">Preference #{student.preferenceOrder}</p>
                       </CardContent>
                     </Card>

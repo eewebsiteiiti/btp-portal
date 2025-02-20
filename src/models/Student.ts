@@ -5,7 +5,6 @@ const StudentSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true }, // Todo: Hash the password
-  cpi: { type: Number, required: true },
   preference: { type: Array, required: false },
 });
 
