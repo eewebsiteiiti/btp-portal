@@ -5,15 +5,14 @@ import { dbConnect } from "@/lib/mongodb";
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    let data = await req.json();
+    const data = await req.json();
     const name = data.name;
-    let processed: { [key: string]:Set<Set<any>> } = {};
+    const processed: { [key: string]:Set<Set<unknown>> } = {};
     const students = await Student.find({});
     for (let i = 0; i < students.length; i++) {
       const preference = students[i].preference;
       for (let j = 0; j < preference.length; j++) {
         if (preference[j].project.supervisor === name) {
-          const pref_index = j;
           const key = preference[j].project.title;
           const group = preference[j].group;
           // group
