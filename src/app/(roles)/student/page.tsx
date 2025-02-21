@@ -29,23 +29,50 @@ export default function StudentPage() {
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [activeProject, setActiveProject] = useState<ProjectI | null>(null);
   const [error, setError] = useState("");
-  console.log("projects", projects);
+  const[ preferenceArray, setPreferenceArray] = useState([]);
   
-
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchStudentPreferences = async () => {
+      if (!session?.user?.email) return;
+
       try {
-        const response = await fetch("/api/project/get");
+        const response = await fetch(`/api/student/get?email=${session.user.email}`);
         const data = await response.json();
-        setProjects(data.projects);
+        
+        if (data.students && data.students.preferences) {
+          setPreferenceArray(data.students.preferences); 
+        } else {
+          setPreferenceArray([]); 
+        }
       } catch {
-        setError("Error fetching projects");
+        setError("Error fetching student preferences");
       }
     };
-    fetchProjects();
-  }, []);
 
-  const sensors = useSensors(
+    fetchStudentPreferences();
+  }, [session]);
+  useEffect(() => {
+    if (preferenceArray.length === 0) return; 
+
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch("/api/project/getbypreference", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ preferences: preferenceArray }),
+        });
+
+        const data = await response.json();
+        setProjects(data.projects || []); 
+      } catch {
+        setError("Error fetching projects");
+      } 
+    };
+
+    fetchProjects();
+  }, [preferenceArray]);
+  
+    const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );

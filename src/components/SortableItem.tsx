@@ -5,15 +5,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card } from "@/components/ui/card";
 import { SortableItemProps } from "@/types";
 
-
-export default function SortableItem({
-  id,
-  project,
-  index,
-  isOverlay,
-}: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+export default function SortableItem({ id, project, index, isOverlay }: SortableItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -26,23 +19,21 @@ export default function SortableItem({
       style={style}
       {...attributes}
       {...listeners}
-      className={`cursor-grab active:cursor-grabbing p-3 rounded-md border bg-white shadow-md transition-all duration-200 ${
-        isOverlay ? "opacity-50 scale-105" : ""
-      } flex items-center`}
+      className={`cursor-grab active:cursor-grabbing p-4 rounded-xl border shadow-sm transition-all duration-200 
+        bg-background border-border ${isOverlay ? "opacity-50 scale-105" : ""} flex items-center gap-4`}
     >
-      <div className="mr-3 font-semibold text-gray-700">{index}.</div>
-      <div>
-        <h3 className="text-sm font-medium text-gray-900">{project.Title}</h3>
-        <p className="text-xs text-gray-500">
-          Supervisor: {project.Supervisor}
-        </p>
+      <div className="text-sm font-semibold text-muted-foreground">{index}.</div>
+      <div className="flex flex-col">
+        <h3 className="text-base font-medium text-foreground">{project.Title}</h3>
+        <p className="text-xs text-muted-foreground">Supervisor: {project.Supervisor}</p>
         {project.Cosupervisor && (
-          <p className="text-xs text-gray-500">
-            Co-Supervisor: {project.Cosupervisor}
-          </p>
+          <p className="text-xs text-muted-foreground">Co-Supervisor: {project.Cosupervisor}</p>
         )}
-        {/* <p className="text-xs text-gray-500 truncate">{project.description}</p> */}
-        <p className="text-xs text-gray-500">Capacity: {project.Capacity}</p>
+        <p className="text-xs text-muted-foreground truncate">{project.Comments}</p>
+        <p className="text-xs text-muted-foreground truncate">Domain: {project.Domain}</p>
+        <p className="text-xs text-muted-foreground truncate">Project No: {project.Project_No}</p>
+        <p className="text-xs text-muted-foreground truncate">Nature of Work: {project.Nature_of_work}</p>
+        <p className="text-xs text-muted-foreground">Capacity: {project.Capacity}</p>
       </div>
     </Card>
   );

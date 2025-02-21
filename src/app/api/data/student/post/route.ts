@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    console.log(processed);
     return NextResponse.json(
       { message: "POST request received", processed },
       { status: 201 }

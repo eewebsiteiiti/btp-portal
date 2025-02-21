@@ -29,7 +29,6 @@ export const authOptions: NextAuthOptions = {
         role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
-        console.log(credentials);
         if(credentials?.role === "admin"){
           if(credentials?.email !== process.env.ADMIN_EMAIL || credentials?.password !== process.env.ADMIN_PASSWORD){
             throw new Error("Invalid email or password");
@@ -42,8 +41,6 @@ export const authOptions: NextAuthOptions = {
           const user = (await Student.findOne({
             email: credentials?.email,
           }).lean()) as unknown as StudentI;
-          console.log(user);
-
           if (!user || user?.password !== credentials?.password) {
             throw new Error("Invalid email or password");
           }
@@ -64,7 +61,6 @@ export const authOptions: NextAuthOptions = {
           const user = (await Professor.findOne({
             email: credentials?.email,
           }).lean()) as unknown as ProfessorI;
-          console.log(user);
 
           if (!user || user?.password !== credentials?.password) {
             throw new Error("Invalid email or password");
