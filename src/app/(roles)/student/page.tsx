@@ -24,13 +24,15 @@ import {
 import SortableItem from "@/components/SortableItem";
 
 interface Project {
-  id: string;
-  title: string;
-  domain: string;
-  supervisor: string;
-  cosupervisor?: string;
-  description: string;
-  capacity: number;
+  Domain: string;
+  _id: string;
+  Project_No: string;
+  Title: string;
+  Capacity: string;
+  Nature_of_work: string;
+  Comments: string;
+  Supervisor: string;
+  Cosupervisor?: string;
 }
 
 export default function StudentPage() {
@@ -65,8 +67,8 @@ export default function StudentPage() {
 
     if (over && active.id !== over.id) {
       setProjects((prev) => {
-        const oldIndex = prev.findIndex((p) => p.id === active.id);
-        const newIndex = prev.findIndex((p) => p.id === over.id);
+        const oldIndex = prev.findIndex((p) => p._id === active.id);
+        const newIndex = prev.findIndex((p) => p._id === over.id);
         return arrayMove(prev, oldIndex, newIndex);
       });
     }
@@ -80,7 +82,7 @@ export default function StudentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: session.user.email,
-          preference: projects.map((p) => p.id),
+          preference: projects.map((p) => p._id),
         }),
       });
       if (!response.ok) throw new Error();
@@ -109,22 +111,22 @@ export default function StudentPage() {
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={(event) => {
-            const project = projects.find((p) => p.id === event.active.id);
+            const project = projects.find((p) => p._id === event.active.id);
             setActiveProject(project || null);
           }}
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveProject(null)}
         >
-          <SortableContext items={projects.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={projects.map((p) => p._id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
               {projects.map((project, index) => (
-                <SortableItem key={project.id} id={project.id} project={project} index={index + 1} />
+                <SortableItem key={project._id} id={project._id} project={project} index={index + 1} />
               ))}
             </div>
           </SortableContext>
           <DragOverlay>
             {activeProject ? (
-              <SortableItem id={activeProject.id} project={activeProject} isOverlay />
+              <SortableItem id={activeProject._id} project={activeProject} isOverlay />
             ) : null}
           </DragOverlay>
         </DndContext>

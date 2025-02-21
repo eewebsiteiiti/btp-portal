@@ -7,19 +7,26 @@ import { Card } from "@/components/ui/card";
 interface SortableItemProps {
   id: string;
   project: {
-    id: string;
-    title: string;
-    domain: string;
-    supervisor: string;
-    cosupervisor?: string;
-    description: string;
-    capacity: number;
+    Domain: string;
+    _id: string;
+    Project_No: string;
+    Title: string;
+    Capacity: string;
+    Nature_of_work: string;
+    Comments: string;
+    Supervisor: string;
+    Cosupervisor?: string;
   };
   index?: number;
   isOverlay?: boolean;
 }
 
-export default function SortableItem({ id, project, index, isOverlay }: SortableItemProps) {
+export default function SortableItem({
+  id,
+  project,
+  index,
+  isOverlay,
+}: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 
@@ -40,13 +47,17 @@ export default function SortableItem({ id, project, index, isOverlay }: Sortable
     >
       <div className="mr-3 font-semibold text-gray-700">{index}.</div>
       <div>
-        <h3 className="text-sm font-medium text-gray-900">{project.title}</h3>
-        <p className="text-xs text-gray-500">Supervisor: {project.supervisor}</p>
-        {project.cosupervisor && (
-          <p className="text-xs text-gray-500">Co-Supervisor: {project.cosupervisor}</p>
+        <h3 className="text-sm font-medium text-gray-900">{project.Title}</h3>
+        <p className="text-xs text-gray-500">
+          Supervisor: {project.Supervisor}
+        </p>
+        {project.Cosupervisor && (
+          <p className="text-xs text-gray-500">
+            Co-Supervisor: {project.Cosupervisor}
+          </p>
         )}
-        <p className="text-xs text-gray-500 truncate">{project.description}</p>
-        <p className="text-xs text-gray-500">Capacity: {project.capacity}</p>
+        {/* <p className="text-xs text-gray-500 truncate">{project.description}</p> */}
+        <p className="text-xs text-gray-500">Capacity: {project.Capacity}</p>
       </div>
     </Card>
   );
