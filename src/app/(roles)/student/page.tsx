@@ -22,23 +22,12 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import SortableItem from "@/components/SortableItem";
-
-interface Project {
-  Domain: string;
-  _id: string;
-  Project_No: string;
-  Title: string;
-  Capacity: string;
-  Nature_of_work: string;
-  Comments: string;
-  Supervisor: string;
-  Cosupervisor?: string;
-}
+import { ProjectI } from "@/types";
 
 export default function StudentPage() {
   const { data: session } = useSession();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [projects, setProjects] = useState<ProjectI[]>([]);
+  const [activeProject, setActiveProject] = useState<ProjectI | null>(null);
   const [error, setError] = useState("");
   console.log("projects", projects);
   
