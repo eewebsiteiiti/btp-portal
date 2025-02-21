@@ -3,22 +3,22 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { dbConnect } from "@/lib/mongodb";
 import Student from "@/models/Student";
 import Professor from "@/models/Professor";
-
-interface Student {
-  _id: string;
-  roll_no: string;
-  name: string;
-  email: string;
-  password: string;
-  preference: Array<object>;
-}
-interface Professor {
-  _id: string;
-  name: string;
-  email: string;
-  password: string;
-  preference: Array<object>;
-}
+import { StudentI, ProfessorI } from "@/types";
+// interface Student {
+//   _id: string;
+//   roll_no: string;
+//   name: string;
+//   email: string;
+//   password: string;
+//   preference: Array<object>;
+// }
+// interface Professor {
+//   _id: string;
+//   name: string;
+//   email: string;
+//   password: string;
+//   preference: Array<object>;
+// }
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -41,7 +41,7 @@ export const authOptions: NextAuthOptions = {
           await dbConnect();
           const user = (await Student.findOne({
             email: credentials?.email,
-          }).lean()) as unknown as Student;
+          }).lean()) as unknown as StudentI;
           console.log(user);
 
           if (!user || user?.password !== credentials?.password) {
@@ -52,6 +52,7 @@ export const authOptions: NextAuthOptions = {
           // }
           return {
             id: user._id,
+            roll_no: user.roll_no,
             email: user.email,
             role: "student",
             name: user.name,
@@ -62,7 +63,7 @@ export const authOptions: NextAuthOptions = {
 
           const user = (await Professor.findOne({
             email: credentials?.email,
-          }).lean()) as unknown as Professor;
+          }).lean()) as unknown as ProfessorI;
           console.log(user);
 
           if (!user || user?.password !== credentials?.password) {

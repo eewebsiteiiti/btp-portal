@@ -13,21 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash } from "lucide-react"; // Icons for action buttons
 import { Card } from "@/components/ui/card"; // Wrapping table in a card UI
 import Link from "next/link";
-
-interface Project {
-  Domain: string;
-  _id: string;
-  Project_No: string;
-  Title: string;
-  Capacity: string;
-  Nature_of_work: string;
-  Comments: string;
-  Supervisor: string;
-  Cosupervisor?: string;
-}
+import { ProjectI } from "@/types";
 
 const ProjectsPage = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

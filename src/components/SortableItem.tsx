@@ -3,23 +3,8 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card } from "@/components/ui/card";
+import { SortableItemProps } from "@/types";
 
-interface SortableItemProps {
-  id: string;
-  project: {
-    Domain: string;
-    _id: string;
-    Project_No: string;
-    Title: string;
-    Capacity: string;
-    Nature_of_work: string;
-    Comments: string;
-    Supervisor: string;
-    Cosupervisor?: string;
-  };
-  index?: number;
-  isOverlay?: boolean;
-}
 
 export default function SortableItem({
   id,

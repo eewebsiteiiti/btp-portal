@@ -13,16 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash } from "lucide-react"; // Icons for action buttons
 import { Card } from "@/components/ui/card"; // Wrapping table in a card UI
 import Link from "next/link";
-
-interface Professor {
-  faculty_id: string;
-  name: string;
-  email: string;
-  password: string;
-}
+import { ProfessorI } from "@/types";
 
 const ProfessorPage = () => {
-  const [professor, setProfessor] = useState<Professor[]>([]);
+  const [professor, setProfessor] = useState<ProfessorI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,13 +73,13 @@ const ProfessorPage = () => {
                 {professor && professor.length > 0 ? (
                   professor.map((prof, index) => (
                     <TableRow
-                      key={prof.faculty_id}
+                      key={prof._id}
                       className={`transition-all ${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-100`}
                     >
                       <TableCell className="py-2 text-gray-800 font-medium">
-                        {prof.faculty_id}
+                        {prof._id}
                       </TableCell>
                       <TableCell className="py-2 text-gray-800">
                         {prof.name}

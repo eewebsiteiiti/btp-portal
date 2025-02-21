@@ -13,16 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash } from "lucide-react"; // Icons for action buttons
 import { Card } from "@/components/ui/card"; // Wrapping table in a card UI
 import Link from "next/link";
-
-interface Student {
-  roll_no: string;
-  name: string;
-  email: string;
-  password?: string; // Excluded from frontend
-}
+import { StudentI } from "@/types";
 
 const StudentsPage = () => {
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<StudentI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

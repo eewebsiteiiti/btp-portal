@@ -6,34 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import LogoutButton from "@/components/LogoutButton";
 import Link from "next/link";
+import { ProfessorI, ProjectI, StudentI } from "@/types";
 
-interface Professor {
-  name: string;
-  email: string;
-  password: string;
-}
-interface Student {
-  roll_no: string;
-  name: string;
-  email: string;
-  password: string;
-}
-interface Project {
-  Domain: string;
-  _id: string;
-  Project_No: string;
-  Title: string;
-  Capacity: string;
-  Nature_of_work: string;
-  Comments: string;
-  Supervisor: string;
-  Cosupervisor?: string;
-}
 
 export default function AdminUpload() {
-  const [professors, setProfessors] = useState<Professor[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [professors, setProfessors] = useState<ProfessorI[]>([]);
+  const [students, setStudents] = useState<StudentI[]>([]);
+  const [projects, setProjects] = useState<ProjectI[]>([]);
   const [loading, setLoading] = useState(false);
   const [counts, setCounts] = useState({
     professors: 0,
@@ -50,15 +29,6 @@ export default function AdminUpload() {
     }
   };
   useEffect(() => {
-    // const fetchCounts = async () => {
-    //   try {
-    //     const res = await fetch("/api/data/count");
-    //     const data = await res.json();
-    //     setCounts(data);
-    //   } catch (error) {
-    //     console.error("Error fetching counts:", error);
-    //   }
-    // };
     fetchCounts();
   }, [setCounts]);
 
@@ -79,9 +49,9 @@ export default function AdminUpload() {
         const sheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json(sheet);
 
-        if (type === "professor") setProfessors(parsedData as Professor[]);
-        else if (type === "student") setStudents(parsedData as Student[]);
-        else if (type === "project") setProjects(parsedData as Project[]);
+        if (type === "professor") setProfessors(parsedData as ProfessorI[]);
+        else if (type === "student") setStudents(parsedData as StudentI[]);
+        else if (type === "project") setProjects(parsedData as ProjectI[]);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -89,7 +59,7 @@ export default function AdminUpload() {
 
   const handleUpload = async (
     type: string,
-    data: Professor[] | Student[] | Project[]
+    data: ProfessorI[] | StudentI[] | ProjectI[]
   ) => {
     if (data.length === 0) {
       alert(`No ${type} data to upload`);
@@ -109,15 +79,6 @@ export default function AdminUpload() {
             type.charAt(0).toUpperCase() + type.slice(1)
           } data uploaded successfully`
         );
-        // const fetchCounts = async () => {
-        //   try {
-        //     const res = await fetch("/api/data/count");
-        //     const updatedData = await res.json();
-        //     setCounts(updatedData);
-        //   } catch (error) {
-        //     console.error("Error fetching updated counts:", error);
-        //   }
-        // };
         fetchCounts();
       } else {
         alert(`Failed to upload ${type} data`);
@@ -146,15 +107,6 @@ export default function AdminUpload() {
       } else {
         alert(`Failed to clear ${type} data`);
       }
-      // const fetchCounts = async () => {
-      //   try {
-      //     const res = await fetch("/api/data/count");
-      //     const updatedData = await res.json();
-      //     setCounts(updatedData);
-      //   } catch (error) {
-      //     console.error("Error fetching updated counts:", error);
-      //   }
-      // };
       fetchCounts();
     } catch (error) {
       console.error(`Error clearing ${type} data:`, error);
