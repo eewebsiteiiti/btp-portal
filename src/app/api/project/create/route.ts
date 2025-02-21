@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     await dbConnect();
     let data = await req.json(); 
     data = data.data;    
-    data = Object.setPrototypeOf(data, Array.prototype);    
+    data = Object.setPrototypeOf(data, Array.prototype);       
     const projects = await Project.insertMany(data);
     return NextResponse.json({ message: 'POST request received', projects }, {status: 201});
   } catch (error) {

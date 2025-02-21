@@ -19,13 +19,15 @@ interface Student {
   password: string;
 }
 interface Project {
-  id: string;
-  title: string;
-  domain: string;
-  description: string;
-  capacity: number;
-  supervisor: string;
-  cosupervisor?: string;
+  Domain: string;
+  _id: string;
+  Project_No: string;
+  Title: string;
+  Capacity: string;
+  Nature_of_work: string;
+  Comments: string;
+  Supervisor: string;
+  Cosupervisor?: string;
 }
 
 export default function AdminUpload() {

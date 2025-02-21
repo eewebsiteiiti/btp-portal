@@ -15,13 +15,15 @@ import { Card } from "@/components/ui/card"; // Wrapping table in a card UI
 import Link from "next/link";
 
 interface Project {
-  id: string;
-  title: string;
-  domain: string;
-  description: string;
-  capacity: number;
-  supervisor: string;
-  cosupervisor?: string;
+  Domain: string;
+  _id: string;
+  Project_No: string;
+  Title: string;
+  Capacity: string;
+  Nature_of_work: string;
+  Comments: string;
+  Supervisor: string;
+  Cosupervisor?: string;
 }
 
 const ProjectsPage = () => {
@@ -52,7 +54,7 @@ const ProjectsPage = () => {
         Dashboard
       </Link>{" "}
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        📚 Student Management
+        📚 Project Management
       </h1>
       {loading ? (
         <p className="text-center text-lg font-medium">Loading projects...</p>
@@ -65,23 +67,26 @@ const ProjectsPage = () => {
               {/* Table Header */}
               <TableHeader className="sticky top-0 bg-gray-200">
                 <TableRow>
+                <TableHead className="font-bold py-3 text-gray-700">
+                    Domain
+                  </TableHead>
                   <TableHead className="font-bold py-3 text-gray-700">
-                    id
+                    Poject_No
                   </TableHead>
                   <TableHead className="font-bold py-3 text-gray-700">
                     Title
                   </TableHead>
                   <TableHead className="font-bold py-3 text-gray-700">
-                    Domain
-                  </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
-                    Description
-                  </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
                     Capacity
                   </TableHead>
                   <TableHead className="font-bold py-3 text-gray-700">
-                    Supervisor
+                    Nature_of_work
+                  </TableHead>
+                  <TableHead className="font-bold py-3 text-gray-700">
+                    Comments{" "}
+                  </TableHead>
+                  <TableHead className="font-bold py-3 text-gray-700">
+                    Supervisor{" "}
                   </TableHead>
                   <TableHead className="font-bold py-3 text-gray-700">
                     Cosupervisor
@@ -95,33 +100,33 @@ const ProjectsPage = () => {
               {/* Table Body */}
               <TableBody>
                 {projects && projects.length > 0 ? (
-                  projects.map((student, index) => (
+                  projects.map((project, index) => (
                     <TableRow
-                      key={student.id}
+                      key={project._id}
                       className={`transition-all ${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-100`}
                     >
                       <TableCell className="py-2 text-gray-800 font-medium">
-                        {student.id}
+                        {project.Project_No}
                       </TableCell>
                       <TableCell className="py-2 text-gray-800">
-                        {student.title}
+                        {project.Title}
                       </TableCell>
                       <TableCell className="py-2 text-gray-600">
-                        {student.domain}
+                        {project.Capacity}
                       </TableCell>
                       <TableCell className="py-2 text-gray-600">
-                        {student.description}
+                        {project.Nature_of_work}
                       </TableCell>
                       <TableCell className="py-2 text-gray-600">
-                        {student.capacity}
+                        {project.Comments}
                       </TableCell>
                       <TableCell className="py-2 text-gray-600">
-                        {student.supervisor}
+                        {project.Supervisor}
                       </TableCell>
                       <TableCell className="py-2 text-gray-600">
-                        {student.cosupervisor}
+                        {project.Cosupervisor}
                       </TableCell>
                       <TableCell className="py-2 text-center">
                         <Button variant="outline" size="icon" className="mr-2">

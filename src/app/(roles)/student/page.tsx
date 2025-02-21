@@ -6,8 +6,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "next-auth/react";
 import LogoutButton from "@/components/LogoutButton";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  KeyboardSensor,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import SortableItem from "@/components/SortableItem";
 
 interface Project {
@@ -23,8 +36,10 @@ interface Project {
 export default function StudentPage() {
   const { data: session } = useSession();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [error, setError] = useState("");
-console.log("projects", projects);
+  console.log("projects", projects);
+  
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -39,8 +54,15 @@ console.log("projects", projects);
     fetchProjects();
   }, []);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveProject(null);
+
     if (over && active.id !== over.id) {
       setProjects((prev) => {
         const oldIndex = prev.findIndex((p) => p.id === active.id);
@@ -83,20 +105,37 @@ console.log("projects", projects);
       {error && <p className="text-red-500 font-medium">{error}</p>}
 
       <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={(event) => {
+            const project = projects.find((p) => p.id === event.active.id);
+            setActiveProject(project || null);
+          }}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => setActiveProject(null)}
+        >
           <SortableContext items={projects.map((p) => p.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
-              {projects.map((project) => (
-                <SortableItem key={project.id} id={project.id} project={project} />
+              {projects.map((project, index) => (
+                <SortableItem key={project.id} id={project.id} project={project} index={index + 1} />
               ))}
             </div>
           </SortableContext>
+          <DragOverlay>
+            {activeProject ? (
+              <SortableItem id={activeProject.id} project={activeProject} isOverlay />
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </ScrollArea>
 
       <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
         <p className="text-xs text-gray-600">Total Projects: {projects.length}</p>
-        <Button onClick={submitPreferences} className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all">
+        <Button
+          onClick={submitPreferences}
+          className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
+        >
           Submit
         </Button>
       </div>

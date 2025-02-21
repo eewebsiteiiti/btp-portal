@@ -1,14 +1,13 @@
 import mongoose from "mongoose";
 
 const ProjectSchema = new mongoose.Schema({
-  id: { type: String, required: true },
-  title: { type: String, required: true },
-  domain: { type: String, required: true },
-  description: { type: String, required: true },
-  capacity: { type: Number, enum:[1, 2], required: true },
-  supervisor: { type: String, required: true },
-  cosupervisor: { type: String, required: false },
-  student: { type: Array, required: false },
+  Domain: { type: String, required: true },
+  Project_No: { type: String, required: true },
+  Title : { type: String, required: true },
+  Capacity: { type: Number, required: true },
+  Nature_of_work: { type: String, required: true },
+  Comments: { type: String, required: true },
+  Supervisor: { type: String, required: true },
+  Cosupervisor: { type: String, required: false },
 });
-
 export default mongoose.models.Project || mongoose.model("Project", ProjectSchema);
