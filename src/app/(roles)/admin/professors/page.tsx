@@ -65,6 +65,12 @@ const ProfessorPage = () => {
                   <TableHead className="font-bold py-3 text-gray-700">
                     Email
                   </TableHead>
+                  <TableHead className="font-bold py-3 text-gray-700">
+                    Projects
+                  </TableHead>
+                  <TableHead className="font-bold py-3 text-gray-700">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -86,6 +92,11 @@ const ProfessorPage = () => {
                       </TableCell>
                       <TableCell className="py-2 text-gray-600">
                         {prof.email}
+                      </TableCell>
+                      <TableCell className="py-2 text-gray-600">
+                        {prof.projects && prof.projects.length > 0
+                          ? prof.projects.map((p) => p).join(", ")
+                          : "No Projects"}
                       </TableCell>
                       <TableCell className="py-2 text-center">
                         <Button variant="outline" size="icon" className="mr-2">

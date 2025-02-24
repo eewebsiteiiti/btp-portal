@@ -3,6 +3,8 @@ export interface ProfessorI {
   name: string;
   email: string;
   password: string;
+  students: StudentI[];
+  projects: ProjectI[];
 }
 export interface StudentI {
   _id: string;
