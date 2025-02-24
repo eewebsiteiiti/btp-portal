@@ -30,6 +30,7 @@ export default function StudentPage() {
   const [activeProject, setActiveProject] = useState<ProjectI | null>(null);
   const [error, setError] = useState("");
   const[ preferenceArray, setPreferenceArray] = useState([]);
+  console.log(preferenceArray);
   
   useEffect(() => {
     const fetchStudentPreferences = async () => {

@@ -33,10 +33,10 @@ export default function SortableItem({ id, project, index, isOverlay }: Sortable
           {project.Cosupervisor && (
             <p className="text-xs text-muted-foreground">Co-Supervisor: {project.Cosupervisor}</p>
           )}
-          <p className="text-xs text-muted-foreground truncate">{project.Comments}</p>
-          <p className="text-xs text-muted-foreground truncate">Domain: {project.Domain}</p>
-          <p className="text-xs text-muted-foreground truncate">Project No: {project.Project_No}</p>
-          <p className="text-xs text-muted-foreground truncate">Nature of Work: {project.Nature_of_work}</p>
+          <p className="text-xs text-muted-foreground truncate w-64">{project.Comments}</p>
+          <p className="text-xs text-muted-foreground truncate w-64">Domain: {project.Domain}</p>
+          <p className="text-xs text-red-500 truncate w-64">Project No: {project.Project_No}</p>
+          <p className="text-xs text-muted-foreground truncate w-64">Nature of Work: {project.Nature_of_work}</p>
           <p className="text-xs text-muted-foreground">Capacity: {project.Capacity}</p>
           {isRoll && <p className="text-sm text-blue-800">Partner's Roll: {roll}</p>}
         </div>
@@ -49,12 +49,11 @@ export default function SortableItem({ id, project, index, isOverlay }: Sortable
               type="text"
               onChange={(e) => setRoll(e.target.value)}
               value={roll}
-              placeholder="Enter partner's roll number"
-              className="w-full p-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              placeholder="Partner's roll number"
+              className="w-full p-1 border-2 border-gray-300 rounded-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-black-500 transition"
             />
-
           </form>
-          <Button className="ml-auto" size="sm" disabled={roll.length!==9} onClick={()=>{setIsRoll(true)}}>Add a partner</Button>
+          <Button className="ml-auto p-4" size="sm" disabled={roll.length!==9} onClick={()=>{setIsRoll(true)}}>Add a partner</Button>
         </div>
 
       </> : <></>}
