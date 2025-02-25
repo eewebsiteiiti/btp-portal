@@ -32,7 +32,9 @@ export default function SortableItem({ id, project, index, isOverlay }: Sortable
         <p className="text-xs text-muted-foreground truncate">{project.Comments}</p>
         <p className="text-xs text-muted-foreground truncate">Domain: {project.Domain}</p>
         <p className="text-xs text-muted-foreground truncate">Project No: {project.Project_No}</p>
-        <p className="text-xs text-muted-foreground truncate">Nature of Work: {project.Nature_of_work}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          Nature of Work: {project.Nature_of_work.length > 100 ? `${project.Nature_of_work.substring(0, 100)}...` : project.Nature_of_work}
+        </p>
         <p className="text-xs text-muted-foreground">Capacity: {project.Capacity}</p>
       </div>
     </Card>
