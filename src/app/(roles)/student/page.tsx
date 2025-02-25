@@ -122,7 +122,7 @@ export default function StudentPage() {
       <h2 className="font-semibold text-gray-800">Order Your Preferred Projects</h2>
       {error && <p className="text-red-500 font-medium">{error}</p>}
 
-      <ScrollArea className="block flex-1 border rounded-md bg-white shadow-md p-2">
+      <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
         <div className="text-red">
 
         <DndContext
