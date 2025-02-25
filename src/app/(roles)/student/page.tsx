@@ -122,7 +122,9 @@ export default function StudentPage() {
       <h2 className="font-semibold text-gray-800">Order Your Preferred Projects</h2>
       {error && <p className="text-red-500 font-medium">{error}</p>}
 
-      <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
+      <ScrollArea className="block flex-1 border rounded-md bg-white shadow-md p-2">
+        <div className="text-red">
+
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -132,7 +134,8 @@ export default function StudentPage() {
           }}
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveProject(null)}
-        >
+          
+          >
           <SortableContext items={projects.map((p) => p._id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
               {projects.map((project, index) => (
@@ -146,6 +149,7 @@ export default function StudentPage() {
             ) : null}
           </DragOverlay>
         </DndContext>
+            </div>
       </ScrollArea>
 
       <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
