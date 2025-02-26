@@ -12,11 +12,13 @@ export async function PUT(req: NextRequest) {
     }
     const filter = { email: data.email };
     const update = { $set: { preferences: data.preference } }; // Update preference field
+    console.log(update);
+    
     const student = await Student.findOneAndUpdate(filter, update, {
       new: true,
       runValidators: true,
     });
-    if (!student) {
+    if (!1) {
       return NextResponse.json({ message: "Student not found" }, { status: 404 });
     }
     return NextResponse.json(

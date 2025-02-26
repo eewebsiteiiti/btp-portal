@@ -31,7 +31,7 @@ export default function StudentPage() {
   const [error, setError] = useState("");
   const [preferenceArray, setPreferenceArray] = useState([]);
   const [partners, setPartners] = useState<{ [key: string]: string }>({});
-  
+
   useEffect(() => {
     const fetchStudentPreferences = async () => {
       if (!session?.user?.email) return;
@@ -40,10 +40,10 @@ export default function StudentPage() {
         const response = await fetch(`/api/student/get?email=${session.user.email}`);
         const data = await response.json();
         
-        if (data.students && data.students.preferences) {
-          setPreferenceArray(data.students.preferences); 
+        if (data.students?.preferences) {
+          setPreferenceArray(data.students.preferences);
         } else {
-          setPreferenceArray([]); 
+          setPreferenceArray([]);
         }
       } catch {
         setError("Error fetching student preferences");
@@ -54,7 +54,7 @@ export default function StudentPage() {
   }, [session]);
 
   useEffect(() => {
-    if (preferenceArray.length === 0) return; 
+    if (preferenceArray.length === 0) return;
 
     const fetchProjects = async () => {
       try {
@@ -65,15 +65,24 @@ export default function StudentPage() {
         });
 
         const data = await response.json();
-        setProjects(data.projects || []); 
+        const projectList = data.projects.map((p: { project: ProjectI }) => p.project);
+
+        // Map existing partner roll numbers
+        const partnerMap = data.projects.reduce((acc: { [key: string]: string }, project: { project: ProjectI; partnerRollNumber?: string }) => {
+          acc[project.project._id] = project.partnerRollNumber || "";
+          return acc;
+        }, {});
+
+        setProjects(projectList);
+        setPartners(partnerMap);
       } catch {
         setError("Error fetching projects");
-      } 
+      }
     };
 
     fetchProjects();
   }, [preferenceArray]);
-  
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
@@ -98,6 +107,7 @@ export default function StudentPage() {
 
   const submitPreferences = async () => {
     if (!session?.user) return;
+
     try {
       const response = await fetch("/api/student/preference/put", {
         method: "PUT",
@@ -105,11 +115,13 @@ export default function StudentPage() {
         body: JSON.stringify({
           email: session.user.email,
           preference: projects.map((p) => ({
-            projectId: p._id,
-            partnerRollNumber: partners[p._id] || ""
+            project: p._id,
+            isGroup: !!partners[p._id],
+            partnerRollNumber: partners[p._id] || "",
           })),
         }),
       });
+
       if (!response.ok) throw new Error();
       alert("Preferences saved successfully!");
     } catch {
@@ -119,6 +131,7 @@ export default function StudentPage() {
 
   return (
     <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
+      {/* Student Info Card */}
       <Card className="shadow-md rounded-lg p-3 bg-white">
         <CardContent>
           <h2 className="font-semibold text-gray-800">Student Information</h2>
@@ -131,6 +144,7 @@ export default function StudentPage() {
       <h2 className="font-semibold text-gray-800">Order Your Preferred Projects</h2>
       {error && <p className="text-red-500 font-medium">{error}</p>}
 
+      {/* Projects List */}
       <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
         <DndContext
           sensors={sensors}
@@ -161,13 +175,12 @@ export default function StudentPage() {
             </div>
           </SortableContext>
           <DragOverlay>
-            {activeProject ? (
-              <SortableItem id={activeProject._id} project={activeProject} isOverlay />
-            ) : null}
+            {activeProject && <SortableItem id={activeProject._id} project={activeProject} isOverlay />}
           </DragOverlay>
         </DndContext>
       </ScrollArea>
 
+      {/* Submit Button */}
       <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
         <p className="text-xs text-gray-600">Total Projects: {projects.length}</p>
         <Button

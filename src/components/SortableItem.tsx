@@ -35,7 +35,7 @@ export default function SortableItem({ id, project, index, isOverlay }: Sortable
         <p className="text-xs text-muted-foreground truncate">
           Nature of Work: {project.Nature_of_work.length > 100 ? `${project.Nature_of_work.substring(0, 100)}...` : project.Nature_of_work}
         </p>
-        <p className="text-xs text-muted-foreground">Capacity: {project.Capacity}</p>
+        <p className="text-xs text-muted-foreground">Capacity: {project.Capacity}</p>        
       </div>
     </Card>
   );
