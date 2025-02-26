@@ -178,9 +178,9 @@ export default function StudentPage() {
           <SortableContext items={projects.map((p) => p._id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
               {projects.map((project, index) => (
-                <div key={project._id} className="flex flex-col space-y-2">
-                  <SortableItem id={project._id} project={project} index={index + 1} />
-                  <p className="text-gray-600 text-sm">Status: {projectMap[project._id]?.status || "Pending"}</p>
+                <div key={project._id} className="flex flex-col space-y-2 border rounded-md p-3 bg-black shadow-sm">
+                  <SortableItem id={project._id} project={project} index={index + 1} alpha={1} />
+                  {project.Capacity==2? (<> <p className="text-gray-600 text-sm">Status: {projectMap[project._id]?.status || "Pending"}</p>
                   <input
                     type="text"
                     placeholder="Enter partner's roll number"
@@ -192,7 +192,8 @@ export default function StudentPage() {
                         [project._id]: { ...prev[project._id], partnerRollNumber: e.target.value },
                       }))
                     }
-                  />
+                  /></>):(<></>)}
+                 
                 </div>
               ))}
             </div>

@@ -38,6 +38,7 @@ export interface SortableItemProps {
   project: ProjectI;
   index?: number;
   isOverlay?: boolean;
+  alpha?: number;
 }
 
 export interface PreferenceI{
