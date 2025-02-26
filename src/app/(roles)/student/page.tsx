@@ -209,7 +209,7 @@ export default function StudentPage() {
           onClick={submitPreferences}
           className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
         >
-          Submit
+          Save
         </Button>
       </div>    </div>
   );
