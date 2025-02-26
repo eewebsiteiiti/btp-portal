@@ -30,7 +30,7 @@ export default function StudentPage() {
   const [activeProject, setActiveProject] = useState<ProjectI | null>(null);
   const [error, setError] = useState("");
   const [preferenceArray, setPreferenceArray] = useState([]);
-  const [partners, setPartners] = useState<{ [key: string]: string }>({});
+  const [projectMap, setProjectMap] = useState<{ [key: string]: { partnerRollNumber: string; status: string } }>({});
 
   useEffect(() => {
     const fetchStudentPreferences = async () => {
@@ -67,14 +67,19 @@ export default function StudentPage() {
         const data = await response.json();
         const projectList = data.projects.map((p: { project: ProjectI }) => p.project);
 
-        // Map existing partner roll numbers
-        const partnerMap = data.projects.reduce((acc: { [key: string]: string }, project: { project: ProjectI; partnerRollNumber?: string }) => {
-          acc[project.project._id] = project.partnerRollNumber || "";
-          return acc;
-        }, {});
+        const projectStatusMap = data.projects.reduce(
+          (acc: { [key: string]: { partnerRollNumber: string; status: string } }, project: { project: ProjectI; partnerRollNumber?: string; status?: string }) => {
+            acc[project.project._id] = {
+              partnerRollNumber: project.partnerRollNumber || "",
+              status: project.status || "Pending",
+            };
+            return acc;
+          },
+          {}
+        );
 
         setProjects(projectList);
-        setPartners(partnerMap);
+        setProjectMap(projectStatusMap);
       } catch {
         setError("Error fetching projects");
       }
@@ -101,13 +106,9 @@ export default function StudentPage() {
     }
   };
 
-  const handlePartnerChange = (projectId: string, rollNumber: string) => {
-    setPartners((prev) => ({ ...prev, [projectId]: rollNumber }));
-  };
-
   const submitPreferences = async () => {
     if (!session?.user) return;
-
+  
     try {
       const response = await fetch("/api/student/preference/put", {
         method: "PUT",
@@ -116,22 +117,41 @@ export default function StudentPage() {
           email: session.user.email,
           preference: projects.map((p) => ({
             project: p._id,
-            isGroup: !!partners[p._id],
-            partnerRollNumber: partners[p._id] || "",
+            isGroup: !!projectMap[p._id]?.partnerRollNumber,
+            partnerRollNumber: projectMap[p._id]?.partnerRollNumber || "",
           })),
         }),
       });
-
+  
       if (!response.ok) throw new Error();
+      
       alert("Preferences saved successfully!");
+      const fetchStudentPreferences = async () => {
+        if (!session?.user?.email) return;
+  
+        try {
+          const response = await fetch(`/api/student/get?email=${session.user.email}`);
+          const data = await response.json();
+          
+          if (data.students?.preferences) {
+            setPreferenceArray(data.students.preferences);
+          } else {
+            setPreferenceArray([]);
+          }
+        } catch {
+          setError("Error fetching student preferences");
+        }
+      };
+      // Refresh list after submitting
+      fetchStudentPreferences();
     } catch {
       setError("Error saving preferences");
     }
   };
+  
 
   return (
     <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
-      {/* Student Info Card */}
       <Card className="shadow-md rounded-lg p-3 bg-white">
         <CardContent>
           <h2 className="font-semibold text-gray-800">Student Information</h2>
@@ -144,7 +164,6 @@ export default function StudentPage() {
       <h2 className="font-semibold text-gray-800">Order Your Preferred Projects</h2>
       {error && <p className="text-red-500 font-medium">{error}</p>}
 
-      {/* Projects List */}
       <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
         <DndContext
           sensors={sensors}
@@ -161,15 +180,19 @@ export default function StudentPage() {
               {projects.map((project, index) => (
                 <div key={project._id} className="flex flex-col space-y-2">
                   <SortableItem id={project._id} project={project} index={index + 1} />
-                  {project.Capacity === 2 && (
-                    <input
-                      type="text"
-                      placeholder="Enter partner's roll number"
-                      className="border p-2 rounded-md w-full"
-                      value={partners[project._id] || ""}
-                      onChange={(e) => handlePartnerChange(project._id, e.target.value)}
-                    />
-                  )}
+                  <p className="text-gray-600 text-sm">Status: {projectMap[project._id]?.status || "Pending"}</p>
+                  <input
+                    type="text"
+                    placeholder="Enter partner's roll number"
+                    className="border p-2 rounded-md w-full"
+                    value={projectMap[project._id]?.partnerRollNumber || ""}
+                    onChange={(e) =>
+                      setProjectMap((prev) => ({
+                        ...prev,
+                        [project._id]: { ...prev[project._id], partnerRollNumber: e.target.value },
+                      }))
+                    }
+                  />
                 </div>
               ))}
             </div>
@@ -180,7 +203,6 @@ export default function StudentPage() {
         </DndContext>
       </ScrollArea>
 
-      {/* Submit Button */}
       <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
         <p className="text-xs text-gray-600">Total Projects: {projects.length}</p>
         <Button
@@ -189,7 +211,6 @@ export default function StudentPage() {
         >
           Submit
         </Button>
-      </div>
-    </div>
+      </div>    </div>
   );
 }
