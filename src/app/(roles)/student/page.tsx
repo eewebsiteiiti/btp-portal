@@ -29,8 +29,9 @@ export default function StudentPage() {
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [activeProject, setActiveProject] = useState<ProjectI | null>(null);
   const [error, setError] = useState("");
-  const[ preferenceArray, setPreferenceArray] = useState([]);
-  
+  const [preferenceArray, setPreferenceArray] = useState([]);
+  const [projectMap, setProjectMap] = useState<{ [key: string]: { partnerRollNumber: string; status: string } }>({});
+
   useEffect(() => {
     const fetchStudentPreferences = async () => {
       if (!session?.user?.email) return;
@@ -39,10 +40,10 @@ export default function StudentPage() {
         const response = await fetch(`/api/student/get?email=${session.user.email}`);
         const data = await response.json();
         
-        if (data.students && data.students.preferences) {
-          setPreferenceArray(data.students.preferences); 
+        if (data.students?.preferences) {
+          setPreferenceArray(data.students.preferences);
         } else {
-          setPreferenceArray([]); 
+          setPreferenceArray([]);
         }
       } catch {
         setError("Error fetching student preferences");
@@ -51,8 +52,9 @@ export default function StudentPage() {
 
     fetchStudentPreferences();
   }, [session]);
+
   useEffect(() => {
-    if (preferenceArray.length === 0) return; 
+    if (preferenceArray.length === 0) return;
 
     const fetchProjects = async () => {
       try {
@@ -63,16 +65,30 @@ export default function StudentPage() {
         });
 
         const data = await response.json();
-        setProjects(data.projects || []); 
+        const projectList = data.projects.map((p: { project: ProjectI }) => p.project);
+
+        const projectStatusMap = data.projects.reduce(
+          (acc: { [key: string]: { partnerRollNumber: string; status: string } }, project: { project: ProjectI; partnerRollNumber?: string; status?: string }) => {
+            acc[project.project._id] = {
+              partnerRollNumber: project.partnerRollNumber || "",
+              status: project.status || "Pending",
+            };
+            return acc;
+          },
+          {}
+        );
+
+        setProjects(projectList);
+        setProjectMap(projectStatusMap);
       } catch {
         setError("Error fetching projects");
-      } 
+      }
     };
 
     fetchProjects();
   }, [preferenceArray]);
-  
-    const sensors = useSensors(
+
+  const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
@@ -92,21 +108,47 @@ export default function StudentPage() {
 
   const submitPreferences = async () => {
     if (!session?.user) return;
+  
     try {
       const response = await fetch("/api/student/preference/put", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: session.user.email,
-          preference: projects.map((p) => p._id),
+          preference: projects.map((p) => ({
+            project: p._id,
+            isGroup: !!projectMap[p._id]?.partnerRollNumber,
+            partnerRollNumber: projectMap[p._id]?.partnerRollNumber || "",
+          })),
         }),
       });
+  
       if (!response.ok) throw new Error();
+      
       alert("Preferences saved successfully!");
+      const fetchStudentPreferences = async () => {
+        if (!session?.user?.email) return;
+  
+        try {
+          const response = await fetch(`/api/student/get?email=${session.user.email}`);
+          const data = await response.json();
+          
+          if (data.students?.preferences) {
+            setPreferenceArray(data.students.preferences);
+          } else {
+            setPreferenceArray([]);
+          }
+        } catch {
+          setError("Error fetching student preferences");
+        }
+      };
+      // Refresh list after submitting
+      fetchStudentPreferences();
     } catch {
       setError("Error saving preferences");
     }
   };
+  
 
   return (
     <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
@@ -123,8 +165,6 @@ export default function StudentPage() {
       {error && <p className="text-red-500 font-medium">{error}</p>}
 
       <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-        <div className="text-red">
-
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -134,22 +174,34 @@ export default function StudentPage() {
           }}
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveProject(null)}
-          
-          >
+        >
           <SortableContext items={projects.map((p) => p._id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
               {projects.map((project, index) => (
-                <SortableItem key={project._id} id={project._id} project={project} index={index + 1} />
+                <div key={project._id} className="flex flex-col space-y-2 border rounded-md p-3 bg-black shadow-sm">
+                  <SortableItem id={project._id} project={project} index={index + 1} alpha={1} />
+                  {project.Capacity==2? (<> <p className="text-gray-600 text-sm">Status: {projectMap[project._id]?.status || "Pending"}</p>
+                  <input
+                    type="text"
+                    placeholder="Enter partner's roll number"
+                    className="border p-2 rounded-md w-full"
+                    value={projectMap[project._id]?.partnerRollNumber || ""}
+                    onChange={(e) =>
+                      setProjectMap((prev) => ({
+                        ...prev,
+                        [project._id]: { ...prev[project._id], partnerRollNumber: e.target.value },
+                      }))
+                    }
+                  /></>):(<></>)}
+                 
+                </div>
               ))}
             </div>
           </SortableContext>
           <DragOverlay>
-            {activeProject ? (
-              <SortableItem id={activeProject._id} project={activeProject} isOverlay />
-            ) : null}
+            {activeProject && <SortableItem id={activeProject._id} project={activeProject} isOverlay />}
           </DragOverlay>
         </DndContext>
-            </div>
       </ScrollArea>
 
       <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
@@ -158,9 +210,8 @@ export default function StudentPage() {
           onClick={submitPreferences}
           className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
         >
-          Submit
+          Save
         </Button>
-      </div>
-    </div>
+      </div>    </div>
   );
 }

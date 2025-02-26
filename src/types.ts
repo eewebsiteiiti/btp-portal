@@ -18,7 +18,7 @@ export interface ProjectI {
   _id: string;
   Project_No: string;
   Title: string;
-  Capacity: string;
+  Capacity: number;
   Nature_of_work: string;
   Comments: string;
   Supervisor: string;
@@ -38,4 +38,11 @@ export interface SortableItemProps {
   project: ProjectI;
   index?: number;
   isOverlay?: boolean;
+  alpha?: number;
+}
+
+export interface PreferenceI{
+  project: ProjectI;
+  isGroup: boolean;
+  partner?: StudentI;
 }

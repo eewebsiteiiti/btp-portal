@@ -5,13 +5,15 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card } from "@/components/ui/card";
 import { SortableItemProps } from "@/types";
 
-export default function SortableItem({ id, project, index, isOverlay }: SortableItemProps) {
+export default function SortableItem({ id, project, index, isOverlay, alpha }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isOverlay ? "none" : transition || "transform 0.2s ease",
   };
+  console.log(alpha);
+  
 
   return (
     <Card
@@ -35,7 +37,7 @@ export default function SortableItem({ id, project, index, isOverlay }: Sortable
         <p className="text-xs text-muted-foreground truncate">
           Nature of Work: {project.Nature_of_work.length > 100 ? `${project.Nature_of_work.substring(0, 100)}...` : project.Nature_of_work}
         </p>
-        <p className="text-xs text-muted-foreground">Capacity: {project.Capacity}</p>
+        <p className="text-xs text-muted-foreground">Capacity: {project.Capacity}</p>        
       </div>
     </Card>
   );
