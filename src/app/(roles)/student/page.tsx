@@ -29,7 +29,8 @@ export default function StudentPage() {
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [activeProject, setActiveProject] = useState<ProjectI | null>(null);
   const [error, setError] = useState("");
-  const[ preferenceArray, setPreferenceArray] = useState([]);
+  const [preferenceArray, setPreferenceArray] = useState([]);
+  const [partners, setPartners] = useState<{ [key: string]: string }>({});
   
   useEffect(() => {
     const fetchStudentPreferences = async () => {
@@ -51,6 +52,7 @@ export default function StudentPage() {
 
     fetchStudentPreferences();
   }, [session]);
+
   useEffect(() => {
     if (preferenceArray.length === 0) return; 
 
@@ -72,7 +74,7 @@ export default function StudentPage() {
     fetchProjects();
   }, [preferenceArray]);
   
-    const sensors = useSensors(
+  const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
@@ -90,6 +92,10 @@ export default function StudentPage() {
     }
   };
 
+  const handlePartnerChange = (projectId: string, rollNumber: string) => {
+    setPartners((prev) => ({ ...prev, [projectId]: rollNumber }));
+  };
+
   const submitPreferences = async () => {
     if (!session?.user) return;
     try {
@@ -98,7 +104,10 @@ export default function StudentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: session.user.email,
-          preference: projects.map((p) => p._id),
+          preference: projects.map((p) => ({
+            projectId: p._id,
+            partnerRollNumber: partners[p._id] || ""
+          })),
         }),
       });
       if (!response.ok) throw new Error();
@@ -123,8 +132,6 @@ export default function StudentPage() {
       {error && <p className="text-red-500 font-medium">{error}</p>}
 
       <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-        <div className="text-red">
-
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -134,12 +141,22 @@ export default function StudentPage() {
           }}
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveProject(null)}
-          
-          >
+        >
           <SortableContext items={projects.map((p) => p._id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
               {projects.map((project, index) => (
-                <SortableItem key={project._id} id={project._id} project={project} index={index + 1} />
+                <div key={project._id} className="flex flex-col space-y-2">
+                  <SortableItem id={project._id} project={project} index={index + 1} />
+                  {project.Capacity === 2 && (
+                    <input
+                      type="text"
+                      placeholder="Enter partner's roll number"
+                      className="border p-2 rounded-md w-full"
+                      value={partners[project._id] || ""}
+                      onChange={(e) => handlePartnerChange(project._id, e.target.value)}
+                    />
+                  )}
+                </div>
               ))}
             </div>
           </SortableContext>
@@ -149,7 +166,6 @@ export default function StudentPage() {
             ) : null}
           </DragOverlay>
         </DndContext>
-            </div>
       </ScrollArea>
 
       <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
