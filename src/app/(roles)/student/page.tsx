@@ -31,7 +31,7 @@ export default function StudentPage() {
   const [error, setError] = useState("");
   const [preferenceArray, setPreferenceArray] = useState([]);
   const [projectMap, setProjectMap] = useState<{ [key: string]: { partnerRollNumber: string; status: string } }>({});
-
+  console.log("projectMap", projectMap);
   useEffect(() => {
     const fetchStudentPreferences = async () => {
       if (!session?.user?.email) return;
@@ -39,7 +39,7 @@ export default function StudentPage() {
       try {
         const response = await fetch(`/api/student/get?email=${session.user.email}`);
         const data = await response.json();
-        
+
         if (data.students?.preferences) {
           setPreferenceArray(data.students.preferences);
         } else {
@@ -108,7 +108,7 @@ export default function StudentPage() {
 
   const submitPreferences = async () => {
     if (!session?.user) return;
-  
+
     try {
       const response = await fetch("/api/student/preference/put", {
         method: "PUT",
@@ -122,17 +122,17 @@ export default function StudentPage() {
           })),
         }),
       });
-  
+
       if (!response.ok) throw new Error();
-      
+
       alert("Preferences saved successfully!");
       const fetchStudentPreferences = async () => {
         if (!session?.user?.email) return;
-  
+
         try {
           const response = await fetch(`/api/student/get?email=${session.user.email}`);
           const data = await response.json();
-          
+
           if (data.students?.preferences) {
             setPreferenceArray(data.students.preferences);
           } else {
@@ -148,7 +148,7 @@ export default function StudentPage() {
       setError("Error saving preferences");
     }
   };
-  
+
 
   return (
     <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
@@ -178,28 +178,14 @@ export default function StudentPage() {
           <SortableContext items={projects.map((p) => p._id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
               {projects.map((project, index) => (
-                <div key={project._id} className="flex flex-col space-y-2 border rounded-md p-3 bg-black shadow-sm">
-                  <SortableItem id={project._id} project={project} index={index + 1} alpha={1} />
-                  {project.Capacity==2? (<> <p className="text-gray-600 text-sm">Status: {projectMap[project._id]?.status || "Pending"}</p>
-                  <input
-                    type="text"
-                    placeholder="Enter partner's roll number"
-                    className="border p-2 rounded-md w-full"
-                    value={projectMap[project._id]?.partnerRollNumber || ""}
-                    onChange={(e) =>
-                      setProjectMap((prev) => ({
-                        ...prev,
-                        [project._id]: { ...prev[project._id], partnerRollNumber: e.target.value },
-                      }))
-                    }
-                  /></>):(<></>)}
-                 
+                <div key={project._id} className="flex flex-col space-y-2 border rounded-md p-3 shadow-sm">
+                  <SortableItem id={project._id} project={project} index={index + 1} setProjectMap={setProjectMap} projectMap={projectMap} />
                 </div>
               ))}
             </div>
           </SortableContext>
           <DragOverlay>
-            {activeProject && <SortableItem id={activeProject._id} project={activeProject} isOverlay />}
+            {activeProject && <SortableItem id={activeProject._id} project={activeProject} setProjectMap={setProjectMap} projectMap={projectMap} isOverlay />}
           </DragOverlay>
         </DndContext>
       </ScrollArea>

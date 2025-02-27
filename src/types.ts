@@ -38,7 +38,8 @@ export interface SortableItemProps {
   project: ProjectI;
   index?: number;
   isOverlay?: boolean;
-  alpha?: number;
+  setProjectMap: React.Dispatch<React.SetStateAction<{ [key: string]: { partnerRollNumber: string; status: string } }>>;
+  projectMap: { [key: string]: { partnerRollNumber: string; status: string } };
 }
 
 export interface PreferenceI{
