@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import Professor from '@/models/Professor';
 import { dbConnect } from '@/lib/mongodb';
 import Student from '@/models/Student';
-import { set } from 'mongoose';
 
 export async function GET(req: NextRequest) {
     try {
@@ -51,25 +50,22 @@ export async function GET(req: NextRequest) {
             // }
 
         }
+
+        const data = Object.fromEntries(
+            Object.entries(projectWiseStudents).map(([projectId, preferences]) => [
+                projectId,
+                Object.fromEntries(
+                    Object.entries(preferences).map(([rank, studentSet]) => [
+                        rank,
+                        Array.from(studentSet), // Convert Set to Array
+                    ])
+                ),
+            ])
+        );
         console.log(projectWiseStudents);
 
 
-        return NextResponse.json({ message: 'Professors added successfully' }, { status: 200 });
-
-        //     let data = await req.json();
-        //     data = data.data;
-        //     data = Object.setPrototypeOf(data, Array.prototype);
-
-        //     // Fetch projects for each professor and add them to the data
-        //     for (const professor of data) {
-        //       const projects = await Project.find({ Supervisor: professor.name });
-        //       professor.projects = projects; // Adding projects to professor object
-        //     }
-
-        //     // Insert updated professor data
-        //     const professors = await Professor.insertMany(data);
-
-        //     return NextResponse.json({ message: 'Professors added successfully', professors }, { status: 200 });
+        return NextResponse.json({ message: 'Professors added successfully', data }, { status: 200 });
     } catch (error) {
         console.error(error);
         return NextResponse.json({ message: 'Error', error }, { status: 500 });
