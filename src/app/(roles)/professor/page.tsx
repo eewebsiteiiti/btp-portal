@@ -46,18 +46,18 @@ export default function ProfessorPage() {
             <h2 className="text-lg font-semibold">{project.title}</h2>
             <p className="text-sm text-gray-500 mb-2">{project.description}</p>
             {/* <ScrollArea className="border rounded-md p-2 w-full overflow-y-auto h-96"> */}
-              <div className="space-y-4">
-                {project.students
-                  .map((student) => (
-                    <Card key={student.roll_no} className="p-4 w-full">
-                      <CardContent>
-                        <h3 className="text-lg font-medium">{student.name} ({student.roll_no})</h3>
-                        <p className="text-sm text-gray-500">Email: {student.email}</p>
-                        <p className="text-sm font-bold">Preference #{student.preferenceOrder}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
+            <div className="space-y-4">
+              {project.students
+                .map((student) => (
+                  <Card key={student.roll_no} className="p-4 w-full">
+                    <CardContent>
+                      <h3 className="text-lg font-medium">{student.name} ({student.roll_no})</h3>
+                      <p className="text-sm text-gray-500">Email: {student.email}</p>
+                      <p className="text-sm font-bold">Preference #{student.preferenceOrder}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
             {/* </ScrollArea> */}
           </TabsContent>
         ))}
