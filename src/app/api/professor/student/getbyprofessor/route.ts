@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import Professor from '@/models/Professor';
 import { dbConnect } from '@/lib/mongodb';
 import Student from '@/models/Student';
+import Project from '@/models/Project';
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
         await dbConnect();
-        // const { email } = await req.json();
-        const email = 'professor1@university.com'
+        const { email } = await req.json();
         const professor = await Professor.findOne({ email });
         const students = await Student.find();
         let projectWiseStudents: { [key: string]: { [key: number]: Set<string> } } = {};
+        const projectDetails = await Project.find({ _id: { $in: professor.projects } });
         for (const project of professor.projects) {
             projectWiseStudents[project.toString()] = {};
             for (const student of students) {
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest) {
         console.log(projectWiseStudents);
 
 
-        return NextResponse.json({ message: 'Professors added successfully', data }, { status: 200 });
+        return NextResponse.json({ message: 'Professors added successfully', data, projectDetails }, { status: 200 });
     } catch (error) {
         console.error(error);
         return NextResponse.json({ message: 'Error', error }, { status: 500 });
