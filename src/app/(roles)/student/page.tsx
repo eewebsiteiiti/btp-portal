@@ -30,14 +30,17 @@ export default function StudentPage() {
   const [activeProject, setActiveProject] = useState<ProjectI | null>(null);
   const [error, setError] = useState("");
   const [preferenceArray, setPreferenceArray] = useState([]);
-  const [projectMap, setProjectMap] = useState<{ [key: string]: { partnerRollNumber: string; status: string } }>({});
-  console.log("projectMap", projectMap);
+  const [projectMap, setProjectMap] = useState<{
+    [key: string]: { partnerRollNumber: string; status: string };
+  }>({});
   useEffect(() => {
     const fetchStudentPreferences = async () => {
       if (!session?.user?.email) return;
 
       try {
-        const response = await fetch(`/api/student/get?email=${session.user.email}`);
+        const response = await fetch(
+          `/api/student/get?email=${session.user.email}`
+        );
         const data = await response.json();
 
         if (data.students?.preferences) {
@@ -65,10 +68,21 @@ export default function StudentPage() {
         });
 
         const data = await response.json();
-        const projectList = data.projects.map((p: { project: ProjectI }) => p.project);
+        const projectList = data.projects.map(
+          (p: { project: ProjectI }) => p.project
+        );
 
         const projectStatusMap = data.projects.reduce(
-          (acc: { [key: string]: { partnerRollNumber: string; status: string } }, project: { project: ProjectI; partnerRollNumber?: string; status?: string }) => {
+          (
+            acc: {
+              [key: string]: { partnerRollNumber: string; status: string };
+            },
+            project: {
+              project: ProjectI;
+              partnerRollNumber?: string;
+              status?: string;
+            }
+          ) => {
             acc[project.project._id] = {
               partnerRollNumber: project.partnerRollNumber || "",
               status: project.status || "Pending",
@@ -130,7 +144,9 @@ export default function StudentPage() {
         if (!session?.user?.email) return;
 
         try {
-          const response = await fetch(`/api/student/get?email=${session.user.email}`);
+          const response = await fetch(
+            `/api/student/get?email=${session.user.email}`
+          );
           const data = await response.json();
 
           if (data.students?.preferences) {
@@ -149,7 +165,6 @@ export default function StudentPage() {
     }
   };
 
-
   return (
     <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
       <Card className="shadow-md rounded-lg p-3 bg-white">
@@ -160,10 +175,10 @@ export default function StudentPage() {
           <LogoutButton />
         </CardContent>
       </Card>
-
-      <h2 className="font-semibold text-gray-800">Order Your Preferred Projects</h2>
+      <h2 className="font-semibold text-gray-800">
+        Order Your Preferred Projects
+      </h2>
       {error && <p className="text-red-500 font-medium">{error}</p>}
-
       <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
         <DndContext
           sensors={sensors}
@@ -175,29 +190,51 @@ export default function StudentPage() {
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveProject(null)}
         >
-          <SortableContext items={projects.map((p) => p._id)} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={projects.map((p) => p._id)}
+            strategy={verticalListSortingStrategy}
+          >
             <div className="space-y-3">
               {projects.map((project, index) => (
-                <div key={project._id} className="flex flex-col space-y-2 border rounded-md p-3 shadow-sm">
-                  <SortableItem id={project._id} project={project} index={index + 1} setProjectMap={setProjectMap} projectMap={projectMap} />
+                <div
+                  key={project._id}
+                  className="flex flex-col space-y-2 border rounded-md p-3 shadow-sm"
+                >
+                  <SortableItem
+                    id={project._id}
+                    project={project}
+                    index={index + 1}
+                    setProjectMap={setProjectMap}
+                    projectMap={projectMap}
+                  />
                 </div>
               ))}
             </div>
           </SortableContext>
           <DragOverlay>
-            {activeProject && <SortableItem id={activeProject._id} project={activeProject} setProjectMap={setProjectMap} projectMap={projectMap} isOverlay />}
+            {activeProject && (
+              <SortableItem
+                id={activeProject._id}
+                project={activeProject}
+                setProjectMap={setProjectMap}
+                projectMap={projectMap}
+                isOverlay
+              />
+            )}
           </DragOverlay>
         </DndContext>
       </ScrollArea>
-
       <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
-        <p className="text-xs text-gray-600">Total Projects: {projects.length}</p>
+        <p className="text-xs text-gray-600">
+          Total Projects: {projects.length}
+        </p>
         <Button
           onClick={submitPreferences}
           className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
         >
           Save
         </Button>
-      </div>    </div>
+      </div>{" "}
+    </div>
   );
 }
