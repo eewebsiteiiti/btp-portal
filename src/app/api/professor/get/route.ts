@@ -5,7 +5,6 @@ import { dbConnect } from "@/lib/mongodb";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const email = searchParams.get("email");
-  console.log(email);
   if (email) {
     try {
       await dbConnect();
