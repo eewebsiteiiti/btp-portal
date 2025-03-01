@@ -94,7 +94,7 @@ export default function SortableItem({
               <>
                 <p className="text-sm">
                   {" "}
-                  Partner's Roll Number: {projectMap[id].partnerRollNumber}
+                  Partner&apos;s Roll Number: {projectMap[id].partnerRollNumber}
                   <span
                     className={`italic ${
                       projectMap[project._id]?.status === "Pending"
