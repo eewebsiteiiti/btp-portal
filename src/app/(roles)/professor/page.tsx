@@ -23,12 +23,12 @@ const ProfessorPage = () => {
     const fetchProfessorAndStudents = async () => {
       try {
         const [studentsRes, professorRes] = await Promise.all([
-          fetch("api/professor/student/getbyprofessor", {
+          fetch("/api/professor/student/getbyprofessor", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: session.user.email }),
           }),
-          fetch(`api/professor/get?email=${session.user.email}`),
+          fetch(`/api/professor/get?email=${session.user.email}`),
         ]);
 
         const [studentsData, professorData] = await Promise.all([
@@ -71,55 +71,48 @@ const ProfessorPage = () => {
       {allProjects.length > 0 && (
         <Tabs defaultValue={allProjects[0]._id} className="w-full">
           <TabsList className="flex overflow-x-auto border-b">
-            {allProjects.map((project) => (
-              <TabsTrigger key={project._id} value={project._id}>
-                {project.Project_No}
+            {allProjects.map(({ _id, Project_No }) => (
+              <TabsTrigger key={_id} value={_id}>
+                {Project_No}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {allProjects.map((project) => (
+          {allProjects.map(({ _id, Title, Comments }) => (
             <TabsContent
-              key={project._id}
-              value={project._id}
+              key={_id}
+              value={_id}
               className="p-4 border rounded-md"
             >
-              <h2 className="text-lg font-semibold">{project.Title}</h2>
-              <p className="text-sm text-gray-500 mb-2">
-                {project.Nature_of_work}
-              </p>
+              <h2 className="text-lg font-semibold">{Title}</h2>
+              <p className="text-sm text-gray-500 mb-2">{Comments}</p>
 
               <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-                <div className="">
-                  {Object.entries(allStudents[project._id] || {}).map(
-                    ([, studentList], index) => (
-                      <div key={index} className="p- w-full">
-                        {studentList.map((studentGroup, groupKey) => (
-                          <div key={groupKey} className="p-3 w-full">
-                            {studentGroup.map((student) => (
-                              <Card
-                                key={student.roll_no}
-                                className="p-2 w-full"
-                              >
-                                <CardContent>
-                                  <h3 className="text-lg font-medium">
-                                    {student.name} ({student.roll_no})
-                                  </h3>
-                                  <p className="text-sm text-gray-500">
-                                    Email: {student.email}
-                                  </p>
-                                  <p className="text-sm font-bold">
-                                    Preference #{index + 1}
-                                  </p>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    )
-                  )}
-                </div>
+                {Object.values(allStudents[_id] || {}).map(
+                  (studentList, index) => (
+                    <div key={index} className="w-full">
+                      {studentList.map((studentGroup, groupKey) => (
+                        <div key={groupKey} className="p-3 w-full">
+                          {studentGroup.map(({ roll_no, name, email }) => (
+                            <Card key={roll_no} className="p-2 w-full">
+                              <CardContent>
+                                <h3 className="text-lg font-medium">
+                                  {name} ({roll_no})
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                  Email: {email}
+                                </p>
+                                <p className="text-sm font-bold">
+                                  Preference #{index + 1}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
               </ScrollArea>
             </TabsContent>
           ))}
