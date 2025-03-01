@@ -42,8 +42,19 @@ export interface SortableItemProps {
   projectMap: { [key: string]: { partnerRollNumber: string; status: string } };
 }
 
-export interface PreferenceI{
+export interface PreferenceI {
   project: ProjectI;
   isGroup: boolean;
   partner?: StudentI;
+}
+
+
+export interface StudentPreference {
+  student: String;
+  preferences: PreferenceI[];
+}
+
+
+export interface ProjectPreferenceI {
+  students: String[];
 }

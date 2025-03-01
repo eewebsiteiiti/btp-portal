@@ -29,9 +29,6 @@ export async function PUT(req: NextRequest) {
         (p: Preference) => p.project.toString() === newPref.project.toString()
       );
 
-      // Reset status to "Pending" if:
-      // 1. The partnerRollNumber changed.
-      // 2. The project order (index) changed.
       if (
         !existingPref ||
         existingPref.partnerRollNumber !== newPref.partnerRollNumber ||
