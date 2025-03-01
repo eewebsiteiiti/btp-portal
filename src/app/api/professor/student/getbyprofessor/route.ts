@@ -1,74 +1,81 @@
-import { NextRequest, NextResponse } from 'next/server';
-import Professor from '@/models/Professor';
-import { dbConnect } from '@/lib/mongodb';
-import Student from '@/models/Student';
-import Project from '@/models/Project';
+import { NextRequest, NextResponse } from "next/server";
+import Professor from "@/models/Professor";
+import { dbConnect } from "@/lib/mongodb";
+import Student from "@/models/Student";
+import Project from "@/models/Project";
 
 export async function POST(req: NextRequest) {
-    try {
-        await dbConnect();
-        const { email } = await req.json();
-        const professor = await Professor.findOne({ email });
-        const students = await Student.find();
-        let projectWiseStudents: { [key: string]: { [key: number]: Set<string> } } = {};
-        const projectDetails = await Project.find({ _id: { $in: professor.projects } });
-        for (const project of professor.projects) {
-            projectWiseStudents[project.toString()] = {};
-            for (const student of students) {
-                const preference = student.preferences;
-                for (let i = 0; i < preference.length; i++) {
-                    const prefer = preference[i];
-                    let studentArray = [];
-                    // console.log(student.roll_no);
-                    studentArray.push(Number(student.roll_no));
-                    if (prefer.isGroup && prefer.status === 'Success') {
-                        studentArray.push(Number(prefer.partnerRollNumber));
-                    }
-                    studentArray.sort();
-                    const setObject = JSON.stringify(studentArray);
-                    // console.log(setObject)
-                    const id = prefer.project.toString();
-                    if (id in projectWiseStudents) {
-                        if (!projectWiseStudents[id][i]) {
-                            projectWiseStudents[id][i] = new Set<string>();
-                            projectWiseStudents[id][i].add(setObject);
-                        }
-                        else {
-                            projectWiseStudents[id][i].add(setObject);
-                        }
-                    }
-                }
-            }
-            const test = (projectWiseStudents[project.toString()][0]);
-            console.log(test);
+  try {
+    await dbConnect();
+    const { email } = await req.json();
+    const professor = await Professor.findOne({ email });
 
-            // for (const proj of professor.projects){
-            //     const id = proj.toString();
-            //     Object.keys(projectWiseStudents[id]).forEach((key) => {
-            //         projectWiseStudents[id][key] = Array.from(projectWiseStudents[id][key]);
-            //     }
-            //     )
-            // }
-
-        }
-
-        const data = Object.fromEntries(
-            Object.entries(projectWiseStudents).map(([projectId, preferences]) => [
-                projectId,
-                Object.fromEntries(
-                    Object.entries(preferences).map(([rank, studentSet]) => [
-                        rank,
-                        Array.from(studentSet), // Convert Set to Array
-                    ])
-                ),
-            ])
-        );
-        console.log(projectWiseStudents);
-
-
-        return NextResponse.json({ message: 'Professors added successfully', data, projectDetails }, { status: 200 });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ message: 'Error', error }, { status: 500 });
+    if (!professor) {
+      return NextResponse.json(
+        { message: "Professor not found" },
+        { status: 404 }
+      );
     }
+
+    const students = await Student.find();
+    const projectWiseStudents: {
+      [key: string]: { [key: number]: Set<string> };
+    } = {};
+    const projectDetails = await Project.find({
+      _id: { $in: professor.projects },
+    });
+
+    for (const project of professor.projects) {
+      projectWiseStudents[project.toString()] = {};
+
+      for (const student of students) {
+        const preference = student.preferences;
+
+        for (let i = 0; i < preference.length; i++) {
+          const prefer = preference[i];
+
+          if (prefer.project.toString() === project.toString()) {
+            const studentGroup = [student];
+
+            if (prefer.isGroup && prefer.status === "Success") {
+              const partner = students.find(
+                (s) => s.roll_no === prefer.partnerRollNumber
+              );
+              if (partner) studentGroup.push(partner);
+            }
+
+            studentGroup.sort((a, b) => Number(a.roll_no) - Number(b.roll_no)); // Sort for consistency
+            const setObject = JSON.stringify(
+              studentGroup.map((s) => s.toObject())
+            ); // Store full student objects
+
+            if (!projectWiseStudents[project.toString()][i]) {
+              projectWiseStudents[project.toString()][i] = new Set<string>();
+            }
+            projectWiseStudents[project.toString()][i].add(setObject);
+          }
+        }
+      }
+    }
+
+    const data = Object.fromEntries(
+      Object.entries(projectWiseStudents).map(([projectId, preferences]) => [
+        projectId,
+        Object.fromEntries(
+          Object.entries(preferences).map(([rank, studentSet]) => [
+            rank,
+            Array.from(studentSet).map((str) => JSON.parse(str)), // Convert Set to Array of student objects
+          ])
+        ),
+      ])
+    );
+
+    return NextResponse.json(
+      { message: "Data retrieved successfully", data, projectDetails },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: "Error", error }, { status: 500 });
+  }
 }

@@ -1,130 +1,125 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import LogoutButton from "@/components/LogoutButton";
+import { ProjectI, StudentI, ProfessorI } from "@/types";
 
-interface Professor {
-  name: string;
-  email: string;
-  projects: { _id: string; title: string; domain: string }[];
-}
-
-interface ProjectWiseStudents {
-  [projectId: string]: {
-    [rank: number]: Set<string>;
-  };
-}
-
-export default function ProfessorPage() {
-  const [professor, setProfessor] = useState<Professor | null>(null);
-  const [projectWiseStudents, setProjectWiseStudents] = useState<ProjectWiseStudents | null>(null);
+const ProfessorPage = () => {
+  const { data: session } = useSession();
+  const [allStudents, setAllStudents] = useState<
+    Record<string, Record<string, StudentI[][]>>
+  >({});
+  const [allProjects, setAllProjects] = useState<ProjectI[]>([]);
+  const [professor, setProfessor] = useState<ProfessorI | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      const email = "professor@example.com"; // Change this dynamically
-      const response = await fetch("/api/professor", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!session?.user?.email) return;
 
-      if (!response.ok) return;
+    const fetchProfessorAndStudents = async () => {
+      try {
+        const [studentsRes, professorRes] = await Promise.all([
+          fetch("/api/professor/student/getbyprofessor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: session.user.email }),
+          }),
+          fetch(`/api/professor/get?email=${session.user.email}`),
+        ]);
 
-      const data = await response.json();
-      setProfessor(data.professor);
+        const [studentsData, professorData] = await Promise.all([
+          studentsRes.json(),
+          professorRes.json(),
+        ]);
 
-      // Convert arrays back to Sets
-      const reconstructedData = Object.fromEntries(
-        Object.entries(data.projectWiseStudents).map(([projectId, preferences]) => [
-          projectId,
-          Object.fromEntries(
-            Object.entries(preferences).map(([rank, studentArray]) => [
-              Number(rank),
-              new Set(studentArray),
-            ])
-          ),
-        ])
-      );
+        setAllStudents(studentsData.data || {});
+        setAllProjects(studentsData.projectDetails || []);
+        setProfessor(professorData.professor);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setProjectWiseStudents(reconstructedData);
-    }
+    fetchProfessorAndStudents();
+  }, [session]);
 
-    fetchData();
-  }, []);
-
-  if (!professor) return <p className="text-center mt-10 text-lg">Loading...</p>;
+  if (loading) return <p className="text-center mt-10 text-lg">Loading...</p>;
+  if (!professor)
+    return (
+      <p className="text-center mt-10 text-lg">No professor data found.</p>
+    );
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
       {/* Professor Info */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Professor Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p><strong>Name:</strong> {professor.name}</p>
-          <p><strong>Email:</strong> {professor.email}</p>
+      <Card className="w-full">
+        <CardContent className="p-4">
+          <h2 className="text-xl font-semibold">Professor Information</h2>
+          <p>Name: {professor.name}</p>
+          <p>Email: {professor.email}</p>
+          <LogoutButton />
         </CardContent>
       </Card>
 
       {/* Tabs for Projects */}
-      <Tabs defaultValue={professor.projects[0]?._id} className="w-full">
-        <TabsList className="mb-4">
-          {professor.projects.map((project) => (
-            <TabsTrigger key={project._id} value={project._id}>
-              {project.title}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {allProjects.length > 0 && (
+        <Tabs defaultValue={allProjects[0]._id} className="w-full">
+          <TabsList className="flex overflow-x-auto border-b">
+            {allProjects.map(({ _id, Project_No }) => (
+              <TabsTrigger key={_id} value={_id}>
+                {Project_No}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        {professor.projects.map((project) => (
-          <TabsContent key={project._id} value={project._id}>
-            <Card>
-              <CardHeader>
-                <CardTitle>{project.title}</CardTitle>
-                <p className="text-sm text-gray-500">Domain: {project.domain}</p>
-              </CardHeader>
-              <CardContent>
-                <Separator className="mb-4" />
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Preference Rank</TableHead>
-                      <TableHead>Student(s)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {projectWiseStudents?.[project._id] ? (
-                      Object.entries(projectWiseStudents[project._id])
-                        .sort(([rankA], [rankB]) => Number(rankA) - Number(rankB)) // Sort by preference rank
-                        .map(([rank, studentSet]) => (
-                          <TableRow key={rank}>
-                            <TableCell>{rank}</TableCell>
-                            <TableCell>
-                              {[...studentSet].map((group, index) => (
-                                <Badge key={index} className="mr-2">{group}</Badge>
-                              ))}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={2} className="text-center">
-                          No student preferences found
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
+          {allProjects.map(({ _id, Title, Comments }) => (
+            <TabsContent
+              key={_id}
+              value={_id}
+              className="p-4 border rounded-md"
+            >
+              <h2 className="text-lg font-semibold">{Title}</h2>
+              <p className="text-sm text-gray-500 mb-2">{Comments}</p>
+
+              <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
+                {Object.values(allStudents[_id] || {}).map(
+                  (studentList, index) => (
+                    <div key={index} className="w-full">
+                      {studentList.map((studentGroup, groupKey) => (
+                        <div key={groupKey} className="p-3 w-full">
+                          {studentGroup.map(({ roll_no, name, email }) => (
+                            <Card key={roll_no} className="p-2 w-full">
+                              <CardContent>
+                                <h3 className="text-lg font-medium">
+                                  {name} ({roll_no})
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                  Email: {email}
+                                </p>
+                                <p className="text-sm font-bold">
+                                  Preference #{index + 1}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
+              </ScrollArea>
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
     </div>
   );
-}
+};
+
+export default ProfessorPage;
