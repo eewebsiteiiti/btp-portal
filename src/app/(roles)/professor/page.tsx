@@ -9,11 +9,20 @@ import LogoutButton from "@/components/LogoutButton";
 import { ProjectI, StudentI, ProfessorI } from "@/types";
 import { Badge } from "@/components/ui/badge";
 
+// projectWiseStudentsData={
+//   project_id:{
+//     preference_of_student:{
+//       group_no:[{roll_no,name,email}]
+//     }
+//   }
+// }
+interface projectWiseStudentsDataI {
+  [key: string]: Record<string, StudentI[][]>;
+}
 const ProfessorPage = () => {
   const { data: session } = useSession();
-  const [studentsData, setStudentsData] = useState<
-    Record<string, Record<string, StudentI[][]>>
-  >({});
+  const [projectWiseStudentsData, setprojectWiseStudentsData] =
+    useState<projectWiseStudentsDataI>({});
   const [professor, setProfessor] = useState<ProfessorI | null>(null);
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +45,7 @@ const ProfessorPage = () => {
           res.map((r) => r.json())
         );
 
-        setStudentsData(studentsRes.data || {});
+        setprojectWiseStudentsData(studentsRes.data || {});
         setProjects(studentsRes.projectDetails || []);
         setProfessor(professorRes.professor);
       } catch (error) {
@@ -56,7 +65,7 @@ const ProfessorPage = () => {
     );
 
   return (
-    <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
+    <div className="space-y-4 p-4 bg-gray-100  w-full flex flex-col">
       {/* Professor Info */}
       <Card className="w-full">
         <CardContent className="p-4">
@@ -88,36 +97,38 @@ const ProfessorPage = () => {
               <p className="text-sm text-gray-500 mb-2">{Comments}</p>
 
               {/* Student List */}
-              <ScrollArea className="border rounded-lg bg-gray-100 shadow-sm p-2 ">
-                {studentsData[_id] &&
-                  Object.values(studentsData[_id]).map((studentList, index) => (
-                    <React.Fragment key={index}>
-                      {studentList.map((group, groupKey) => (
-                        <Card
-                          key={groupKey}
-                          className="p-4 bg-white shadow-md "
-                        >
-                          <CardContent className="space-y-3">
-                            {group.map(({ roll_no, name, email }) => (
-                              <div key={roll_no} className="p-2">
-                                <div className="flex justify-between items-center">
-                                  <h3 className="text-md font-semibold">
-                                    {name} ({roll_no})
-                                  </h3>
-                                  <Badge variant="secondary">
-                                    Preference #{index + 1}
-                                  </Badge>
+              <ScrollArea className="border rounded-lg bg-gray-100  p-2 ">
+                {projectWiseStudentsData[_id] &&
+                  Object.values(projectWiseStudentsData[_id]).map(
+                    (studentList, index) => (
+                      <React.Fragment key={index}>
+                        {studentList.map((group, groupKey) => (
+                          <Card
+                            key={groupKey}
+                            className="p-4  shadow-md my-1 hover:bg-gray-50 shadow-sm"
+                          >
+                            <CardContent className="space-y-3">
+                              {group.map(({ roll_no, name, email }) => (
+                                <div key={roll_no} className="p-2">
+                                  <div className="flex justify-between items-center">
+                                    <h3 className="text-md font-semibold">
+                                      {name} ({roll_no})
+                                    </h3>
+                                    <Badge variant="secondary">
+                                      Preference #{index + 1}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-500">
+                                    Email: {email}
+                                  </p>
                                 </div>
-                                <p className="text-sm text-gray-500">
-                                  Email: {email}
-                                </p>
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </React.Fragment>
-                  ))}
+                              ))}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </React.Fragment>
+                    )
+                  )}
               </ScrollArea>
             </TabsContent>
           ))}
