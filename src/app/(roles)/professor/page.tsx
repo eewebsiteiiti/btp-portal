@@ -7,22 +7,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import LogoutButton from "@/components/LogoutButton";
 import { ProjectI, StudentI, ProfessorI } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
 const ProfessorPage = () => {
   const { data: session } = useSession();
-  const [allStudents, setAllStudents] = useState<
+  const [studentsData, setStudentsData] = useState<
     Record<string, Record<string, StudentI[][]>>
   >({});
-  const [allProjects, setAllProjects] = useState<ProjectI[]>([]);
   const [professor, setProfessor] = useState<ProfessorI | null>(null);
+  const [projects, setProjects] = useState<ProjectI[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!session?.user?.email) return;
 
-    const fetchProfessorAndStudents = async () => {
+    const fetchData = async () => {
       try {
-        const [studentsRes, professorRes] = await Promise.all([
+        const res = await Promise.all([
           fetch("/api/professor/student/getbyprofessor", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -31,14 +32,13 @@ const ProfessorPage = () => {
           fetch(`/api/professor/get?email=${session.user.email}`),
         ]);
 
-        const [studentsData, professorData] = await Promise.all([
-          studentsRes.json(),
-          professorRes.json(),
-        ]);
+        const [studentsRes, professorRes] = await Promise.all(
+          res.map((r) => r.json())
+        );
 
-        setAllStudents(studentsData.data || {});
-        setAllProjects(studentsData.projectDetails || []);
-        setProfessor(professorData.professor);
+        setStudentsData(studentsRes.data || {});
+        setProjects(studentsRes.projectDetails || []);
+        setProfessor(professorRes.professor);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -46,7 +46,7 @@ const ProfessorPage = () => {
       }
     };
 
-    fetchProfessorAndStudents();
+    fetchData();
   }, [session]);
 
   if (loading) return <p className="text-center mt-10 text-lg">Loading...</p>;
@@ -67,18 +67,18 @@ const ProfessorPage = () => {
         </CardContent>
       </Card>
 
-      {/* Tabs for Projects */}
-      {allProjects.length > 0 && (
-        <Tabs defaultValue={allProjects[0]._id} className="w-full">
+      {/* Projects & Students */}
+      {projects.length > 0 && (
+        <Tabs defaultValue={projects[0]._id} className="w-full">
           <TabsList className="flex overflow-x-auto border-b">
-            {allProjects.map(({ _id, Project_No }) => (
+            {projects.map(({ _id, Project_No }) => (
               <TabsTrigger key={_id} value={_id}>
                 {Project_No}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {allProjects.map(({ _id, Title, Comments }) => (
+          {projects.map(({ _id, Title, Comments }) => (
             <TabsContent
               key={_id}
               value={_id}
@@ -87,32 +87,37 @@ const ProfessorPage = () => {
               <h2 className="text-lg font-semibold">{Title}</h2>
               <p className="text-sm text-gray-500 mb-2">{Comments}</p>
 
-              <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-                {Object.values(allStudents[_id] || {}).map(
-                  (studentList, index) => (
-                    <div key={index} className="w-full">
-                      {studentList.map((studentGroup, groupKey) => (
-                        <div key={groupKey} className="p-3 w-full">
-                          {studentGroup.map(({ roll_no, name, email }) => (
-                            <Card key={roll_no} className="p-2 w-full">
-                              <CardContent>
-                                <h3 className="text-lg font-medium">
-                                  {name} ({roll_no})
-                                </h3>
+              {/* Student List */}
+              <ScrollArea className="border rounded-lg bg-gray-100 shadow-sm p-2 ">
+                {studentsData[_id] &&
+                  Object.values(studentsData[_id]).map((studentList, index) => (
+                    <React.Fragment key={index}>
+                      {studentList.map((group, groupKey) => (
+                        <Card
+                          key={groupKey}
+                          className="p-4 bg-white shadow-md "
+                        >
+                          <CardContent className="space-y-3">
+                            {group.map(({ roll_no, name, email }) => (
+                              <div key={roll_no} className="p-2">
+                                <div className="flex justify-between items-center">
+                                  <h3 className="text-md font-semibold">
+                                    {name} ({roll_no})
+                                  </h3>
+                                  <Badge variant="secondary">
+                                    Preference #{index + 1}
+                                  </Badge>
+                                </div>
                                 <p className="text-sm text-gray-500">
                                   Email: {email}
                                 </p>
-                                <p className="text-sm font-bold">
-                                  Preference #{index + 1}
-                                </p>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
                       ))}
-                    </div>
-                  )
-                )}
+                    </React.Fragment>
+                  ))}
               </ScrollArea>
             </TabsContent>
           ))}
