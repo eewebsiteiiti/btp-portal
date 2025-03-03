@@ -3,42 +3,55 @@
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import LogoutButton from "@/components/LogoutButton";
-import { ProjectI, StudentI, ProfessorI } from "@/types";
+import { ProfessorI, ProjectI, StudentI } from "@/types";
 
-const ProfessorPage = () => {
+const ProfessorDashboard = () => {
   const { data: session } = useSession();
-  const [allStudents, setAllStudents] = useState<
-    Record<string, Record<string, StudentI[][]>>
-  >({});
-  const [allProjects, setAllProjects] = useState<ProjectI[]>([]);
   const [professor, setProfessor] = useState<ProfessorI | null>(null);
+  const [projects, setProjects] = useState<ProjectI[]>([]);
+  const [projectWiseStudents, setProjectWiseStudents] = useState<
+    Record<string, { pref: number; studentGroup: StudentI[] }[]>
+  >({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!session?.user?.email) return;
 
-    const fetchProfessorAndStudents = async () => {
+    const fetchData = async () => {
       try {
         const [studentsRes, professorRes] = await Promise.all([
           fetch("/api/professor/student/getbyprofessor", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: session.user.email }),
-          }),
-          fetch(`/api/professor/get?email=${session.user.email}`),
+          }).then((res) => res.json()),
+          fetch(`/api/professor/get?email=${session.user.email}`).then((res) =>
+            res.json()
+          ),
         ]);
 
-        const [studentsData, professorData] = await Promise.all([
-          studentsRes.json(),
-          professorRes.json(),
-        ]);
+        const formattedData = Object.entries(studentsRes.data || {}).reduce(
+          (acc, [projectId, prefs]) => {
+            acc[projectId] = Object.entries(
+              prefs as Record<string, Record<string, StudentI[]>>
+            ).flatMap(([pref, orders]) =>
+              Object.values(orders).map((group) => ({
+                pref: Number(pref),
+                studentGroup: group,
+              }))
+            );
+            return acc;
+          },
+          {} as Record<string, { pref: number; studentGroup: StudentI[] }[]>
+        );
 
-        setAllStudents(studentsData.data || {});
-        setAllProjects(studentsData.projectDetails || []);
-        setProfessor(professorData.professor);
+        setProjectWiseStudents(formattedData);
+        console.log(formattedData);
+
+        setProjects(studentsRes.projectDetails || []);
+        setProfessor(professorRes.professor);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -46,80 +59,84 @@ const ProfessorPage = () => {
       }
     };
 
-    fetchProfessorAndStudents();
+    fetchData();
   }, [session]);
 
   if (loading) return <p className="text-center mt-10 text-lg">Loading...</p>;
-  if (!professor)
-    return (
-      <p className="text-center mt-10 text-lg">No professor data found.</p>
-    );
 
   return (
-    <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
+    <div className="space-y-6 p-6 bg-gray-50 min-h-screen w-full flex flex-col">
       {/* Professor Info */}
-      <Card className="w-full">
-        <CardContent className="p-4">
-          <h2 className="text-xl font-semibold">Professor Information</h2>
-          <p>Name: {professor.name}</p>
-          <p>Email: {professor.email}</p>
-          <LogoutButton />
+      <Card className="w-full shadow-md">
+        <CardContent className="p-6">
+          <h2 className="text-2xl font-bold">Professor Information</h2>
+          <p className="text-lg">{professor?.name}</p>
+          <p className="text-gray-500">{professor?.email}</p>
+          <div className="mt-4">
+            <LogoutButton />
+          </div>
         </CardContent>
       </Card>
 
-      {/* Tabs for Projects */}
-      {allProjects.length > 0 && (
-        <Tabs defaultValue={allProjects[0]._id} className="w-full">
-          <TabsList className="flex overflow-x-auto border-b">
-            {allProjects.map(({ _id, Project_No }) => (
+      {/* Project Tabs */}
+      {projects.length > 0 ? (
+        <Tabs defaultValue={projects[0]._id}>
+          <TabsList className="flex border-b">
+            {projects.map(({ _id, Project_No }) => (
               <TabsTrigger key={_id} value={_id}>
                 {Project_No}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {allProjects.map(({ _id, Title, Comments }) => (
+          {projects.map((project) => (
             <TabsContent
-              key={_id}
-              value={_id}
-              className="p-4 border rounded-md"
+              key={project._id}
+              value={project._id}
+              className="p-6 border rounded-lg shadow-md bg-white"
             >
-              <h2 className="text-lg font-semibold">{Title}</h2>
-              <p className="text-sm text-gray-500 mb-2">{Comments}</p>
+              <h2 className="text-xl font-semibold mb-2">{project.Title}</h2>
+              <p className="text-gray-500 mb-4">{project.Comments}</p>
 
-              <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-                {Object.values(allStudents[_id] || {}).map(
-                  (studentList, index) => (
-                    <div key={index} className="w-full">
-                      {studentList.map((studentGroup, groupKey) => (
-                        <div key={groupKey} className="p-3 w-full">
-                          {studentGroup.map(({ roll_no, name, email }) => (
-                            <Card key={roll_no} className="p-2 w-full">
-                              <CardContent>
-                                <h3 className="text-lg font-medium">
-                                  {name} ({roll_no})
-                                </h3>
-                                <p className="text-sm text-gray-500">
-                                  Email: {email}
-                                </p>
-                                <p className="text-sm font-bold">
-                                  Preference #{index + 1}
-                                </p>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
+              {projectWiseStudents[project._id]?.length > 0 ? (
+                projectWiseStudents[project._id].map(
+                  ({ studentGroup, pref }, index) => (
+                    <Card
+                      key={index}
+                      className="p-4 my-2 shadow-sm hover:bg-gray-100"
+                    >
+                      <CardContent>
+                        {studentGroup.map(({ name, roll_no, email }, idx) => (
+                          <div key={idx}>
+                            <h3 className="text-lg font-medium">{name}</h3>
+                            <p className="text-sm text-gray-500">
+                              Email: {email}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Roll Number: {roll_no}
+                            </p>
+                          </div>
+                        ))}
+                      </CardContent>
+                      <CardDescription className="text-sm font-bold mt-2">
+                        Preference #{pref + 1}
+                      </CardDescription>
+                    </Card>
                   )
-                )}
-              </ScrollArea>
+                )
+              ) : (
+                <p className="text-gray-500">
+                  No students have selected this project yet.
+                </p>
+              )}
             </TabsContent>
           ))}
         </Tabs>
+      ) : (
+        <p className="text-center text-gray-500">No projects available.</p>
       )}
     </div>
   );
 };
 
-export default ProfessorPage;
+export default ProfessorDashboard;
