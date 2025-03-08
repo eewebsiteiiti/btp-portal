@@ -99,15 +99,15 @@ const ProfessorDashboard = () => {
     }
   };
 
-  const handleSubmit = async (projectId: string) => {
+  const handleSubmit = async () => {
     try {
-      const updatedStudents = projectWiseStudents[projectId];
+      // const updatedStudents = projectWiseStudents[projectId];
       await fetch("/api/professor/student/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          projectId,
-          students: updatedStudents,
+          students: projectWiseStudents,
+          professor: professor?._id,
         }),
       });
       alert("Student order updated successfully!");
@@ -213,7 +213,7 @@ const ProfessorDashboard = () => {
               </ScrollArea>
 
               <button
-                onClick={() => handleSubmit(project._id)}
+                onClick={handleSubmit}
                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Save Changes
