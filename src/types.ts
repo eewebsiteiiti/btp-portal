@@ -24,6 +24,7 @@ export interface ProjectI {
   Supervisor: string;
   Cosupervisor?: string;
   studentLimit: number;
+  Supervisor_email: string;
 }
 
 export interface UserI {
