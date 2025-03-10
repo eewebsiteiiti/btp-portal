@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import Professor from "@/models/Professor";
 import Student from "@/models/Student";
 import Project from "@/models/Project";
+import AssignedProjects from "@/models/AssignedProjects";
 const fun = async () => {
   try {
     await dbConnect();
@@ -274,13 +275,29 @@ const fun = async () => {
 };
 
 export async function GET() {
-  const data = await fun();
+  try {
+    const data = await fun();
 
-  console.log(data);
-  //student : project assigned
+    data?.map(async (d) => {
+      try {
+        const assignedProjects = new AssignedProjects({
+          studentId: d[0],
+          projectId: d[1],
+        });
 
-  return NextResponse.json(
-    { message: "GET request received" },
-    { status: 200 }
-  );
+        await assignedProjects.save();
+      } catch (e) {
+        console.log(e);
+        NextResponse.json({ message: "Error", e }, { status: 500 });
+      }
+    });
+
+    return NextResponse.json(
+      { message: "GET request received" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: "Error", error }, { status: 500 });
+  }
 }
