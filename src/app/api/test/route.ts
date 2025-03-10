@@ -9,7 +9,6 @@ const fun = async () => {
     try {
         await dbConnect();
         const professorData = await Professor.find({});
-        // const projProfMap =
         const projProfMap: { [key: string]: string } = {};
         for (const prof of professorData) {
             for (const project of prof.projects) {
@@ -177,6 +176,7 @@ const fun = async () => {
         // //     [5, 5, 1, 3, 3, 2, 2],
         // // ];
 
+
         const fillProf = (
             prof: { [key: string]: number },
             result: number[][],
@@ -255,7 +255,7 @@ const fun = async () => {
                 });
                 differentRowIndex.push(preferredIndex);
             }
-
+            // [0,1], [1,1] => group
             const mapping: [string, string][] = [];
             differentRowIndex.forEach(([i, j]) => {
                 var studi_ob_id;
@@ -273,10 +273,17 @@ const fun = async () => {
                 })
                 // console.log(projProfMap);
 
+                // does the student have a group?
+                let checkGroup = false;
+                const partner = projectGroupInfo[studi_ob_id];
+                if (partner !== undefined) {
+                    checkGroup = true;
+                }
+
                 const professorId = projProfMap[proj_ob_id]; // string of professor id
                 // console.log("idhar aya:", profStudentCountMap[professorId]);
                 // console.log("idhar aya1:", limit[professorId]);
-                if (profStudentCountMap[professorId] < limit[professorId]) {
+                if (profStudentCountMap[professorId] < limit[professorId] && !checkGroup) {
                     mapping.push([studi_ob_id, proj_ob_id]);
                     profStudentMap[professorId].push([studi_ob_id, proj_ob_id]);
                     profStudentCountMap[professorId]++;
@@ -286,6 +293,21 @@ const fun = async () => {
                     result[i].fill(1e5);
                     result.forEach((row) => (row[j] = 1e5));
                 }
+                else if (profStudentCountMap[professorId] <= limit[professorId] - 2 && checkGroup) {
+                    mapping.push([studi_ob_id, proj_ob_id]);
+                    mapping.push([partner, proj_ob_id]);
+                    profStudentMap[professorId].push([studi_ob_id, proj_ob_id]);
+                    profStudentMap[professorId].push([partner, proj_ob_id]);
+                    profStudentCountMap[professorId] += 2;
+                    // console.log("hello");
+                    result = fillProf(profStudentCountMap, result, limit, projProfMap);
+                    // console.log("idhar ", i, j);
+                    result[i].fill(1e5);
+                    // parter i 
+                    const partnerIndex = studentIndexMap[partner];
+                    result[partnerIndex].fill(1e5);
+                    result.forEach((row) => (row[j] = 1e5));
+                }
 
             });
             finalMapping = [...finalMapping, ...mapping];
@@ -293,7 +315,7 @@ const fun = async () => {
         // return result;
 
 
-        return profStudentCountMap;
+        return finalMapping;
         // console.log(profStudentMap);
     } catch (e) {
         console.log(e);
