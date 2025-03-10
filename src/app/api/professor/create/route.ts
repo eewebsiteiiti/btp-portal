@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     // Fetch projects for each professor and add them to the data
     for (const professor of data) {
-      const projects = await Project.find({ Supervisor: professor.email });
+      const projects = await Project.find({ Supervisor: professor.name });
       professor.projects = projects; // Adding projects to professor object
     }
 
