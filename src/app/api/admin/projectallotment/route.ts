@@ -1,10 +1,9 @@
 import { dbConnect } from "@/lib/mongodb";
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import Professor from "@/models/Professor";
 import Student from "@/models/Student";
 import Project from "@/models/Project";
-import { SSF } from "xlsx";
-import { minify } from "next/dist/build/swc/generated-native";
+import AssignedProjects from "@/models/AssignedProjects";
 const fun = async () => {
   try {
     await dbConnect();
@@ -301,13 +300,31 @@ const fun = async () => {
     console.log(e);
   }
 };
+export async function GET() {
+  try {
+    const data = await fun();
+    console.log(data);
 
-export async function GET(req: NextRequest) {
-  const dataaa = await fun();
-  console.log(dataaa?.length);
+    data?.map(async (d) => {
+      try {
+        await dbConnect();
+        const assignedProjects = new AssignedProjects({
+          studentId: d[0],
+          projectId: d[1],
+        });
+        await assignedProjects.save();
+      } catch (e) {
+        console.log(e);
+        NextResponse.json({ message: "Error", e }, { status: 500 });
+      }
+    });
 
-  return NextResponse.json(
-    { message: "GET request received", data: dataaa },
-    { status: 200 }
-  );
+    return NextResponse.json(
+      { message: "Project Allotment - successull", a: data },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: "Error", error }, { status: 500 });
+  }
 }

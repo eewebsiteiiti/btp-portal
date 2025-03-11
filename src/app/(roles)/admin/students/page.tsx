@@ -10,8 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash } from "lucide-react"; // Icons for action buttons
-import { Card } from "@/components/ui/card"; // Wrapping table in a card UI
+import { Pencil, Trash } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { StudentI } from "@/types";
 
@@ -39,7 +39,7 @@ const StudentsPage = () => {
 
   return (
     <div className="p-6">
-      <Link href="/admin" className="text-blue-600">
+      <Link href="/admin" className="text-blue-600 hover:underline">
         Dashboard
       </Link>
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
@@ -74,7 +74,7 @@ const StudentsPage = () => {
 
               {/* Table Body */}
               <TableBody>
-                {students && students.length > 0 ? (
+                {students.length > 0 ? (
                   students.map((student, index) => (
                     <TableRow
                       key={student.roll_no}
@@ -95,7 +95,7 @@ const StudentsPage = () => {
                         <Button variant="outline" size="icon" className="mr-2">
                           <Pencil size={18} className="text-blue-600" />
                         </Button>
-                        <Button variant="outline" size="icon" className="mr-2">
+                        <Button variant="outline" size="icon">
                           <Trash size={18} className="text-red-600" />
                         </Button>
                       </TableCell>
@@ -104,7 +104,7 @@ const StudentsPage = () => {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={4}
                       className="text-center py-4 text-gray-500"
                     >
                       No students found.
