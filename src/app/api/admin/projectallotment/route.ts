@@ -42,7 +42,7 @@ const fun = async () => {
       projectIndexMap[project._id] = i;
     });
 
-    var projectCapacity: { [key: string]: number } = {};
+    const projectCapacity: { [key: string]: number } = {};
     projects.forEach((project) => {
       projectCapacity[project._id] = project.Capacity;
     });
@@ -52,8 +52,8 @@ const fun = async () => {
     const professor: number[][] = [];
 
     // fill the student array with 1e4 dimension students x student preference array
-    students.map((s) => {
-      let a = [];
+    students.map(() => {
+      const a = [];
       for (let i = 0; i < projects.length; i++) {
         a.push(1e5);
       }
@@ -61,8 +61,8 @@ const fun = async () => {
     });
 
     // fill the professor array with 1e4 dimension professors x student preference array
-    students.map((p) => {
-      let a = [];
+    students.map(() => {
+      const a = [];
       for (let i = 0; i < projects.length; i++) {
         a.push(1e5);
       }
@@ -72,34 +72,35 @@ const fun = async () => {
     const projectGroupInfo: { [key: string]: { [key: string]: string } } = {};
 
     // check grouping information
-    const studentGroups: { [key: string]: string } = {};
-    let studentPrefList: { [key: string]: any } = {};
-    const projectWiseProfPref = professorData.map((p) => {
-      p.studentsPreference.forEach((value: any, key: string | number) => {
-        studentPrefList[key] = value;
-      });
+    const studentPrefList: { [key: string]: { [key: string]: string } } = {};
+    professorData.map((p) => {
+      p.studentsPreference.forEach(
+        (value: { [key: string]: string }, key: string | number) => {
+          studentPrefList[key] = value;
+        }
+      );
     });
 
     Object.keys(studentPrefList).map((proj) => {
       const listOfStudents = studentPrefList[proj];
 
-      listOfStudents.map((studs: string | any[]) => {
-        if (studs.length > 1) {
-          // console.log((studs[0].toString()));
-          // console.log((studs[1].toString()));
-          const temp1 = studs[0].toString();
-          const temp2 = studs[1].toString();
-          if (projectGroupInfo[proj] === undefined) {
-            projectGroupInfo[proj] = {};
+      (Array.isArray(listOfStudents) ? listOfStudents : []).map(
+        (studs: string[]) => {
+          if (studs.length > 1) {
+            const temp1 = studs[0].toString();
+            const temp2 = studs[1].toString();
+            if (projectGroupInfo[proj] === undefined) {
+              projectGroupInfo[proj] = {};
+            }
+            projectGroupInfo[proj][temp1] = studs[1].toString();
+            projectGroupInfo[proj][temp2] = studs[0].toString();
           }
-          projectGroupInfo[proj][temp1] = studs[1].toString();
-          projectGroupInfo[proj][temp2] = studs[0].toString();
         }
-      });
+      );
     });
 
     // Fill student which is perference id corresponding to the project for each student
-    students.forEach((st, i) => {
+    students.forEach((st) => {
       const st_prefer = st.preferences;
       const st_id = st._id.toString();
       st_prefer.forEach(
@@ -117,17 +118,19 @@ const fun = async () => {
     // Fill professor which is perference id corresponding to the project for each professor
     Object.keys(studentPrefList).map((proj) => {
       const studs = studentPrefList[proj];
-      studs.forEach((st: any[], st_idx: number) => {
-        if (st.length > 1) {
-          st.forEach((s, s_idx) => {
-            s = s.toString();
-            professor[studentIndexMap[s]][projectIndexMap[proj]] = st_idx;
-          });
-        } else {
-          const st_od = st[0].toString();
-          professor[studentIndexMap[st_od]][projectIndexMap[proj]] = st_idx;
+      (Array.isArray(studs) ? studs : []).forEach(
+        (st: string[], st_idx: number) => {
+          if (st.length > 1) {
+            st.forEach((s) => {
+              s = s.toString();
+              professor[studentIndexMap[s]][projectIndexMap[proj]] = st_idx;
+            });
+          } else {
+            const st_od = st[0].toString();
+            professor[studentIndexMap[st_od]][projectIndexMap[proj]] = st_idx;
+          }
         }
-      });
+      );
     });
 
     const fillProf = (
@@ -153,11 +156,7 @@ const fun = async () => {
       return result;
     };
 
-    const checkRowFill = (
-      result: number[][],
-      i: number,
-      j: number
-    ): boolean => {
+    const checkRowFill = (result: number[][], i: number): boolean => {
       let count = 0;
       result[i].forEach((val) => {
         if (val === 1e5) {
@@ -216,8 +215,8 @@ const fun = async () => {
       }
       // [0,1], [1,1] => group
       const mapping: [string, string][] = [];
-      var studi_ob_id: string;
-      var proj_ob_id: string;
+      let studi_ob_id: string;
+      let proj_ob_id: string;
       differentRowIndex.forEach(([i, j]) => {
         Object.keys(studentIndexMap).map((key) => {
           if (studentIndexMap[key] === i) {
@@ -247,14 +246,14 @@ const fun = async () => {
         if (
           profStudentCountMap[professorId] <= limit[professorId] &&
           !checkGroup &&
-          !checkRowFill(result, i, j)
+          !checkRowFill(result, i)
         ) {
           mapping.push([studi_ob_id, proj_ob_id]);
           profStudentMap[professorId].push([studi_ob_id, proj_ob_id]);
           profStudentCountMap[professorId]++;
           result = fillProf(profStudentCountMap, result, limit, projProfMap);
           result[i].fill(1e5);
-          console.log(i, j);
+          // console.log(i, j);
           // console.log(projectCapacity);
           projectCapacity[proj_ob_id]--;
           if (projectCapacity[proj_ob_id] <= 0) {
@@ -263,7 +262,7 @@ const fun = async () => {
         } else if (
           profStudentCountMap[professorId] <= limit[professorId] - 2 &&
           checkGroup &&
-          !checkRowFill(result, i, j)
+          !checkRowFill(result, i)
         ) {
           mapping.push([studi_ob_id, proj_ob_id]);
           mapping.push([partner, proj_ob_id]);
@@ -285,17 +284,8 @@ const fun = async () => {
       });
       finalMapping = [...finalMapping, ...mapping];
     }
-    // return result;
 
-    // return profStudentCountMap;
-    let count = 0;
-    Object.keys(limit).map((key) => {
-      count += limit[key];
-    });
-    // console.log(profStudentMap);
     return finalMapping;
-    return projProfMap;
-    // console.log(profStudentMap);
   } catch (e) {
     console.log(e);
   }
@@ -303,8 +293,6 @@ const fun = async () => {
 export async function GET() {
   try {
     const data = await fun();
-    console.log(data);
-
     data?.map(async (d) => {
       try {
         await dbConnect();

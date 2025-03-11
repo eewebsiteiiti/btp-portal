@@ -18,11 +18,10 @@ export default function AdminLayout({
         {[
           { label: "Dashboard", path: "/admin" },
           { label: "Uploads", path: "/admin/uploads" },
-
           { label: "Professors", path: "/admin/professors" },
           { label: "Students", path: "/admin/students" },
           { label: "Projects", path: "/admin/projects" },
-          { label: "allotedproject", path: "/admin/allotedproject" },
+          { label: "Alloted Project", path: "/admin/allotedproject" },
         ].map(({ label, path }) => (
           <button
             key={path}

@@ -14,6 +14,7 @@ export default function AdminDashboard() {
     useState(false);
   const [isStudentSubmitEnabled, setIsStudentSubmitEnabled] = useState(false);
   const [isAllocating, setIsAllocating] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const fetchCounts = async () => {
     try {
@@ -66,9 +67,7 @@ export default function AdminDashboard() {
   const handleStartAllocation = async () => {
     setIsAllocating(true);
     try {
-      const res = await fetch("/api/data/start-allocation", {
-        method: "POST",
-      });
+      const res = await fetch("/api/admin/projectallotment");
       if (!res.ok) throw new Error("Failed to start allocation");
       alert("Project allocation started successfully!");
     } catch (error) {
@@ -76,6 +75,21 @@ export default function AdminDashboard() {
       alert("Failed to start project allocation.");
     } finally {
       setIsAllocating(false);
+    }
+  };
+
+  const handleResetAllocation = async () => {
+    setIsResetting(true);
+    try {
+      const res = await fetch("/api/admin/resetallotment");
+      if (!res.ok) throw new Error("Failed to reset allocation");
+      alert("Project allocation reset successfully!");
+      // fetchCounts(); // Refresh data after reset
+    } catch (error) {
+      console.error("Error resetting project allocation:", error);
+      alert("Failed to reset project allocation.");
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -122,14 +136,21 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Start Allocation Button */}
-      <div className="flex justify-center">
+      {/* Start and Reset Allocation Buttons */}
+      <div className="flex justify-center gap-4">
         <Button
           onClick={handleStartAllocation}
-          disabled={isAllocating}
+          disabled={isAllocating || isResetting}
           className="mt-6"
         >
           {isAllocating ? "Starting Allocation..." : "Start Project Allocation"}
+        </Button>
+        <Button
+          onClick={handleResetAllocation}
+          disabled={isAllocating || isResetting}
+          className="mt-6 bg-red-500 hover:bg-red-600"
+        >
+          {isResetting ? "Resetting..." : "Reset Allotment"}
         </Button>
       </div>
     </div>

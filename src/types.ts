@@ -4,7 +4,7 @@ export interface ProfessorI {
   email: string;
   password: string;
   students: StudentI[];
-  projects: ProjectI[];
+  projects: string[];
 }
 export interface StudentI {
   _id: string;

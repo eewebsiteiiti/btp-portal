@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { StudentI } from "@/types";
-import Professor from "@/models/Professor";
+// import Professor from "@/models/Professor";
 import { dbConnect } from "@/lib/mongodb";
 
 export async function POST(req: NextRequest) {
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     await dbConnect();
     const data = await req.json();
     const studentsPreferenceResponse = data.students;
-    const professor_id = data.professor;
+    // const professor_id = data.professor;
     const studentsPreferenceFormatted: { [key: string]: StudentI[][] } = {};
     for (const [projectId, students] of Object.entries(
       studentsPreferenceResponse
@@ -19,12 +19,12 @@ export async function POST(req: NextRequest) {
         return studentGroup;
       });
     }
-    const professorupdate = await Professor.findByIdAndUpdate(
-      professor_id,
-      { studentsPreference: studentsPreferenceFormatted },
-      { new: true }
-    );
-    console.log(professorupdate);
+    // const professorupdate = await Professor.findByIdAndUpdate(
+    //   professor_id,
+    //   { studentsPreference: studentsPreferenceFormatted },
+    //   { new: true }
+    // );
+    // console.log(professorupdate);
 
     return NextResponse.json(
       { message: "This is a POST request" },

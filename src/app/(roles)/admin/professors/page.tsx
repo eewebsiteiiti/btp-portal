@@ -13,11 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { ProfessorI } from "@/types";
+import { ProfessorI, ProjectI } from "@/types";
 
 const ProfessorPage = () => {
   const [professor, setProfessor] = useState<ProfessorI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [projects, setProjects] = useState<ProjectI[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,9 +34,25 @@ const ProfessorPage = () => {
         setLoading(false);
       }
     };
-
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch("/api/project/get");
+        if (!response.ok) throw new Error("Failed to fetch projects");
+        const data = await response.json();
+        setProjects(data.projects);
+      } catch (error) {
+        setError((error as Error).message);
+      }
+    };
+    fetchProjects();
     fetchprofessor();
   }, []);
+
+  // Helper function to get project title from ID
+  const getProjectTitle = (projectId: string) => {
+    const project = projects.find((p) => p._id === projectId);
+    return project ? project.Title : "Unknown Project";
+  };
 
   return (
     <div className="p-6 space-y-8">
@@ -68,9 +85,9 @@ const ProfessorPage = () => {
               {/* Table Header */}
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
+                  {/* <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
                     Faculty ID
-                  </TableHead>
+                  </TableHead> */}
                   <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
                     Name
                   </TableHead>
@@ -97,9 +114,9 @@ const ProfessorPage = () => {
                       } hover:bg-gray-100`}
                     >
                       {/* Faculty ID */}
-                      <TableCell className="py-4 px-4 text-gray-800 font-medium">
+                      {/* <TableCell className="py-4 px-4 text-gray-800 font-medium">
                         {prof._id}
-                      </TableCell>
+                      </TableCell> */}
 
                       {/* Name */}
                       <TableCell className="py-4 px-4 text-gray-800">
@@ -115,9 +132,9 @@ const ProfessorPage = () => {
                       <TableCell className="py-4 px-4 text-gray-600">
                         {prof.projects && prof.projects.length > 0 ? (
                           <ul className="list-disc pl-4 space-y-1">
-                            {prof.projects.map((p) => (
-                              <li key={p} className="text-sm">
-                                {p}
+                            {prof.projects.map((p, i) => (
+                              <li key={i} className="text-sm">
+                                {getProjectTitle(p)}
                               </li>
                             ))}
                           </ul>
