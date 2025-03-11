@@ -137,6 +137,9 @@ const Page = () => {
                   <strong>Co-Supervisor:</strong>{" "}
                   {project.Cosupervisor || "N/A"}
                 </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Capacity:</strong> {project.Capacity}
+                </p>
               </div>
 
               {/* Assigned Students Table */}

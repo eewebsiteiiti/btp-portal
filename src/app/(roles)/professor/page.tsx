@@ -23,10 +23,13 @@ import {
 } from "@dnd-kit/sortable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SortableItemPP } from "@/components/SortableItemPP";
+import { ControlsI } from "@/types";
 
 const ProfessorDashboard = () => {
   const { data: session } = useSession();
   const [professor, setProfessor] = useState<ProfessorI | null>(null);
+  const [controls, setControls] = useState<ControlsI>();
+
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [projectWiseStudents, setProjectWiseStudents] = useState<
     Record<string, { pref: number; studentGroup: StudentI[] }[]>
@@ -76,6 +79,24 @@ const ProfessorDashboard = () => {
 
     fetchData();
   }, [session]);
+  useEffect(() => {
+    try {
+      const fetchAdminControls = async () => {
+        try {
+          const res = await fetch("/api/admin/submit-control");
+          const data = await res.json();
+          setControls(data);
+        } catch (error) {
+          console.error("Error fetching admin controls:", error);
+        }
+      };
+      fetchAdminControls();
+    } catch (error) {
+      console.error("Error fetching controls:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleDragEnd = (event: DragEndEvent, projectId: string) => {
     const { active, over } = event;
@@ -139,92 +160,104 @@ const ProfessorDashboard = () => {
           </div>
         </CardContent>
       </Card>
+      {controls?.studentViewEnableProfessor ? (
+        <>
+          {/* Project Tabs */}
+          {projects.length > 0 ? (
+            <Tabs defaultValue={projects[0]._id} className="">
+              <TabsList className="flex border-b">
+                {projects.map(({ _id, Project_No }) => (
+                  <TabsTrigger key={_id} value={_id} className="text-md mx-2">
+                    {Project_No}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {projects.map((project) => (
+                <TabsContent
+                  key={project._id}
+                  value={project._id}
+                  className="p-6 border rounded-lg shadow-md bg-white"
+                >
+                  <h2 className="text-xl font-semibold mb-2">
+                    {project.Title}
+                  </h2>
+                  <p className="text-gray-500 mb-4">{project.Comments}</p>
+                  <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
+                    {projectWiseStudents[project._id]?.length > 0 ? (
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={(event) => handleDragEnd(event, project._id)}
+                      >
+                        <SortableContext
+                          items={projectWiseStudents[project._id].map(
+                            (item) => item.studentGroup[0]._id
+                          )}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {projectWiseStudents[project._id].map(
+                            ({ studentGroup, pref }) => (
+                              <SortableItemPP
+                                key={studentGroup[0]._id}
+                                id={studentGroup[0]._id}
+                              >
+                                <Card className="p-4 my-4 shadow-sm hover:bg-gray-100">
+                                  <CardContent>
+                                    <div>
+                                      {studentGroup.map(
+                                        ({ name, roll_no, email }) => (
+                                          <div key={roll_no}>
+                                            <h3 className="text-lg font-medium">
+                                              {name}
+                                            </h3>
+                                            <p className="text-sm text-gray-500">
+                                              Email: {email}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                              Roll Number: {roll_no}
+                                            </p>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  </CardContent>
+                                  <CardDescription className="text-sm font-bold mt-2 text-blue-600">
+                                    Preference #{pref + 1}
+                                  </CardDescription>
+                                </Card>
+                              </SortableItemPP>
+                            )
+                          )}
+                        </SortableContext>
+                      </DndContext>
+                    ) : (
+                      <p className="text-gray-500">
+                        No students have selected this project yet.
+                      </p>
+                    )}
+                  </ScrollArea>
 
-      {/* Project Tabs */}
-      {projects.length > 0 ? (
-        <Tabs defaultValue={projects[0]._id} className="">
-          <TabsList className="flex border-b">
-            {projects.map(({ _id, Project_No }) => (
-              <TabsTrigger key={_id} value={_id} className="text-md mx-2">
-                {Project_No}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {projects.map((project) => (
-            <TabsContent
-              key={project._id}
-              value={project._id}
-              className="p-6 border rounded-lg shadow-md bg-white"
-            >
-              <h2 className="text-xl font-semibold mb-2">{project.Title}</h2>
-              <p className="text-gray-500 mb-4">{project.Comments}</p>
-              <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-                {projectWiseStudents[project._id]?.length > 0 ? (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={(event) => handleDragEnd(event, project._id)}
+                  <button
+                    onClick={handleSubmit}
+                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                   >
-                    <SortableContext
-                      items={projectWiseStudents[project._id].map(
-                        (item) => item.studentGroup[0]._id
-                      )}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {projectWiseStudents[project._id].map(
-                        ({ studentGroup, pref }) => (
-                          <SortableItemPP
-                            key={studentGroup[0]._id}
-                            id={studentGroup[0]._id}
-                          >
-                            <Card className="p-4 my-4 shadow-sm hover:bg-gray-100">
-                              <CardContent>
-                                <div>
-                                  {studentGroup.map(
-                                    ({ name, roll_no, email }) => (
-                                      <div key={roll_no}>
-                                        <h3 className="text-lg font-medium">
-                                          {name}
-                                        </h3>
-                                        <p className="text-sm text-gray-500">
-                                          Email: {email}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                          Roll Number: {roll_no}
-                                        </p>
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              </CardContent>
-                              <CardDescription className="text-sm font-bold mt-2 text-blue-600">
-                                Preference #{pref + 1}
-                              </CardDescription>
-                            </Card>
-                          </SortableItemPP>
-                        )
-                      )}
-                    </SortableContext>
-                  </DndContext>
-                ) : (
-                  <p className="text-gray-500">
-                    No students have selected this project yet.
-                  </p>
-                )}
-              </ScrollArea>
-
-              <button
-                onClick={handleSubmit}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Save Changes
-              </button>
-            </TabsContent>
-          ))}
-        </Tabs>
+                    Save Changes
+                  </button>
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
+            <p className="text-center text-gray-500">No projects available.</p>
+          )}
+        </>
       ) : (
-        <p className="text-center text-gray-500">No projects available.</p>
+        <>
+          <div className="flex justify-center items-center h-40 border rounded-md bg-white shadow-md">
+            <p className="text-gray-500 font-medium">
+              Allotment process yet to be started
+            </p>
+          </div>
+        </>
       )}
     </div>
   );

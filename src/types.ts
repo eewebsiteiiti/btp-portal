@@ -26,7 +26,12 @@ export interface ProjectI {
   studentLimit: number;
   Supervisor_email: string;
 }
-
+export interface ControlsI {
+  submitEnableStudentProjects: boolean;
+  submitEnableProfessorStudents: boolean;
+  projectViewEnableStudent: boolean;
+  studentViewEnableProfessor: boolean;
+}
 export interface UserI {
   _id: string;
   name: string;
