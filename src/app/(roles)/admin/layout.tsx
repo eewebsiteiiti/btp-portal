@@ -22,7 +22,7 @@ export default function AdminLayout({
           { label: "Professors", path: "/admin/professors" },
           { label: "Students", path: "/admin/students" },
           { label: "Projects", path: "/admin/projects" },
-          { label: "allotedproject", path: "/admin/allotedproject" },
+          { label: "Allotment", path: "/admin/allotedproject" },
         ].map(({ label, path }) => (
           <button
             key={path}

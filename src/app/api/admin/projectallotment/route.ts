@@ -320,7 +320,7 @@ export async function GET() {
     });
 
     return NextResponse.json(
-      { message: "Project Allotment - successull", a: data },
+      { message: "Project Allotment - successfull", a: data },
       { status: 200 }
     );
   } catch (error) {

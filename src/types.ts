@@ -53,3 +53,17 @@ export interface PreferenceI {
   isGroup: boolean;
   partner?: StudentI;
 }
+
+export interface StudentDetails {
+  name: string;
+  roll_no: string;
+}
+
+export interface ProjectAllotment {
+  project_id: string;
+  project_name: string;
+  project_capacity: number;
+  project_supervisor: string;
+  project_cosupervisor?: string;
+  studentsDetails: StudentDetails[];
+}
