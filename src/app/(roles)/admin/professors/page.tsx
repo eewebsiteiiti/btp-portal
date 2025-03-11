@@ -10,14 +10,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash } from "lucide-react"; // Icons for action buttons
-import { Card } from "@/components/ui/card"; // Wrapping table in a card UI
+import { Pencil, Trash } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { ProfessorI } from "@/types";
+import { ProfessorI, ProjectI } from "@/types";
 
 const ProfessorPage = () => {
   const [professor, setProfessor] = useState<ProfessorI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [projects, setProjects] = useState<ProjectI[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,42 +34,70 @@ const ProfessorPage = () => {
         setLoading(false);
       }
     };
-
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch("/api/project/get");
+        if (!response.ok) throw new Error("Failed to fetch projects");
+        const data = await response.json();
+        setProjects(data.projects);
+      } catch (error) {
+        setError((error as Error).message);
+      }
+    };
+    fetchProjects();
     fetchprofessor();
   }, []);
 
+  // Helper function to get project title from ID
+  const getProjectTitle = (projectId: string) => {
+    const project = projects.find((p) => p._id === projectId);
+    return project ? project.Title : "Unknown Project";
+  };
+
   return (
-    <div className="p-6">
-      <Link href="/admin" className="text-blue-600">
-        Dashboard
-      </Link>{" "}
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        📚 Professor Management
-      </h1>
+    <div className="p-6 space-y-8">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-800">
+            📚 Professor Management
+          </h1>
+          <Link href="/admin" className="text-blue-500 hover:underline">
+            ← Back to Dashboard
+          </Link>
+        </div>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+          + Add Professor
+        </Button>
+      </div>
+
+      {/* Loading and Error State */}
       {loading ? (
-        <p className="text-center text-lg font-medium">Loading professor...</p>
+        <p className="text-center text-lg font-medium animate-pulse">
+          Loading professors...
+        </p>
       ) : error ? (
-        <p className="text-red-500 text-center text-lg">{error}</p>
+        <p className="text-center text-red-500 text-lg">{error}</p>
       ) : (
-        <Card className="p-4 shadow-lg rounded-xl">
+        <Card className="p-6 shadow-md rounded-2xl border border-gray-200">
           <div className="overflow-x-auto">
-            <Table className="w-full border border-gray-200 rounded-lg">
+            <Table className="w-full border-collapse">
               {/* Table Header */}
-              <TableHeader className="sticky top-0 bg-gray-200">
-                <TableRow>
-                  <TableHead className="font-bold py-3 text-gray-700">
-                    faculty_id
-                  </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  {/* <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
+                    Faculty ID
+                  </TableHead> */}
+                  <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
                     Name
                   </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
+                  <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
                     Email
                   </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
+                  <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
                     Projects
                   </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
+                  <TableHead className="py-3 px-4 text-center font-semibold text-gray-600">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -84,27 +113,62 @@ const ProfessorPage = () => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-100`}
                     >
-                      <TableCell className="py-2 text-gray-800 font-medium">
+                      {/* Faculty ID */}
+                      {/* <TableCell className="py-4 px-4 text-gray-800 font-medium">
                         {prof._id}
-                      </TableCell>
-                      <TableCell className="py-2 text-gray-800">
+                      </TableCell> */}
+
+                      {/* Name */}
+                      <TableCell className="py-4 px-4 text-gray-800">
                         {prof.name}
                       </TableCell>
-                      <TableCell className="py-2 text-gray-600">
+
+                      {/* Email */}
+                      <TableCell className="py-4 px-4 text-gray-600">
                         {prof.email}
                       </TableCell>
-                      <TableCell className="py-2 text-gray-600">
-                        {prof.projects && prof.projects.length > 0
-                          ? prof.projects.map((p) => p).join(", ")
-                          : "No Projects"}
+
+                      {/* Projects */}
+                      <TableCell className="py-4 px-4 text-gray-600">
+                        {prof.projects && prof.projects.length > 0 ? (
+                          <ul className="list-disc pl-4 space-y-1">
+                            {prof.projects.map((p, i) => (
+                              <li key={i} className="text-sm">
+                                {getProjectTitle(p)}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="italic text-gray-400">
+                            No Projects
+                          </span>
+                        )}
                       </TableCell>
-                      <TableCell className="py-2 text-center">
-                        <Button variant="outline" size="icon" className="mr-2">
-                          <Pencil size={18} className="text-blue-600" />
-                        </Button>
-                        <Button variant="outline" size="icon" className="mr-2">
-                          <Trash size={18} className="text-red-600" />
-                        </Button>
+
+                      {/* Actions */}
+                      <TableCell className="py-4 px-4 text-center">
+                        <div className="flex justify-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="border-blue-400 hover:border-blue-500"
+                          >
+                            <Pencil
+                              size={18}
+                              className="text-blue-500 hover:text-blue-600"
+                            />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="border-red-400 hover:border-red-500"
+                          >
+                            <Trash
+                              size={18}
+                              className="text-red-500 hover:text-red-600"
+                            />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -112,9 +176,9 @@ const ProfessorPage = () => {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="text-center py-4 text-gray-500"
+                      className="text-center py-6 text-gray-400"
                     >
-                      No professor found.
+                      No professors found.
                     </TableCell>
                   </TableRow>
                 )}

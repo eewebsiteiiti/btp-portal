@@ -1,24 +1,21 @@
 "use client";
-import { ChangeEvent, useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+import { useEffect, useState } from "react";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import LogoutButton from "@/components/LogoutButton";
-import Link from "next/link";
-import { ProfessorI, ProjectI, StudentI } from "@/types";
 
-
-export default function AdminUpload() {
-  const [professors, setProfessors] = useState<ProfessorI[]>([]);
-  const [students, setStudents] = useState<StudentI[]>([]);
-  const [projects, setProjects] = useState<ProjectI[]>([]);
-  const [loading, setLoading] = useState(false);
+export default function AdminDashboard() {
   const [counts, setCounts] = useState({
     professors: 0,
     students: 0,
     projects: 0,
   });
+
+  const [isProfessorSubmitEnabled, setIsProfessorSubmitEnabled] =
+    useState(false);
+  const [isStudentSubmitEnabled, setIsStudentSubmitEnabled] = useState(false);
+  const [isAllocating, setIsAllocating] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
   const fetchCounts = async () => {
     try {
       const res = await fetch("/api/data/count");
@@ -28,160 +25,134 @@ export default function AdminUpload() {
       console.error("Error fetching updated counts:", error);
     }
   };
+
   useEffect(() => {
     fetchCounts();
-  }, [setCounts]);
+  }, []);
 
-  const handleFileUpload = (
-    event: ChangeEvent<HTMLInputElement>,
-    type: string
-  ) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
+  // Static submitted values (temporary)
+  const professorsSubmitted = 12;
+  const studentsSubmitted = 45;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target && e.target.result) {
-        const data = new Uint8Array(e.target.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const parsedData = XLSX.utils.sheet_to_json(sheet);
-
-        if (type === "professor") setProfessors(parsedData as ProfessorI[]);
-        else if (type === "student") setStudents(parsedData as StudentI[]);
-        else if (type === "project") setProjects(parsedData as ProjectI[]);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const handleUpload = async (
-    type: string,
-    data: ProfessorI[] | StudentI[] | ProjectI[]
-  ) => {
-    if (data.length === 0) {
-      alert(`No ${type} data to upload`);
-      return;
-    }
-    setLoading(true);
+  const handleProfessorSwitch = async (enabled: boolean) => {
+    setIsProfessorSubmitEnabled(enabled);
     try {
-      const endpoint = `/api/${type}/create`;
-      const response = await fetch(endpoint, {
+      await fetch("/api/data/submit-control", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data }),
+        body: JSON.stringify({ type: "professor", enabled }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-      if (response.ok) {
-        alert(
-          `${
-            type.charAt(0).toUpperCase() + type.slice(1)
-          } data uploaded successfully`
-        );
-        fetchCounts();
-      } else {
-        alert(`Failed to upload ${type} data`);
-      }
     } catch (error) {
-      console.error(`Error uploading ${type} data:`, error);
-      alert(`Error uploading ${type} data`);
+      console.error("Error updating professor submit control:", error);
     }
-    setLoading(false);
   };
 
-  const handleClearDatabase = async (type: string) => {
+  const handleStudentSwitch = async (enabled: boolean) => {
+    setIsStudentSubmitEnabled(enabled);
     try {
-      const endpoint = `/api/${type}/delete`;
-      const response = await fetch(endpoint, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      await fetch("/api/data/submit-control", {
+        method: "POST",
+        body: JSON.stringify({ type: "student", enabled }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-      if (response.ok) {
-        alert(
-          `${
-            type.charAt(0).toUpperCase() + type.slice(1)
-          } data cleared successfully`
-        );
-        setCounts((prev) => ({ ...prev, [type]: 0 }));
-      } else {
-        alert(`Failed to clear ${type} data`);
-      }
-      fetchCounts();
     } catch (error) {
-      console.error(`Error clearing ${type} data:`, error);
-      alert(`Error clearing ${type} data`);
+      console.error("Error updating student submit control:", error);
+    }
+  };
+
+  const handleStartAllocation = async () => {
+    setIsAllocating(true);
+    try {
+      const res = await fetch("/api/admin/projectallotment");
+      if (!res.ok) throw new Error("Failed to start allocation");
+      alert("Project allocation started successfully!");
+    } catch (error) {
+      console.error("Error starting project allocation:", error);
+      alert("Failed to start project allocation.");
+    } finally {
+      setIsAllocating(false);
+    }
+  };
+
+  const handleResetAllocation = async () => {
+    setIsResetting(true);
+    try {
+      const res = await fetch("/api/admin/resetallotment");
+      if (!res.ok) throw new Error("Failed to reset allocation");
+      alert("Project allocation reset successfully!");
+      // fetchCounts(); // Refresh data after reset
+    } catch (error) {
+      console.error("Error resetting project allocation:", error);
+      alert("Failed to reset project allocation.");
+    } finally {
+      setIsResetting(false);
     }
   };
 
   return (
-    <div className="flex flex-col w-full h-screen p-4">
-      <Card className="p-6 w-full md:w-2/3 mx-auto relative">
-        <h2 className="text-4xl font-bold text-center mb-6">Welcome Admin</h2>
-        <div className="absolute top-4 right-4 bg-red-500">
-          <LogoutButton />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 w-full mx-auto mb-4">
-          {[
-            {
-              label: "Professors",
-              count: counts.professors,
-              type: "professor",
-            },
-            { label: "Students", count: counts.students, type: "student" },
-            { label: "Projects", count: counts.projects, type: "project" },
-          ].map(({ label, count, type }) => (
-            <>
-              <div
-                key={type}
-                className="p-6 bg-primary shadow-md rounded-lg flex flex-col items-center text-center"
-              >
-                <Link href={`/admin/${type}s`}>
-                  <span className="text-secondary text-xl font-semibold">
-                    {label}
-                  </span>
-                </Link>
-                <span className="text-secondary text-2xl font-bold">
-                  {count}
-                </span>
-                <Button
-                  className="mt-4 bg-red-600"
-                  onClick={() => {
-                    handleClearDatabase(type);
-                  }}
-                >
-                  Clear {label}
-                </Button>
-              </div>
-            </>
-          ))}
-        </div>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-4">
-            {[
-              { label: "Professor", type: "professor", data: professors },
-              { label: "Student", type: "student", data: students },
-              { label: "Project", type: "project", data: projects },
-            ].map(({ label, type, data }) => (
-              <div key={type} className="border p-4 rounded-lg">
-                <label className="block mb-2">Upload {label} Data</label>
-                <Input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={(e) => handleFileUpload(e, type)}
-                />
-                <Button
-                  className="mt-4"
-                  onClick={() => handleUpload(type, data)}
-                  disabled={loading}
-                >
-                  {loading ? `Uploading ${label}...` : `Upload ${label}`}
-                </Button>
-              </div>
-            ))}
+    <div className="space-y-6">
+      <h2 className="text-4xl font-bold">Admin Dashboard</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Professors Count */}
+        <div className="p-6 bg-secondary text-primary rounded-lg shadow-md">
+          <span className="text-xl font-semibold">Professors</span>
+          <span className="block text-2xl font-bold">{counts.professors}</span>
+          <span className="block text-sm text-muted-foreground">
+            Submitted: {professorsSubmitted}/{counts.professors}
+          </span>
+          <div className="flex items-center gap-2 mt-4">
+            <Switch
+              checked={isProfessorSubmitEnabled}
+              onCheckedChange={handleProfessorSwitch}
+            />
+            <span>Enable Professor Submission</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Students Count */}
+        <div className="p-6 bg-secondary text-primary rounded-lg shadow-md">
+          <span className="text-xl font-semibold">Students</span>
+          <span className="block text-2xl font-bold">{counts.students}</span>
+          <span className="block text-sm text-muted-foreground">
+            Submitted: {studentsSubmitted}/{counts.students}
+          </span>
+          <div className="flex items-center gap-2 mt-4">
+            <Switch
+              checked={isStudentSubmitEnabled}
+              onCheckedChange={handleStudentSwitch}
+            />
+            <span>Enable Student Submission</span>
+          </div>
+        </div>
+
+        {/* Projects Count */}
+        <div className="p-6 bg-secondary text-primary rounded-lg shadow-md">
+          <span className="text-xl font-semibold">Projects</span>
+          <span className="block text-2xl font-bold">{counts.projects}</span>
+        </div>
+      </div>
+
+      {/* Start and Reset Allocation Buttons */}
+      <div className="flex justify-center gap-4">
+        <Button
+          onClick={handleStartAllocation}
+          disabled={isAllocating || isResetting}
+          className="mt-6"
+        >
+          {isAllocating ? "Starting Allocation..." : "Start Project Allocation"}
+        </Button>
+        <Button
+          onClick={handleResetAllocation}
+          disabled={isAllocating || isResetting}
+          className="mt-6 bg-red-500 hover:bg-red-600"
+        >
+          {isResetting ? "Resetting..." : "Reset Allotment"}
+        </Button>
+      </div>
     </div>
   );
 }

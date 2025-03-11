@@ -178,25 +178,27 @@ const ProfessorDashboard = () => {
                             key={studentGroup[0]._id}
                             id={studentGroup[0]._id}
                           >
-                            <Card className="p-4 my-2 shadow-sm hover:bg-gray-100">
+                            <Card className="p-4 my-4 shadow-sm hover:bg-gray-100">
                               <CardContent>
-                                {studentGroup.map(
-                                  ({ name, roll_no, email }) => (
-                                    <div key={roll_no}>
-                                      <h3 className="text-lg font-medium">
-                                        {name}
-                                      </h3>
-                                      <p className="text-sm text-gray-500">
-                                        Email: {email}
-                                      </p>
-                                      <p className="text-sm text-gray-500">
-                                        Roll Number: {roll_no}
-                                      </p>
-                                    </div>
-                                  )
-                                )}
+                                <div>
+                                  {studentGroup.map(
+                                    ({ name, roll_no, email }) => (
+                                      <div key={roll_no}>
+                                        <h3 className="text-lg font-medium">
+                                          {name}
+                                        </h3>
+                                        <p className="text-sm text-gray-500">
+                                          Email: {email}
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                          Roll Number: {roll_no}
+                                        </p>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
                               </CardContent>
-                              <CardDescription className="text-sm font-bold mt-2">
+                              <CardDescription className="text-sm font-bold mt-2 text-blue-600">
                                 Preference #{pref + 1}
                               </CardDescription>
                             </Card>

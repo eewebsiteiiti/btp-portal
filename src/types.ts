@@ -4,7 +4,7 @@ export interface ProfessorI {
   email: string;
   password: string;
   students: StudentI[];
-  projects: ProjectI[];
+  projects: string[];
 }
 export interface StudentI {
   _id: string;
@@ -23,6 +23,8 @@ export interface ProjectI {
   Comments: string;
   Supervisor: string;
   Cosupervisor?: string;
+  studentLimit: number;
+  Supervisor_email: string;
 }
 
 export interface UserI {
@@ -38,11 +40,15 @@ export interface SortableItemProps {
   project: ProjectI;
   index?: number;
   isOverlay?: boolean;
-  setProjectMap: React.Dispatch<React.SetStateAction<{ [key: string]: { partnerRollNumber: string; status: string } }>>;
+  setProjectMap: React.Dispatch<
+    React.SetStateAction<{
+      [key: string]: { partnerRollNumber: string; status: string };
+    }>
+  >;
   projectMap: { [key: string]: { partnerRollNumber: string; status: string } };
 }
 
-export interface PreferenceI{
+export interface PreferenceI {
   project: ProjectI;
   isGroup: boolean;
   partner?: StudentI;
