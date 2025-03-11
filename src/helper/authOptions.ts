@@ -4,6 +4,7 @@ import { dbConnect } from "@/lib/mongodb";
 import Student from "@/models/Student";
 import Professor from "@/models/Professor";
 import { StudentI, ProfessorI } from "@/types";
+import bcrypt from "bcryptjs";
 // interface Student {
 //   _id: string;
 //   roll_no: string;
@@ -29,8 +30,11 @@ export const authOptions: NextAuthOptions = {
         role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
-        if(credentials?.role === "admin"){
-          if(credentials?.email !== process.env.ADMIN_EMAIL || credentials?.password !== process.env.ADMIN_PASSWORD){
+        if (credentials?.role === "admin") {
+          if (
+            credentials?.email !== process.env.ADMIN_EMAIL ||
+            credentials?.password !== process.env.ADMIN_PASSWORD
+          ) {
             throw new Error("Invalid email or password");
           }
 
@@ -41,12 +45,15 @@ export const authOptions: NextAuthOptions = {
           const user = (await Student.findOne({
             email: credentials?.email,
           }).lean()) as unknown as StudentI;
-          if (!user || user?.password !== credentials?.password) {
-            throw new Error("Invalid email or password");
-          }
-          // if (!user || !bcrypt.compareSync(credentials?.password || "", user.password)) {
+          // if (!user || user?.password !== credentials?.password) {
           //   throw new Error("Invalid email or password");
           // }
+          if (
+            !user ||
+            !bcrypt.compareSync(credentials?.password || "", user.password)
+          ) {
+            throw new Error("Invalid email or password");
+          }
           return {
             id: user._id,
             roll_no: user.roll_no,
@@ -74,8 +81,7 @@ export const authOptions: NextAuthOptions = {
             role: "professor",
             name: user.name,
           };
-        }
-        else return null;
+        } else return null;
       },
     }),
   ],
