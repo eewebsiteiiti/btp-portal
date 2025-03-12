@@ -48,8 +48,13 @@ const ProfessorPage = () => {
   const getProjectTitle = (projectId: string) =>
     projects.find((p) => p._id === projectId)?.Title || "Unknown Project";
 
-  const getStudentName = (studentId: string) =>
-    students.find((s) => s._id === studentId)?.name || "NA";
+  const getStudent = (studentId: string) => {
+    const s = students.find((s) => s._id === studentId);
+    const name = s?.name;
+    const roll_no = s?.roll_no;
+    return `${name}(${roll_no})`;
+  };
+  // students.find((s) => s._id === studentId)?.name || "NA";
 
   return (
     <div className="p-6 space-y-8">
@@ -114,7 +119,7 @@ const ProfessorPage = () => {
                               key={studentId}
                               className="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded-md"
                             >
-                              <span>{getStudentName(studentId)}</span>
+                              <span>{getStudent(studentId)}</span>
                               <span className="text-xs text-gray-500">
                                 #{index + 1}
                               </span>
