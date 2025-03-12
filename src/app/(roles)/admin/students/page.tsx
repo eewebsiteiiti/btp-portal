@@ -195,20 +195,12 @@ const StudentsPage = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          {student.submitStatus ? "Submited" : "Pending"}
+                          {student.submitStatus ? (
+                            <span className="text-green-500">Submitted</span>
+                          ) : (
+                            <span className="text-red-500">Pending</span>
+                          )}{" "}
                         </TableCell>
-                        {/* <TableCell className="py-2 text-center">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="mr-2"
-                          >
-                            <Pencil size={18} className="text-blue-600" />
-                          </Button>
-                          <Button variant="outline" size="icon">
-                            <Trash size={18} className="text-red-600" />
-                          </Button>
-                        </TableCell> */}
                       </TableRow>
 
                       {/* Expanded Row */}
@@ -230,7 +222,24 @@ const StudentsPage = () => {
                                       ? `Partner: ${pref.partnerRollNumber}`
                                       : "Solo"}
                                   </p>
-                                  <p>Status: {pref.status}</p>
+                                  <p>
+                                    {pref.isGroup ? (
+                                      <>
+                                        Status:
+                                        {pref.status === "Success" ? (
+                                          <span className="text-green-500">
+                                            Success
+                                          </span>
+                                        ) : (
+                                          <span className="text-red-500">
+                                            Pending
+                                          </span>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </p>
                                 </div>
                               ))}
                             </div>

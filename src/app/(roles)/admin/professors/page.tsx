@@ -9,8 +9,6 @@ import {
   TableHead,
   TableRow,
 } from "@/components/ui/table";
-// import { Button } from "@/components/ui/button";
-// import { Pencil, Trash } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { ProfessorI, ProjectI } from "@/types";
@@ -66,9 +64,6 @@ const ProfessorPage = () => {
             ← Back to Dashboard
           </Link>
         </div>
-        {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-          + Add Professor
-        </Button> */}
       </div>
 
       {/* Loading and Error State */}
@@ -100,9 +95,6 @@ const ProfessorPage = () => {
                   <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
                     Submit Status
                   </TableHead>
-                  {/* <TableHead className="py-3 px-4 text-center font-semibold text-gray-600">
-                    Actions
-                  </TableHead> */}
                 </TableRow>
               </TableHeader>
 
@@ -116,11 +108,6 @@ const ProfessorPage = () => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-100`}
                     >
-                      {/* Faculty ID */}
-                      {/* <TableCell className="py-4 px-4 text-gray-800 font-medium">
-                        {prof._id}
-                      </TableCell> */}
-
                       {/* Name */}
                       <TableCell className="py-4 px-4 text-gray-800">
                         {prof.name}
@@ -148,34 +135,13 @@ const ProfessorPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {prof.submitStatus ? "Submitted" : "Pending"}
+                        {/* {prof.submitStatus ? "Submitted" : "Pending"} */}
+                        {prof.submitStatus ? (
+                          <span className="text-green-500">Submitted</span>
+                        ) : (
+                          <span className="text-red-500">Pending</span>
+                        )}
                       </TableCell>
-
-                      {/* Actions */}
-                      {/* <TableCell className="py-4 px-4 text-center">
-                        <div className="flex justify-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="border-blue-400 hover:border-blue-500"
-                          >
-                            <Pencil
-                              size={18}
-                              className="text-blue-500 hover:text-blue-600"
-                            />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="border-red-400 hover:border-red-500"
-                          >
-                            <Trash
-                              size={18}
-                              className="text-red-500 hover:text-red-600"
-                            />
-                          </Button>
-                        </div>
-                      </TableCell> */}
                     </TableRow>
                   ))
                 ) : (
