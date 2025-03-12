@@ -1,8 +1,7 @@
-import { NextApiResponse } from "next";
 import { dbConnect } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 
-export async function POST(res: NextApiResponse) {
+export async function POST() {
   try {
     // Connect to the database
     const db = await dbConnect();
@@ -21,6 +20,9 @@ export async function POST(res: NextApiResponse) {
     return NextResponse.json({ message: "Database cleared successfully." });
   } catch (error) {
     console.error("Error clearing database:", error);
-    return res.status(500).json({ error: "Failed to clear the database." });
+    return NextResponse.json(
+      { message: "Failed to clear the database.", error },
+      { status: 500 }
+    );
   }
 }
