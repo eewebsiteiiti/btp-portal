@@ -3,34 +3,34 @@ import Student from "@/models/Student";
 import Project from "@/models/Project";
 import { dbConnect } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
-// import nodemailer from "nodemailer";
-// import crypto from "crypto";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
 
-// const generateRandomPassword = () => {
-//   return crypto.randomBytes(8).toString("hex"); // 16 characters
-// };
+const generateRandomPassword = () => {
+  return crypto.randomBytes(8).toString("hex"); // 16 characters
+};
 
-// const sendEmail = async (email: string, password: string) => {
-//   const transporter = nodemailer.createTransport({
-//     service: "gmail",
-//     auth: {
-//       user: process.env.EMAIL_USER, // Your Gmail address
-//       pass: process.env.EMAIL_PASS, // App password (generated from Google)
-//     },
-//   });
+const sendEmail = async (email: string, password: string) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER, // Your Gmail address
+      pass: process.env.EMAIL_PASS, // App password (generated from Google)
+    },
+  });
 
-//   const mailOptions = {
-//     from: process.env.EMAIL_USER,
-//     to: email,
-//     subject: "Your Student Portal Credentials",
-//     text: `Welcome to the student portal!\n\nYour login details are:\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after logging in.`,
-//   };
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Your Student Portal Credentials",
+    text: `Welcome to the student portal!\n\nYour login details are:\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after logging in.`,
+  };
 
-//   await transporter.sendMail(mailOptions);
-// };
+  await transporter.sendMail(mailOptions);
+};
 
 // Delay function to prevent rate limiting (500ms between emails)
-// const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,14 +51,14 @@ export async function POST(req: NextRequest) {
     const studentsData = [];
 
     for (const student of data) {
-      // const password = generateRandomPassword();
-      // const hashedPassword = await bcrypt.hash(password, 10);
-      const password = "a";
+      const password = generateRandomPassword();
       const hashedPassword = await bcrypt.hash(password, 10);
+      // const password = "a";
+      // const hashedPassword = await bcrypt.hash(password, 10);
 
       // Send email with a delay to avoid rate limiting
-      // await sendEmail(student.email, password);
-      // await delay(500); // Add a delay of 500ms between emails
+      await sendEmail(student.email, password);
+      await delay(500); // Add a delay of 500ms between emails
 
       const studentData = {
         roll_no: student.roll_no,
