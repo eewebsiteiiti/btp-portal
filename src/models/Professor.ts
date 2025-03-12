@@ -11,6 +11,7 @@ const ProfessorSchema = new mongoose.Schema({
   },
   projects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Project" }],
   studentLimit: { type: Number, default: 4 },
+  submitStatus: { type: Boolean, required: true, default: false },
 });
 
 export default mongoose.models.Professor ||

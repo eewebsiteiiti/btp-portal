@@ -5,6 +5,14 @@ export interface ProfessorI {
   password: string;
   students: StudentI[];
   projects: string[];
+  submitStatus: boolean;
+}
+export interface PreferenceI {
+  project: string;
+  isGroup: boolean;
+  preferences: string;
+  status: "Pending" | "Success";
+  partnerRollNumber: string;
 }
 export interface StudentI {
   _id: string;
@@ -12,6 +20,8 @@ export interface StudentI {
   name: string;
   email: string;
   password: string;
+  preferences: PreferenceI[];
+  submitStatus: boolean;
 }
 export interface ProjectI {
   Domain: string;
@@ -51,10 +61,4 @@ export interface SortableItemProps {
     }>
   >;
   projectMap: { [key: string]: { partnerRollNumber: string; status: string } };
-}
-
-export interface PreferenceI {
-  project: ProjectI;
-  isGroup: boolean;
-  partner?: StudentI;
 }

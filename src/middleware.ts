@@ -28,7 +28,7 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/professor/:path*",
-    "/student/:path*,",
-    "/api/:path*",
+    "/student/:path*",
+    // "/api/:path*",
   ],
 };

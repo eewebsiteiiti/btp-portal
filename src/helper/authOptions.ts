@@ -5,21 +5,7 @@ import Student from "@/models/Student";
 import Professor from "@/models/Professor";
 import { StudentI, ProfessorI } from "@/types";
 import bcrypt from "bcryptjs";
-// interface Student {
-//   _id: string;
-//   roll_no: string;
-//   name: string;
-//   email: string;
-//   password: string;
-//   preference: Array<object>;
-// }
-// interface Professor {
-//   _id: string;
-//   name: string;
-//   email: string;
-//   password: string;
-//   preference: Array<object>;
-// }
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -72,7 +58,10 @@ export const authOptions: NextAuthOptions = {
           if (!user || user?.password !== credentials?.password) {
             throw new Error("Invalid email or password");
           }
-          // if (!user || !bcrypt.compareSync(credentials?.password || "", user.password)) {
+          // if (
+          //   !user ||
+          //   !bcrypt.compareSync(credentials?.password || "", user.password)
+          // ) {
           //   throw new Error("Invalid email or password");
           // }
           return {

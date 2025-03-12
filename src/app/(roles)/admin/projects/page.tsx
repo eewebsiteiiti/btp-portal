@@ -9,10 +9,7 @@ import {
   TableHead,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import Link from "next/link";
 import { ProjectI } from "@/types";
 
 const ProjectsPage = () => {
@@ -45,13 +42,7 @@ const ProjectsPage = () => {
           <h1 className="text-4xl font-bold text-gray-800">
             📚 Project Management
           </h1>
-          <Link href="/admin" className="text-blue-500 hover:underline">
-            ← Back to Dashboard
-          </Link>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-          + Add Project
-        </Button>
       </div>
 
       {/* Loading and Error State */}
@@ -92,9 +83,9 @@ const ProjectsPage = () => {
                   <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
                     Co-Supervisor
                   </TableHead>
-                  <TableHead className="py-3 px-4 text-center font-semibold text-gray-600">
+                  {/* <TableHead className="py-3 px-4 text-center font-semibold text-gray-600">
                     Actions
-                  </TableHead>
+                  </TableHead> */}
                 </TableRow>
               </TableHeader>
 
@@ -149,7 +140,7 @@ const ProjectsPage = () => {
                       </TableCell>
 
                       {/* Actions */}
-                      <TableCell className="py-4 px-4 text-center">
+                      {/* <TableCell className="py-4 px-4 text-center">
                         <div className="flex justify-center space-x-2">
                           <Button
                             variant="outline"
@@ -172,7 +163,7 @@ const ProjectsPage = () => {
                             />
                           </Button>
                         </div>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 ) : (

@@ -133,9 +133,13 @@ export default function StudentPage() {
       });
     }
   };
-
   const submitPreferences = async () => {
     if (!session?.user) return;
+
+    const confirmSubmit = window.confirm(
+      "Are you sure you want to submit your preferences? Once submitted, you cannot modify them."
+    );
+    if (!confirmSubmit) return;
 
     try {
       const response = await fetch("/api/student/preference/put", {
@@ -148,12 +152,15 @@ export default function StudentPage() {
             isGroup: !!projectMap[p._id]?.partnerRollNumber,
             partnerRollNumber: projectMap[p._id]?.partnerRollNumber || "",
           })),
+          submitStatus: "true",
         }),
       });
 
       if (!response.ok) throw new Error();
 
       alert("Preferences saved successfully!");
+
+      // Refresh list after submitting
       const fetchStudentPreferences = async () => {
         if (!session?.user?.email) return;
 
@@ -172,12 +179,64 @@ export default function StudentPage() {
           setError("Error fetching student preferences");
         }
       };
-      // Refresh list after submitting
+
       fetchStudentPreferences();
     } catch {
       setError("Error saving preferences");
     }
   };
+  const savePreferences = async () => {
+    if (!session?.user) return;
+
+    // const confirmSubmit = window.confirm(
+    //   "Are you sure you want to submit your preferences? Once submitted, you cannot modify them."
+    // );
+    // if (!confirmSubmit) return;
+
+    try {
+      const response = await fetch("/api/student/preference/put", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: session.user.email,
+          preference: projects.map((p) => ({
+            project: p._id,
+            isGroup: !!projectMap[p._id]?.partnerRollNumber,
+            partnerRollNumber: projectMap[p._id]?.partnerRollNumber || "",
+          })),
+        }),
+      });
+
+      if (!response.ok) throw new Error();
+
+      alert("Preferences saved successfully!");
+
+      // Refresh list after submitting
+      const fetchStudentPreferences = async () => {
+        if (!session?.user?.email) return;
+
+        try {
+          const response = await fetch(
+            `/api/student/get?email=${session.user.email}`
+          );
+          const data = await response.json();
+
+          if (data.students?.preferences) {
+            setPreferenceArray(data.students.preferences);
+          } else {
+            setPreferenceArray([]);
+          }
+        } catch {
+          setError("Error fetching student preferences");
+        }
+      };
+
+      fetchStudentPreferences();
+    } catch {
+      setError("Error saving preferences");
+    }
+  };
+
   return (
     <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
       <Card className="shadow-md rounded-lg p-3 bg-white">
@@ -245,7 +304,7 @@ export default function StudentPage() {
             </p>
             <div>
               <Button
-                onClick={submitPreferences}
+                onClick={savePreferences}
                 className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all mx-2"
               >
                 Save

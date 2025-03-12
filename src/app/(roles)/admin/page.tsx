@@ -93,6 +93,20 @@ export default function AdminDashboard() {
       setIsResetting(false);
     }
   };
+  const handleAutoAllocation = async () => {
+    setIsResetting(true);
+    try {
+      const res = await fetch("api/admin/test1");
+      if (!res.ok) throw new Error("Failed to reset allocation");
+      alert("Done filling student - preferences");
+      fetchCounts(); // Refresh data after reset
+    } catch (error) {
+      console.error("Error resetting project allocation:", error);
+      alert("Failed to reset project allocation.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -168,6 +182,13 @@ export default function AdminDashboard() {
           className="mt-6 bg-red-500 hover:bg-red-600"
         >
           {isResetting ? "Resetting..." : "Reset Allotment"}
+        </Button>
+        <Button
+          onClick={handleAutoAllocation}
+          disabled={isAllocating || isResetting}
+          className="mt-6 bg-blue-500 hover:bg-red-600"
+        >
+          {isResetting ? "Resetting..." : "Dev-Fill"}
         </Button>
       </div>
     </div>

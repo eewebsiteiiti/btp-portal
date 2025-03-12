@@ -119,16 +119,20 @@ const ProfessorDashboard = () => {
       });
     }
   };
-
   const handleSubmit = async () => {
+    const confirmSubmit = window.confirm(
+      "Are you sure you want to save the changes? This will update the student order."
+    );
+    if (!confirmSubmit) return;
+
     try {
-      // const updatedStudents = projectWiseStudents[projectId];
       await fetch("/api/professor/student/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           students: projectWiseStudents,
           professor: professor?._id,
+          submitStatus: true,
         }),
       });
       alert("Student order updated successfully!");
