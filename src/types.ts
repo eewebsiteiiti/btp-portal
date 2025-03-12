@@ -3,7 +3,8 @@ export interface ProfessorI {
   name: string;
   email: string;
   password: string;
-  students: StudentI[];
+  // students: StudentI[];
+  studentsPreference?: { [key: string]: string[] };
   projects: string[];
   submitStatus: boolean;
 }
