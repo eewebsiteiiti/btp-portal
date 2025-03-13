@@ -137,7 +137,19 @@ export default function StudentPage() {
   };
   const submitPreferences = async () => {
     if (!session?.user) return;
+    const pendingRequests = projects.filter((p) => {
+      if (projectMap[p._id]?.partnerRollNumber !== "") {
+        if (projectMap[p._id]?.status === "Pending") {
+          return true;
+        }
+      }
+    });
+    console.log(pendingRequests);
 
+    if (pendingRequests.length > 0) {
+      alert("Please make sure all requests are resolved before saving");
+      return;
+    }
     const confirmSubmit = window.confirm(
       "Are you sure you want to submit your preferences? Once submitted, you cannot modify them."
     );
@@ -249,91 +261,105 @@ export default function StudentPage() {
           <LogoutButton />
         </CardContent>
       </Card>
-      {controls?.projectViewEnableStudent ? (
+      {student && !student.submitStatus ? (
         <>
-          <h2 className="font-semibold text-gray-800">
-            Order Your Preferred Projects
-          </h2>
-          {error && <p className="text-red-500 font-medium">{error}</p>}
-          <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={(event) => {
-                const project = projects.find((p) => p._id === event.active.id);
-                setActiveProject(project || null);
-              }}
-              onDragEnd={handleDragEnd}
-              onDragCancel={() => setActiveProject(null)}
-            >
-              <SortableContext
-                items={projects.map((p) => p._id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {projects.map((project, index) => (
-                    <div
-                      key={project._id}
-                      className="flex flex-col space-y-2 border rounded-md p-3 shadow-sm"
-                    >
+          {controls?.projectViewEnableStudent ? (
+            <>
+              <h2 className="font-semibold text-gray-800">
+                Order Your Preferred Projects
+              </h2>
+              {error && <p className="text-red-500 font-medium">{error}</p>}
+              <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={(event) => {
+                    const project = projects.find(
+                      (p) => p._id === event.active.id
+                    );
+                    setActiveProject(project || null);
+                  }}
+                  onDragEnd={handleDragEnd}
+                  onDragCancel={() => setActiveProject(null)}
+                >
+                  <SortableContext
+                    items={projects.map((p) => p._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-3">
+                      {projects.map((project, index) => (
+                        <div
+                          key={project._id}
+                          className="flex flex-col space-y-2 border rounded-md p-3 shadow-sm"
+                        >
+                          <SortableItem
+                            id={project._id}
+                            project={project}
+                            index={index + 1}
+                            setProjectMap={setProjectMap}
+                            projectMap={projectMap}
+                            student={student as StudentI}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </SortableContext>
+                  <DragOverlay>
+                    {activeProject && (
                       <SortableItem
-                        id={project._id}
-                        project={project}
-                        index={index + 1}
+                        id={activeProject._id}
+                        project={activeProject}
                         setProjectMap={setProjectMap}
                         projectMap={projectMap}
+                        isOverlay
                         student={student as StudentI}
                       />
-                    </div>
-                  ))}
-                </div>
-              </SortableContext>
-              <DragOverlay>
-                {activeProject && (
-                  <SortableItem
-                    id={activeProject._id}
-                    project={activeProject}
-                    setProjectMap={setProjectMap}
-                    projectMap={projectMap}
-                    isOverlay
-                    student={student as StudentI}
-                  />
-                )}
-              </DragOverlay>
-            </DndContext>
-          </ScrollArea>
-          <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
-            <p className="text-xs text-gray-600">
-              Total Projects: {projects.length}
-            </p>
-            <div>
-              <Button
-                onClick={savePreferences}
-                className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all mx-2"
-              >
-                Save
-              </Button>
-              {controls?.submitEnableStudentProjects ? (
-                <>
-                  {" "}
+                    )}
+                  </DragOverlay>
+                </DndContext>
+              </ScrollArea>
+              <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
+                <p className="text-xs text-gray-600">
+                  Total Projects: {projects.length}
+                </p>
+                <div>
                   <Button
-                    onClick={submitPreferences}
-                    className="bg-blue-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
+                    onClick={savePreferences}
+                    className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all mx-2"
                   >
-                    Submit
+                    Save
                   </Button>
-                </>
-              ) : (
-                <></>
-              )}
-            </div>
-          </div>{" "}
+                  {controls?.submitEnableStudentProjects ? (
+                    <>
+                      {" "}
+                      <Button
+                        onClick={submitPreferences}
+                        className="bg-blue-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
+                      >
+                        Submit
+                      </Button>
+                    </>
+                  ) : (
+                    <></>
+                  )}
+                </div>
+              </div>{" "}
+            </>
+          ) : (
+            <>
+              <div className="flex justify-center items-center h-40 border rounded-md bg-white shadow-md">
+                <p className="text-gray-500 font-medium">
+                  Allotment process yet to be started
+                </p>
+              </div>
+            </>
+          )}
         </>
       ) : (
         <>
           <div className="flex justify-center items-center h-40 border rounded-md bg-white shadow-md">
             <p className="text-gray-500 font-medium">
-              Allotment process yet to be started
+              You have already submitted your preferences
             </p>
           </div>
         </>
