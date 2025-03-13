@@ -116,7 +116,6 @@ export default function StudentPage() {
     };
     fetchAdminControls();
   }, []);
-  // console.log(controls);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -144,7 +143,6 @@ export default function StudentPage() {
         }
       }
     });
-    console.log(pendingRequests);
 
     if (pendingRequests.length > 0) {
       alert("Please make sure all requests are resolved before saving");

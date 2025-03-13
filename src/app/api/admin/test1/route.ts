@@ -12,8 +12,6 @@ export async function GET() {
 
     for (const professor of professors) {
       for (const project of professor.projects) {
-        // Use .set() to modify Map
-        // console.log(project);
         const temp = [];
         for (const student of students) {
           temp.push([student._id]);

@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
       const projects = await Project.find({
         Supervisor_email: professor.email,
       });
-      // console.log(projects);
 
       professor.projects = projects; // Adding projects to professor object
     }

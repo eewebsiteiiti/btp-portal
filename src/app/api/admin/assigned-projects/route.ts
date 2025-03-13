@@ -16,7 +16,6 @@ export async function GET() {
         assignedProject.studentId
       );
     });
-    // console.log(projectStudenGroupMap);
     return NextResponse.json({
       message: "Success",
       data: projectStudenGroupMap,

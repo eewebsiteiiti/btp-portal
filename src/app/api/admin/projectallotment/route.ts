@@ -46,7 +46,6 @@ const fun = async () => {
     projects.forEach((project) => {
       projectCapacity[project._id] = project.Capacity;
     });
-    // console.log(projectCapacity);
 
     const student: number[][] = [];
     const professor: number[][] = [];
@@ -172,14 +171,9 @@ const fun = async () => {
 
     let finalMapping: ([number, number] | [string, string])[] = [];
     let minVal = 1e5 - 1;
-    // let i = 0;
     while (new Set(result.flat()).size !== 1) {
-      // while (minVal < 1e5) {
-      // i++;
-      // console.log(new Set(result.flat()));
       minVal = Math.min(...result.flat());
       const mask: [number, number][] = [];
-      // console.log(minVal);
       result.forEach((row, i) => {
         row.forEach((val, j) => {
           if (val === minVal) {
@@ -253,8 +247,6 @@ const fun = async () => {
           profStudentCountMap[professorId]++;
           result = fillProf(profStudentCountMap, result, limit, projProfMap);
           result[i].fill(1e5);
-          // console.log(i, j);
-          // console.log(projectCapacity);
           projectCapacity[proj_ob_id]--;
           if (projectCapacity[proj_ob_id] <= 0) {
             result.forEach((row) => (row[j] = 1e5));
@@ -269,9 +261,7 @@ const fun = async () => {
           profStudentMap[professorId].push([studi_ob_id, proj_ob_id]);
           profStudentMap[professorId].push([partner, proj_ob_id]);
           profStudentCountMap[professorId] += 2;
-          // console.log("hello");
           result = fillProf(profStudentCountMap, result, limit, projProfMap);
-          // console.log("idhar ", i, j);
           result[i].fill(1e5);
           // parter i
           const partnerIndex = studentIndexMap[partner];
