@@ -136,6 +136,7 @@ export default function StudentPage() {
   };
   const submitPreferences = async () => {
     if (!session?.user) return;
+
     const pendingRequests = projects.filter((p) => {
       if (projectMap[p._id]?.partnerRollNumber !== "") {
         if (projectMap[p._id]?.status === "Pending") {
@@ -171,39 +172,13 @@ export default function StudentPage() {
       if (!response.ok) throw new Error();
 
       alert("Preferences saved successfully!");
-
-      // Refresh list after submitting
-      const fetchStudentPreferences = async () => {
-        if (!session?.user?.email) return;
-
-        try {
-          const response = await fetch(
-            `/api/student/get?email=${session.user.email}`
-          );
-          const data = await response.json();
-
-          if (data.student?.preferences) {
-            setPreferenceArray(data.student.preferences);
-          } else {
-            setPreferenceArray([]);
-          }
-        } catch {
-          setError("Error fetching student preferences");
-        }
-      };
-
-      fetchStudentPreferences();
+      setStudent({ ...student, submitStatus: true } as StudentI);
     } catch {
       setError("Error saving preferences");
     }
   };
   const savePreferences = async () => {
     if (!session?.user) return;
-
-    // const confirmSubmit = window.confirm(
-    //   "Are you sure you want to submit your preferences? Once submitted, you cannot modify them."
-    // );
-    // if (!confirmSubmit) return;
 
     try {
       const response = await fetch("/api/student/preference/put", {
@@ -232,7 +207,7 @@ export default function StudentPage() {
             `/api/student/get?email=${session.user.email}`
           );
           const data = await response.json();
-
+          setStudent(data.student);
           if (data.student?.preferences) {
             setPreferenceArray(data.student.preferences);
           } else {
@@ -254,8 +229,10 @@ export default function StudentPage() {
       <Card className="shadow-md rounded-lg p-3 bg-white">
         <CardContent>
           <h2 className="font-semibold text-gray-800">Student Information</h2>
-          <p className="text-gray-600">Name: {session?.user?.name}</p>
-          <p className="text-gray-600">Email: {session?.user?.email}</p>
+          <p className="text-gray-600">Name: {student?.name}</p>
+          <p className="text-gray-600">Email: {student?.email}</p>
+          <p className="text-gray-600">Roll Number: {student?.roll_no}</p>
+
           <LogoutButton />
         </CardContent>
       </Card>
@@ -329,7 +306,6 @@ export default function StudentPage() {
                   </Button>
                   {controls?.submitEnableStudentProjects ? (
                     <>
-                      {" "}
                       <Button
                         onClick={submitPreferences}
                         className="bg-blue-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"

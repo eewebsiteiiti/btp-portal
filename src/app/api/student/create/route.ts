@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       // const password = generateRandomPassword();
       // const hashedPassword = await bcrypt.hash(password, 10);
       const password = "a";
-      const hashedPassword = password;
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       // Send email with a delay to avoid rate limiting
       // await sendEmail(student.email, password);
