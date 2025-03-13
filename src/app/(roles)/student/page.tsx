@@ -22,7 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import SortableItem from "@/components/SortableItem";
-import { ProjectI, ControlsI } from "@/types";
+import { ProjectI, ControlsI, StudentI } from "@/types";
 
 export default function StudentPage() {
   const { data: session } = useSession();
@@ -31,6 +31,7 @@ export default function StudentPage() {
   const [error, setError] = useState("");
   const [preferenceArray, setPreferenceArray] = useState([]);
   const [controls, setControls] = useState<ControlsI>();
+  const [student, setStudent] = useState<StudentI>();
   const [projectMap, setProjectMap] = useState<{
     [key: string]: { partnerRollNumber: string; status: string };
   }>({});
@@ -43,9 +44,10 @@ export default function StudentPage() {
           `/api/student/get?email=${session.user.email}`
         );
         const data = await response.json();
+        setStudent(data.student);
 
-        if (data.students?.preferences) {
-          setPreferenceArray(data.students.preferences);
+        if (data.student?.preferences) {
+          setPreferenceArray(data.student.preferences);
         } else {
           setPreferenceArray([]);
         }
@@ -170,8 +172,8 @@ export default function StudentPage() {
           );
           const data = await response.json();
 
-          if (data.students?.preferences) {
-            setPreferenceArray(data.students.preferences);
+          if (data.student?.preferences) {
+            setPreferenceArray(data.student.preferences);
           } else {
             setPreferenceArray([]);
           }
@@ -221,8 +223,8 @@ export default function StudentPage() {
           );
           const data = await response.json();
 
-          if (data.students?.preferences) {
-            setPreferenceArray(data.students.preferences);
+          if (data.student?.preferences) {
+            setPreferenceArray(data.student.preferences);
           } else {
             setPreferenceArray([]);
           }
@@ -280,6 +282,7 @@ export default function StudentPage() {
                         index={index + 1}
                         setProjectMap={setProjectMap}
                         projectMap={projectMap}
+                        student={student as StudentI}
                       />
                     </div>
                   ))}
@@ -293,6 +296,7 @@ export default function StudentPage() {
                     setProjectMap={setProjectMap}
                     projectMap={projectMap}
                     isOverlay
+                    student={student as StudentI}
                   />
                 )}
               </DragOverlay>

@@ -62,4 +62,5 @@ export interface SortableItemProps {
     }>
   >;
   projectMap: { [key: string]: { partnerRollNumber: string; status: string } };
+  student: StudentI;
 }

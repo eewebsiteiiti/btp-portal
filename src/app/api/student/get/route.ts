@@ -20,9 +20,9 @@ export async function GET(req: NextRequest) {
   } else {
     try {
       await dbConnect();
-      const students = await Student.findOne({ email });
+      const student = await Student.findOne({ email });
       return NextResponse.json(
-        { message: "GET request received", students },
+        { message: "GET request received", student },
         { status: 200 }
       );
     } catch (error) {

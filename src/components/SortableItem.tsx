@@ -13,6 +13,7 @@ export default function SortableItem({
   isOverlay,
   setProjectMap,
   projectMap,
+  student,
 }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
@@ -23,6 +24,10 @@ export default function SortableItem({
   };
   const handleRollNumberAdd = () => {
     // projectMap[project._id] = { partnerRollNumber: rollNumber, status: "Pending" };
+    if (student.roll_no === rollNumber) {
+      alert("You cannot add yourself as a partner");
+      return;
+    }
     setProjectMap((project_map) => ({
       ...project_map,
       [project._id]: { partnerRollNumber: rollNumber, status: "Pending" },
