@@ -149,6 +149,28 @@ export default function StudentPage() {
       alert("Please make sure all requests are resolved before saving");
       return;
     }
+    const checkGroupBreak = async () => {
+      try {
+        const response = await fetch("/api/student/checkgroupbreak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roll_no: student?.roll_no,
+          }),
+        });
+
+        const data = await response.json();
+        return data.groupBreak;
+      } catch {
+        setError("Error checking group break");
+      }
+    };
+    if (await checkGroupBreak()) {
+      alert(
+        "Group break detected. Please resolve the issue before submitting preferences"
+      );
+      return;
+    }
     const confirmSubmit = window.confirm(
       "Are you sure you want to submit your preferences? Once submitted, you cannot modify them."
     );
