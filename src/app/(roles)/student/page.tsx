@@ -239,7 +239,7 @@ export default function StudentPage() {
 
       if (!response.ok) throw new Error();
 
-      alert("Preferences saved successfully!");
+      alert("Preferences submited successfully!");
       setStudent({ ...student, submitStatus: true } as StudentI);
     } catch {
       setError("Error saving preferences");
