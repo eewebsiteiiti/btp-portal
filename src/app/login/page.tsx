@@ -40,8 +40,13 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
-    const result = await signIn("credentials", { email, password, role, redirect: false });
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      role,
+      redirect: false,
+    });
     if (result?.error) {
       setError("Invalid credentials, please try again.");
       setLoading(false);
@@ -56,50 +61,50 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              placeholder="Email" 
-              required 
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              required
             />
-            <Input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              placeholder="Password" 
-              required 
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              required
             />
             <div className="space-y-2">
               <Label className="block text-sm font-medium">Select Role:</Label>
               <div className="flex gap-4">
                 <label className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    name="role" 
-                    value="student" 
-                    checked={role === "student"} 
-                    onChange={(e) => setRole(e.target.value)} 
+                  <input
+                    type="radio"
+                    name="role"
+                    value="student"
+                    checked={role === "student"}
+                    onChange={(e) => setRole(e.target.value)}
                   />
                   <span>Student</span>
                 </label>
                 <label className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    name="role" 
-                    value="professor" 
-                    checked={role === "professor"} 
-                    onChange={(e) => setRole(e.target.value)} 
+                  <input
+                    type="radio"
+                    name="role"
+                    value="professor"
+                    checked={role === "professor"}
+                    onChange={(e) => setRole(e.target.value)}
                   />
                   <span>Professor</span>
                 </label>
                 <label className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    name="role" 
-                    value="admin" 
-                    checked={role === "admin"} 
-                    onChange={(e) => setRole(e.target.value)} 
+                  <input
+                    type="radio"
+                    name="role"
+                    value="admin"
+                    checked={role === "admin"}
+                    onChange={(e) => setRole(e.target.value)}
                   />
                   <span>Admin</span>
                 </label>

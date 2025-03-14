@@ -6,7 +6,10 @@ export default function Home() {
       className="flex items-center justify-center min-h-screen bg-cover bg-center"
       style={{ backgroundImage: "url('/background.jpg')" }}
     >
-      <div className="bg-white bg-opacity-80 p-8 rounded-lg shadow-md text-center max-w-lg">
+      {/* Background Overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+
+      <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-md text-center max-w-lg z-10">
         <h1 className="text-3xl font-bold mb-4">
           Welcome to the BTP Allocation Portal
         </h1>
@@ -16,7 +19,10 @@ export default function Home() {
         </p>
         <form action="/logout" method="post"></form>
         <form action="/login">
-          <Button className="w-full" type="submit">
+          <Button
+            className="w-full bg-blue-600 hover:bg-blue-700 transition-colors duration-300"
+            type="submit"
+          >
             Login
           </Button>
         </form>
