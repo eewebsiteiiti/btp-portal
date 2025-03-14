@@ -22,8 +22,8 @@ const sendEmail = async (email: string, password: string) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: "Your Student Portal Credentials",
-    text: `Welcome to the student portal!\n\nYour login details are:\nEmail: ${email}\nPassword: ${password}\n`,
+    subject: "Your BTP Portal Credentials",
+    text: `Welcome to the BTP student portal!\n\nYour login details are:\nEmail: ${email}\nPassword: ${password}\n`,
   };
 
   await transporter.sendMail(mailOptions);
