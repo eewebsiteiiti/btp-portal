@@ -72,7 +72,7 @@ const StudentResult = ({ roll_no }: Props) => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold">
-          Assigned Projects for {roll_no}
+          Assigned Project for {roll_no}
         </h1>
       </div>
 

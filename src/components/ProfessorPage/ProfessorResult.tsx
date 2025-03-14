@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { StudentI, ProjectI } from "@/types";
-import * as XLSX from "xlsx";
 
 const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
   const [projectStudents, setProjectStudents] = useState<
@@ -39,52 +38,12 @@ const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
       .filter((student): student is StudentI => student !== undefined);
 
   // Export data to Excel
-  const handleExportToExcel = () => {
-    const exportData = allProjects.flatMap((project) => {
-      const students = getSortedStudents(projectStudents[project._id] || []);
-
-      if (students.length > 0) {
-        return students.map((student) => ({
-          "Project No": project.Project_No,
-          "Project Title": project.Title,
-          Domain: project.Domain,
-          Supervisor: project.Supervisor,
-          "Co-Supervisor": project.Cosupervisor || "N/A",
-          "Student Name": student.name,
-          "Student Email": student.email,
-          "Roll No": student.roll_no,
-        }));
-      } else {
-        return {
-          "Project No": project.Project_No,
-          "Project Title": project.Title,
-          Domain: project.Domain,
-          Supervisor: project.Supervisor,
-          "Co-Supervisor": project.Cosupervisor || "N/A",
-          "Student Name": "No student assigned",
-          "Student Email": "-",
-          "Roll No": "-",
-        };
-      }
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Project Data");
-    XLSX.writeFile(workbook, "Project_Allocation.xlsx");
-  };
 
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold">Assigned Projects</h1>
-        <button
-          onClick={handleExportToExcel}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-        >
-          Export to Excel
-        </button>
+        <h1 className="text-3xl font-semibold">Assigned Students</h1>
       </div>
 
       {/* Projects */}

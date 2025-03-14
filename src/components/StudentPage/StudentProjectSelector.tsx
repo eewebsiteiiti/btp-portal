@@ -60,7 +60,7 @@ const StudentProjectSelector = ({
     };
 
     fetchStudentPreferences();
-  }, [session]);
+  }, [session, setStudent]);
 
   useEffect(() => {
     if (preferenceArray.length === 0) return;
