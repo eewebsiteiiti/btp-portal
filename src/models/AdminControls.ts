@@ -21,6 +21,16 @@ const AdminControlsSchema = new mongoose.Schema({
     required: true,
     default: false,
   },
+  studentViewResult: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  professorViewResult: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
 });
 
 export default mongoose.models.AdminControls ||

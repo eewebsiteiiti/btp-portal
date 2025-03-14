@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { StudentI, ProjectI } from "@/types";
 import * as XLSX from "xlsx";
+import Loading from "@/components/Loading";
 
 const Page = () => {
   const [projectStudents, setProjectStudents] = useState<
@@ -10,41 +11,31 @@ const Page = () => {
   >({});
   const [allProjects, setAllProjects] = useState<ProjectI[]>([]);
   const [allStudents, setAllStudents] = useState<StudentI[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAssignedProjects = async () => {
+    const fetchData = async () => {
       try {
-        const data = await fetch("/api/admin/assigned-projects");
-        const res = await data.json();
-        setProjectStudents(res.data);
+        setLoading(true);
+
+        const [assignedProjectsRes, projectsRes, studentsRes] =
+          await Promise.all([
+            fetch("/api/admin/assigned-projects").then((res) => res.json()),
+            fetch("/api/project/get").then((res) => res.json()),
+            fetch("/api/student/get").then((res) => res.json()),
+          ]);
+
+        setProjectStudents(assignedProjectsRes.data);
+        setAllProjects(projectsRes.projects);
+        setAllStudents(studentsRes.students);
       } catch (error) {
-        console.error("Error fetching assigned projects:", error);
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    const fetchProjects = async () => {
-      try {
-        const data = await fetch("/api/project/get");
-        const res = await data.json();
-        setAllProjects(res.projects);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      }
-    };
-
-    const fetchStudents = async () => {
-      try {
-        const data = await fetch("/api/student/get");
-        const res = await data.json();
-        setAllStudents(res.students);
-      } catch (error) {
-        console.error("Error fetching students:", error);
-      }
-    };
-
-    fetchAssignedProjects();
-    fetchProjects();
-    fetchStudents();
+    fetchData();
   }, []);
 
   // Map student_id to full student object and sort by CPI
@@ -111,7 +102,10 @@ const Page = () => {
         </button>
       </div>
 
-      {Object.keys(projectStudents).length === 0 ? (
+      {/* Loading State */}
+      {loading ? (
+        <Loading message="Loading assigned projects..." />
+      ) : Object.keys(projectStudents).length === 0 ? (
         <div className="text-center text-gray-500">
           Allotment process not started yet.
         </div>

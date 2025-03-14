@@ -42,6 +42,8 @@ export interface ControlsI {
   submitEnableProfessorStudents: boolean;
   projectViewEnableStudent: boolean;
   studentViewEnableProfessor: boolean;
+  studentViewResult: boolean;
+  professorViewResult: boolean;
 }
 export interface UserI {
   _id: string;

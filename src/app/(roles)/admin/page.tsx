@@ -16,6 +16,8 @@ export default function AdminDashboard() {
     submitEnableProfessorStudents: false,
     projectViewEnableStudent: false,
     studentViewEnableProfessor: false,
+    studentViewResult: false,
+    professorViewResult: false,
   });
 
   const [isAllocating, setIsAllocating] = useState(false);
@@ -139,6 +141,7 @@ export default function AdminDashboard() {
         if (!res.ok) throw new Error("Failed to clear database");
         alert("Database cleared successfully!");
         fetchCounts();
+        fetchAdminControls();
       } catch (error) {
         console.error("Error clearing database:", error);
         alert("Failed to clear database.");
@@ -179,6 +182,15 @@ export default function AdminDashboard() {
               />
               <span>Enable View of Students for Professors</span>
             </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={controls.professorViewResult}
+                onCheckedChange={(enabled) =>
+                  updateControl("professorViewResult", enabled)
+                }
+              />
+              <span>Enable Result for Professors</span>
+            </div>
           </div>
           <div className="mt-auto flex justify-end">
             <Button variant="destructive" onClick={clearProfessor}>
@@ -211,6 +223,15 @@ export default function AdminDashboard() {
                 }
               />
               <span>Enable View of Projects for Students</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={controls.studentViewResult}
+                onCheckedChange={(enabled) =>
+                  updateControl("studentViewResult", enabled)
+                }
+              />
+              <span>Enable Result for Students</span>
             </div>
           </div>
           <div className="mt-auto flex justify-end">

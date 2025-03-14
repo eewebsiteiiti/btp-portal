@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { ProjectI } from "@/types";
+import Loading from "@/components/Loading";
 
 const ProjectsPage = () => {
   const [projects, setProjects] = useState<ProjectI[]>([]);
@@ -47,9 +48,7 @@ const ProjectsPage = () => {
 
       {/* Loading and Error State */}
       {loading ? (
-        <p className="text-center text-lg font-medium animate-pulse">
-          Loading projects...
-        </p>
+        <Loading message="Loading Projects..." />
       ) : error ? (
         <p className="text-center text-red-500 text-lg">{error}</p>
       ) : (

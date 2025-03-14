@@ -14,6 +14,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StudentI } from "@/types";
 import * as XLSX from "xlsx";
+import Loading from "@/components/Loading";
 
 const StudentsPage = () => {
   const [students, setStudents] = useState<StudentI[]>([]);
@@ -118,7 +119,8 @@ const StudentsPage = () => {
       </div>
 
       {loading ? (
-        <p className="text-center text-lg font-medium">Loading students...</p>
+        // <p className="text-center text-lg font-medium">Loading students...</p>
+        <Loading message="Loading students..." />
       ) : error ? (
         <p className="text-red-500 text-center text-lg">{error}</p>
       ) : (

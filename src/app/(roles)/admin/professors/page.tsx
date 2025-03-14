@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import Link from "next/link";
 import { ProfessorI, ProjectI, StudentI } from "@/types";
+import Loading from "@/components/Loading"; // Create a reusable Loading component
 
 const ProfessorPage = () => {
   const [professors, setProfessors] = useState<ProfessorI[]>([]);
@@ -54,27 +54,19 @@ const ProfessorPage = () => {
     const roll_no = s?.roll_no;
     return `${name}(${roll_no})`;
   };
-  // students.find((s) => s._id === studentId)?.name || "NA";
 
   return (
     <div className="p-6 space-y-8">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-800">
-            📚 Professor Management
-          </h1>
-          <Link href="/admin" className="text-blue-500 hover:underline">
-            ← Back to Dashboard
-          </Link>
-        </div>
+        <h1 className="text-4xl font-bold text-gray-800">
+          📚 Professor Management
+        </h1>
       </div>
 
       {/* Loading and Error State */}
       {loading ? (
-        <p className="text-center text-lg font-medium animate-pulse">
-          Loading professors...
-        </p>
+        <Loading message="Loading professors..." />
       ) : error ? (
         <p className="text-center text-red-500 text-lg">{error}</p>
       ) : (

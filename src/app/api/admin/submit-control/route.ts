@@ -49,6 +49,12 @@ export async function POST(req: Request) {
       case "studentViewEnableProfessor":
         controls.studentViewEnableProfessor = enabled;
         break;
+      case "studentViewResult":
+        controls.studentViewResult = enabled;
+        break;
+      case "professorViewResult":
+        controls.professorViewResult = enabled;
+        break;
       default:
         return NextResponse.json(
           { error: "Invalid control type" },
