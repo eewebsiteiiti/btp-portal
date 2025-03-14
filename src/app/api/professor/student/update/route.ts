@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         return studentGroup;
       });
     }
-    const professorupdate = await Professor.findByIdAndUpdate(
+    await Professor.findByIdAndUpdate(
       professor_id,
       {
         studentsPreference: studentsPreferenceFormatted,
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       },
       { new: true }
     );
-    console.log(professorupdate);
+    // console.log(professorupdate);
 
     return NextResponse.json(
       { message: "This is a POST request" },

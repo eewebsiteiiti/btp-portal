@@ -51,14 +51,14 @@ export async function POST(req: NextRequest) {
     const studentsData = [];
 
     for (const student of data) {
-      // const password = generateRandomPassword();
-      // const hashedPassword = await bcrypt.hash(password, 10);
-      const password = "a";
+      const password = generateRandomPassword();
       const hashedPassword = await bcrypt.hash(password, 10);
+      // const password = "a";
+      // const hashedPassword = await bcrypt.hash(password, 10);
 
       // Send email with a delay to avoid rate limiting
-      // await sendEmail(student.email, password);
-      // await delay(500); // Add a delay of 500ms between emails
+      await sendEmail(student.email, password);
+      await delay(500); // Add a delay of 500ms between emails
 
       const studentData = {
         roll_no: student.roll_no,
