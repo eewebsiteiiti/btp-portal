@@ -1,6 +1,6 @@
 "use client";
 
-import React, { act, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import LogoutButton from "@/components/LogoutButton";
 import { ProfessorI, ProjectI, StudentI } from "@/types";
 import Loading from "@/components/Loading";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label"
+import { Label } from "@/components/ui/label";
 
 import {
   DndContext,
@@ -29,6 +29,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SortableItemPP } from "@/components/SortableItemPP";
 import { ControlsI } from "@/types";
 import ProfessorResult from "@/components/ProfessorPage/ProfessorResult";
+import { Button } from "@/components/ui/button";
 
 const ProfessorDashboard = () => {
   const { data: session } = useSession();
@@ -43,24 +44,25 @@ const ProfessorDashboard = () => {
   const [activeProjectCount, setActiveProjectCount] = useState(0);
   const [maxCapacity, setMaxCapacity] = useState(0);
   const [error, setError] = useState(false);
+
   useEffect(() => {
     // console.log(projects);
     let count = 0;
     projects.map((p) => {
       count += p.Capacity;
-    })
+    });
     setMaxCapacity(count);
   }, [projects]);
 
   useEffect(() => {
     projects.map((p) => {
-      dropProject[p._id] = p.dropProject
-    })
-  }, [projects])
+      dropProject[p._id] = p.dropProject;
+    });
+  }, [projects]);
 
   useEffect(() => {
     setError(activeProjectCount !== 4 && activeProjectCount !== 3);
-  }, [activeProjectCount])
+  }, [activeProjectCount]);
 
   useEffect(() => {
     // count the false of dropProject
@@ -70,7 +72,7 @@ const ProfessorDashboard = () => {
       if (dropProject[key] === false) {
         count += projects?.find((p) => p._id === key)?.Capacity || 0;
       }
-    })
+    });
     console.log(count);
     setActiveProjectCount(count);
   }, [dropProject, projects]);
@@ -109,7 +111,6 @@ const ProfessorDashboard = () => {
         setProjectWiseStudents(formattedData);
         setProjects(studentsRes.projectDetails);
         setProfessor(professorRes.professor);
-
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -133,34 +134,13 @@ const ProfessorDashboard = () => {
 
     fetchAdminControls();
   }, []);
-  // useEffect(() => {
-  //   console.log(projects)
-  //   projects.length !== 0 && projects.map((project) => {
-  //     setActiveProjectCount(activeProjectCount + project.Capacity);
-  //   }
-  //   )
-  // }
-  //   , [projects,professor]);
+
   const handleSwitchChange = async (projectId: string) => {
     setDropProject((prev) => ({
       ...prev,
       [projectId]: !prev[projectId],
     }));
-
-
-
   };
-
-  // useEffect(() => {
-  //   let active = activeProjectCount;
-  //   Object.keys(dropProject).map((key) => {
-  //     if (dropProject[key] === false) {
-  //       active += projects?.find((p) => p._id === key)?.Capacity || 0;
-  //       console.log(projects?.find((p) => p._id === key)?.Capacity);
-  //     }
-  //   })
-  //   setActiveProjectCount(active);
-  // }, []);
 
   const handleDragEnd = (event: DragEndEvent, projectId: string) => {
     const { active, over } = event;
@@ -187,7 +167,7 @@ const ProfessorDashboard = () => {
   const handleSubmit = async () => {
     if (activeProjectCount < 3) {
       alert("Error:students count does not exceed 3(minimum limit)");
-      return
+      return;
     }
     const postDropProjects = async () => {
       await fetch("api/project/update/drop", {
@@ -196,8 +176,8 @@ const ProfessorDashboard = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(dropProject),
-      })
-    }
+      });
+    };
     postDropProjects();
     const confirmSubmit = window.confirm(
       "Are you sure you want to save the changes? This will update the student order."
@@ -244,6 +224,7 @@ const ProfessorDashboard = () => {
           </div>
         </CardContent>
       </Card>
+
       {controls?.professorViewResult ? (
         <ProfessorResult professor_name={professor?.name || ""} />
       ) : (
@@ -264,7 +245,16 @@ const ProfessorDashboard = () => {
                       </TabsTrigger>
                     ))}
                   </TabsList>
-                  {activeProjectCount !== 4 && activeProjectCount !== 3 ? <><>You currently support {activeProjectCount} student capacity. Please switch off the least preferred project to make the capacity exactly 4.</></> : <></>}
+                  {activeProjectCount !== 4 && activeProjectCount !== 3 ? (
+                    <p className="text-destructive">
+                      You currently support {activeProjectCount} student
+                      capacity. Please switch off the least preferred project to
+                      make the capacity less than or equal to 4.
+                    </p>
+                  ) : (
+                    <></>
+                  )}
+
                   {projects.map((project) => (
                     <TabsContent
                       key={project._id}
@@ -276,83 +266,98 @@ const ProfessorDashboard = () => {
                           <h2 className="text-xl font-semibold mb-2">
                             {project.Title}
                           </h2>
-                          <p className="text-gray-500 mb-4">{project.Comments}</p>
+                          <p className="text-gray-500 mb-4">
+                            {project.Comments}
+                          </p>
                         </div>
-                        {maxCapacity >= 4 ? (<><div className="flex items-center gap-4 ">
-                          <Switch
-                            checked={!dropProject[project._id]}
-                            onCheckedChange={() => handleSwitchChange(project._id)}
-                          />
-                          <Label htmlFor="">Switch this project</Label>
-
-                        </div></>) : (<></>)}
-
+                        {maxCapacity >= 4 ? (
+                          <>
+                            <div className="flex items-center gap-4 ">
+                              <Switch
+                                checked={!dropProject[project._id]}
+                                onCheckedChange={() =>
+                                  handleSwitchChange(project._id)
+                                }
+                              />
+                              <Label htmlFor="">Switch this project</Label>
+                            </div>
+                          </>
+                        ) : (
+                          <></>
+                        )}
                       </div>
-                      {dropProject[project._id] ? (<>
-                        Project has been considered drop</>) : (<> <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
-                          {projectWiseStudents[project._id]?.length > 0 ? (
-                            <DndContext
-                              sensors={sensors}
-                              collisionDetection={closestCenter}
-                              onDragEnd={(event) =>
-                                handleDragEnd(event, project._id)
-                              }
-                            >
-                              <SortableContext
-                                items={projectWiseStudents[project._id].map(
-                                  (item) => item.studentGroup[0]._id
-                                )}
-                                strategy={verticalListSortingStrategy}
+                      {dropProject[project._id] ? (
+                        <>Project has been considered drop</>
+                      ) : (
+                        <>
+                          {" "}
+                          <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
+                            {projectWiseStudents[project._id]?.length > 0 ? (
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={(event) =>
+                                  handleDragEnd(event, project._id)
+                                }
                               >
-                                {projectWiseStudents[project._id].map(
-                                  ({ studentGroup, pref }) => (
-                                    <SortableItemPP
-                                      key={studentGroup[0]._id}
-                                      id={studentGroup[0]._id}
-                                    >
-                                      <Card className="p-4 my-4 shadow-sm hover:bg-gray-100">
-                                        <CardContent>
-                                          <div>
-                                            {studentGroup.map(
-                                              ({ name, roll_no, email }) => (
-                                                <div key={roll_no}>
-                                                  <h3 className="text-lg font-medium">
-                                                    {name}
-                                                  </h3>
-                                                  <p className="text-sm text-gray-500">
-                                                    Email: {email}
-                                                  </p>
-                                                  <p className="text-sm text-gray-500">
-                                                    Roll Number: {roll_no}
-                                                  </p>
-                                                </div>
-                                              )
-                                            )}
-                                          </div>
-                                        </CardContent>
-                                        <CardDescription className="text-sm font-bold mt-2 text-blue-600">
-                                          Preference #{pref + 1}
-                                        </CardDescription>
-                                      </Card>
-                                    </SortableItemPP>
-                                  )
-                                )}
-                              </SortableContext>
-                            </DndContext>
-                          ) : (
-                            <p className="text-gray-500">
-                              No students have selected this project yet.
-                            </p>
-                          )}
-                        </ScrollArea></>)}
-
-                      <button
-                        onClick={handleSubmit}
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
-                        Save Changes
-                      </button>
-
+                                <SortableContext
+                                  items={projectWiseStudents[project._id].map(
+                                    (item) => item.studentGroup[0]._id
+                                  )}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  {projectWiseStudents[project._id].map(
+                                    ({ studentGroup, pref }) => (
+                                      <SortableItemPP
+                                        key={studentGroup[0]._id}
+                                        id={studentGroup[0]._id}
+                                      >
+                                        <Card className="p-4 my-4 shadow-sm hover:bg-gray-100">
+                                          <CardContent>
+                                            <div>
+                                              {studentGroup.map(
+                                                ({ name, roll_no, email }) => (
+                                                  <div key={roll_no}>
+                                                    <h3 className="text-lg font-medium">
+                                                      {name}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500">
+                                                      Email: {email}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500">
+                                                      Roll Number: {roll_no}
+                                                    </p>
+                                                  </div>
+                                                )
+                                              )}
+                                            </div>
+                                          </CardContent>
+                                          <CardDescription className="text-sm font-bold mt-2 text-blue-600">
+                                            Preference #{pref + 1}
+                                          </CardDescription>
+                                        </Card>
+                                      </SortableItemPP>
+                                    )
+                                  )}
+                                </SortableContext>
+                              </DndContext>
+                            ) : (
+                              <p className="text-gray-500">
+                                No students have selected this project yet.
+                              </p>
+                            )}
+                          </ScrollArea>
+                        </>
+                      )}
+                      <div className=" ">
+                        <Button
+                          disabled={error}
+                          onClick={handleSubmit}
+                          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        >
+                          Save Changes
+                        </Button>
+                      </div>
                     </TabsContent>
                   ))}
                 </Tabs>
