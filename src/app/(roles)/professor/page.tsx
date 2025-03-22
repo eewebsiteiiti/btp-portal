@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { act, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
@@ -41,21 +41,39 @@ const ProfessorDashboard = () => {
   >({});
   const [loading, setLoading] = useState(true);
   const [activeProjectCount, setActiveProjectCount] = useState(0);
+  const [maxCapacity, setMaxCapacity] = useState(0);
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    // console.log(projects);
+    let count = 0;
+    projects.map((p) => {
+      count += p.Capacity;
+    })
+    setMaxCapacity(count);
+  }, [projects]);
 
   useEffect(() => {
-    // for( const profProject of profProject.project)
-    // const project = projects.find((project) => project._id === projects[0]._id);
-    // setActiveProjectCount(activeProjectCount + (project ? project.Capacity : 0));
-    // console.log(activeProjectCount);
-    projects.map((project) => {
-      console.log()
-      setActiveProjectCount(activeProjectCount + project?.Capacity);
-    }
-    )
-    console.log(activeProjectCount);
-  }
+    projects.map((p) => {
+      dropProject[p._id] = p.dropProject
+    })
+  }, [projects])
 
-    , [projects]);
+  useEffect(() => {
+    setError(activeProjectCount !== 4 && activeProjectCount !== 3);
+  }, [activeProjectCount])
+
+  useEffect(() => {
+    // count the false of dropProject
+    let count = 0;
+    console.log(dropProject);
+    Object.keys(dropProject).map((key) => {
+      if (dropProject[key] === false) {
+        count += projects?.find((p) => p._id === key)?.Capacity || 0;
+      }
+    })
+    console.log(count);
+    setActiveProjectCount(count);
+  }, [dropProject, projects]);
 
   useEffect(() => {
     if (!session?.user?.email) return;
@@ -89,8 +107,9 @@ const ProfessorDashboard = () => {
         );
 
         setProjectWiseStudents(formattedData);
-        setProjects(studentsRes.projectDetails || []);
+        setProjects(studentsRes.projectDetails);
         setProfessor(professorRes.professor);
+
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -114,20 +133,35 @@ const ProfessorDashboard = () => {
 
     fetchAdminControls();
   }, []);
-
-  const handleSwitchChange = (projectId: string) => {
+  // useEffect(() => {
+  //   console.log(projects)
+  //   projects.length !== 0 && projects.map((project) => {
+  //     setActiveProjectCount(activeProjectCount + project.Capacity);
+  //   }
+  //   )
+  // }
+  //   , [projects,professor]);
+  const handleSwitchChange = async (projectId: string) => {
     setDropProject((prev) => ({
       ...prev,
       [projectId]: !prev[projectId],
     }));
-    if (!dropProject[projectId]) {
-      setActiveProjectCount(activeProjectCount + (projects.find((project) => project._id === projectId)?.Capacity ?? 0));
-    }
-    else {
-      setActiveProjectCount(activeProjectCount - (projects.find((project) => project._id === projectId)?.Capacity ?? 0));
-    }
-    console.log(activeProjectCount);
+
+
+
   };
+
+  // useEffect(() => {
+  //   let active = activeProjectCount;
+  //   Object.keys(dropProject).map((key) => {
+  //     if (dropProject[key] === false) {
+  //       active += projects?.find((p) => p._id === key)?.Capacity || 0;
+  //       console.log(projects?.find((p) => p._id === key)?.Capacity);
+  //     }
+  //   })
+  //   setActiveProjectCount(active);
+  // }, []);
+
   const handleDragEnd = (event: DragEndEvent, projectId: string) => {
     const { active, over } = event;
 
@@ -151,6 +185,20 @@ const ProfessorDashboard = () => {
   };
 
   const handleSubmit = async () => {
+    if (activeProjectCount < 3) {
+      alert("Error:students count does not exceed 3(minimum limit)");
+      return
+    }
+    const postDropProjects = async () => {
+      await fetch("api/project/update/drop", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dropProject),
+      })
+    }
+    postDropProjects();
     const confirmSubmit = window.confirm(
       "Are you sure you want to save the changes? This will update the student order."
     );
@@ -183,7 +231,6 @@ const ProfessorDashboard = () => {
   if (loading) {
     return <Loading />;
   }
-
   return (
     <div className="space-y-6 p-6 bg-gray-50 w-full flex flex-col">
       {/* Professor Info */}
@@ -217,6 +264,7 @@ const ProfessorDashboard = () => {
                       </TabsTrigger>
                     ))}
                   </TabsList>
+                  {activeProjectCount !== 4 && activeProjectCount !== 3 ? <><>You currently support {activeProjectCount} student capacity. Please switch off the least preferred project to make the capacity exactly 4.</></> : <></>}
                   {projects.map((project) => (
                     <TabsContent
                       key={project._id}
@@ -230,13 +278,15 @@ const ProfessorDashboard = () => {
                           </h2>
                           <p className="text-gray-500 mb-4">{project.Comments}</p>
                         </div>
-                        <div className="flex items-center gap-4 ">
+                        {maxCapacity >= 4 ? (<><div className="flex items-center gap-4 ">
                           <Switch
-                            checked={dropProject[project._id]}
+                            checked={!dropProject[project._id]}
                             onCheckedChange={() => handleSwitchChange(project._id)}
                           />
-                          <Label htmlFor="">Switch this project off</Label>
-                        </div>
+                          <Label htmlFor="">Switch this project</Label>
+
+                        </div></>) : (<></>)}
+
                       </div>
                       {dropProject[project._id] ? (<>
                         Project has been considered drop</>) : (<> <ScrollArea className="flex-1 border rounded-md bg-white shadow-md p-2">
@@ -294,13 +344,14 @@ const ProfessorDashboard = () => {
                               No students have selected this project yet.
                             </p>
                           )}
-                          <button
-                            onClick={handleSubmit}
-                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                          >
-                            Save Changes
-                          </button>
                         </ScrollArea></>)}
+
+                      <button
+                        onClick={handleSubmit}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        Save Changes
+                      </button>
 
                     </TabsContent>
                   ))}

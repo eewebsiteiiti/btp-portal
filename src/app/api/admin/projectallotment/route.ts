@@ -14,6 +14,9 @@ const fun = async () => {
         projProfMap[project] = String(prof._id);
       }
     }
+
+
+
     const profStudentCountMap: { [key: string]: number } = {};
     for (const prof of professorData) {
       profStudentCountMap[prof._id] = 0;
@@ -45,6 +48,11 @@ const fun = async () => {
     const projectCapacity: { [key: string]: number } = {};
     projects.forEach((project) => {
       projectCapacity[project._id] = project.Capacity;
+    });
+
+    const projectOff: { [key: string]: boolean } = {};
+    projects.forEach((project) => {
+      projectOff[project._id] = project.dropProject;
     });
 
     const student: number[][] = [];
@@ -132,6 +140,21 @@ const fun = async () => {
       );
     });
 
+    const fillProject = (
+      projectOff: { [key: string]: boolean },
+      result: number[][]
+    ): number[][] => {
+      Object.keys(projectOff).forEach((key) => {
+        if (projectOff[key]) {
+          const i = projectIndexMap[key];
+          result.forEach((row) => {
+            row[i] = 1e5;
+          });
+        }
+      });
+      return result;
+    }
+
     const fillProf = (
       prof: { [key: string]: number },
       result: number[][],
@@ -168,6 +191,8 @@ const fun = async () => {
     let result = student.map((row, i) =>
       row.map((val, j) => val + professor[i][j])
     );
+    
+    result = fillProject(projectOff, result);
 
     let finalMapping: ([number, number] | [string, string])[] = [];
     let minVal = 1e5 - 1;

@@ -1,22 +1,36 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import Project from "@/models/Project";
 import { dbConnect } from "@/lib/mongodb";
 
-export async function PUT() {
+export async function PUT(req: NextRequest) {
     try {
         await dbConnect();
-        // await Project.updateOne(
-        //     { _id: '67d430ea275a92c306d13e0a' },
-        //     { $set: { dropProject: true } }
-        // );
+        const body = await req.json();// {id:bool}
 
+
+        const projectUpdates = Object.entries(body).map(
+            async ([projectId, drop]) => {
+                await Project.updateOne(
+                    { _id: projectId },
+                    { $set: { dropProject: drop } }
+                );
+            }
+        );
+        console.log(projectUpdates);
+
+
+
+        await Promise.all(projectUpdates);
 
         return NextResponse.json(
-            { message: "PUT request received" },
+            { message: "Projects updated successfully" },
             { status: 200 }
         );
     } catch (error) {
-        console.log(error);
-        return NextResponse.json({ message: "Error", error }, { status: 500 });
+        console.error("Error:", error);
+        return NextResponse.json(
+            { message: "Error updating projects", error },
+            { status: 500 }
+        );
     }
 }
