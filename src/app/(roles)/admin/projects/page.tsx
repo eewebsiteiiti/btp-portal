@@ -82,6 +82,9 @@ const ProjectsPage = () => {
                   <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
                     Co-Supervisor
                   </TableHead>
+                  <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
+                    Project-Droped
+                  </TableHead>
                   {/* <TableHead className="py-3 px-4 text-center font-semibold text-gray-600">
                     Actions
                   </TableHead> */}
@@ -136,6 +139,15 @@ const ProjectsPage = () => {
                       {/* Co-Supervisor */}
                       <TableCell className="py-4 px-4 text-gray-600">
                         {project.Cosupervisor || "—"}
+                      </TableCell>
+
+                      {/* Project-Drop */}
+                      <TableCell className="py-4 px-4 text-gray-600">
+                        {project.dropProject ? (
+                          <span className="text-destructive">Yes</span>
+                        ) : (
+                          "No"
+                        )}
                       </TableCell>
 
                       {/* Actions */}

@@ -15,8 +15,6 @@ const fun = async () => {
       }
     }
 
-
-
     const profStudentCountMap: { [key: string]: number } = {};
     for (const prof of professorData) {
       profStudentCountMap[prof._id] = 0;
@@ -153,7 +151,7 @@ const fun = async () => {
         }
       });
       return result;
-    }
+    };
 
     const fillProf = (
       prof: { [key: string]: number },
@@ -191,7 +189,7 @@ const fun = async () => {
     let result = student.map((row, i) =>
       row.map((val, j) => val + professor[i][j])
     );
-    
+
     result = fillProject(projectOff, result);
 
     let finalMapping: ([number, number] | [string, string])[] = [];
