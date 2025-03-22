@@ -291,7 +291,7 @@ const ProfessorDashboard = () => {
                             Capacity: {project.Capacity}
                           </p>
                         </div>
-                        {maxCapacity >= 4 && (
+                        {maxCapacity > 4 && (
                           <div className="flex items-center gap-4">
                             <Switch
                               checked={dropProject[project._id]}
