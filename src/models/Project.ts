@@ -10,6 +10,7 @@ const ProjectSchema = new mongoose.Schema({
   Supervisor: { type: String, required: true },
   Cosupervisor: { type: String, required: false },
   Supervisor_email: { type: String, required: true },
+  dropProject: { type: Boolean, required: true, default: false },
 });
 export default mongoose.models.Project ||
   mongoose.model("Project", ProjectSchema);

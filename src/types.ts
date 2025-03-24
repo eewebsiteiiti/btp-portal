@@ -36,6 +36,7 @@ export interface ProjectI {
   Cosupervisor?: string;
   studentLimit: number;
   Supervisor_email: string;
+  dropProject: boolean;
 }
 export interface ControlsI {
   submitEnableStudentProjects: boolean;

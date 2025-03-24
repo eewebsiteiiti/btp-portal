@@ -178,7 +178,7 @@ const Page = () => {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 mt-2">
-                  Allotment process not started yet.
+                  No Studnets assigned.
                 </p>
               )}
             </div>
