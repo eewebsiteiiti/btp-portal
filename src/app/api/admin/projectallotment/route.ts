@@ -23,7 +23,7 @@ const fun = async () => {
     const limit: { [key: string]: number } = {};
     for (const prof of professorData) {
       // limit[prof._id] = prof.studentLimit;
-      limit[prof._id] = 4;
+      limit[prof._id] = 4; /// max limit by admin
     }
 
     const profStudentMap: { [string: string]: [string, string][] } = {};
@@ -53,14 +53,14 @@ const fun = async () => {
       projectOff[project._id] = project.dropProject;
     });
 
-    const student: number[][] = [];
-    const professor: number[][] = [];
+    const student: number[][] = []; // main matrix
+    const professor: number[][] = []; // main matrix
 
     // fill the student array with 1e4 dimension students x student preference array
     students.map(() => {
       const a = [];
       for (let i = 0; i < projects.length; i++) {
-        a.push(1e5);
+        a.push(1e5); // initializing to 1e5
       }
       student.push(a);
     });
@@ -69,7 +69,7 @@ const fun = async () => {
     students.map(() => {
       const a = [];
       for (let i = 0; i < projects.length; i++) {
-        a.push(1e5);
+        a.push(1e5); // initializing to 1e5
       }
       professor.push(a);
     });
@@ -126,11 +126,13 @@ const fun = async () => {
       (Array.isArray(studs) ? studs : []).forEach(
         (st: string[], st_idx: number) => {
           if (st.length > 1) {
+            // for group
             st.forEach((s) => {
               s = s.toString();
               professor[studentIndexMap[s]][projectIndexMap[proj]] = st_idx;
             });
           } else {
+            // for individual
             const st_od = st[0].toString();
             professor[studentIndexMap[st_od]][projectIndexMap[proj]] = st_idx;
           }
@@ -206,12 +208,13 @@ const fun = async () => {
       });
 
       const sameRowIndex: [number, number][] = [];
-      const differentRowIndex: [number, number][] = [];
+      // const sameColIndex: [number, number][] = []
+      const nonClashIndex: [number, number][] = [];
       const rowSet = new Set<number>();
 
       mask.forEach(([i, j]) => {
         if (!rowSet.has(i)) {
-          differentRowIndex.push([i, j]);
+          nonClashIndex.push([i, j]);
           rowSet.add(i);
         } else {
           sameRowIndex.push([i, j]);
@@ -228,13 +231,13 @@ const fun = async () => {
             studentPref = student[i][j];
           }
         });
-        differentRowIndex.push(preferredIndex);
+        nonClashIndex.push(preferredIndex);
       }
       // [0,1], [1,1] => group
       const mapping: [string, string][] = [];
       let studi_ob_id: string;
       let proj_ob_id: string;
-      differentRowIndex.forEach(([i, j]) => {
+      nonClashIndex.forEach(([i, j]) => {
         Object.keys(studentIndexMap).map((key) => {
           if (studentIndexMap[key] === i) {
             studi_ob_id = key;
@@ -263,7 +266,8 @@ const fun = async () => {
         if (
           profStudentCountMap[professorId] <= limit[professorId] &&
           !checkGroup &&
-          !checkRowFill(result, i)
+          !checkRowFill(result, i) &&
+          projectCapacity[proj_ob_id] >= 1
         ) {
           mapping.push([studi_ob_id, proj_ob_id]);
           profStudentMap[professorId].push([studi_ob_id, proj_ob_id]);
@@ -277,7 +281,9 @@ const fun = async () => {
         } else if (
           profStudentCountMap[professorId] <= limit[professorId] - 2 &&
           checkGroup &&
-          !checkRowFill(result, i)
+          !checkRowFill(result, i) &&
+          !checkRowFill(result, studentIndexMap[partner]) &&
+          projectCapacity[proj_ob_id] >= 2
         ) {
           mapping.push([studi_ob_id, proj_ob_id]);
           mapping.push([partner, proj_ob_id]);
@@ -287,8 +293,10 @@ const fun = async () => {
           result = fillProf(profStudentCountMap, result, limit, projProfMap);
           result[i].fill(1e5);
           // parter i
+
           const partnerIndex = studentIndexMap[partner];
           result[partnerIndex].fill(1e5);
+          console.log(projectCapacity);
           projectCapacity[proj_ob_id] -= 2;
           if (projectCapacity[proj_ob_id] <= 0) {
             result.forEach((row) => (row[j] = 1e5));

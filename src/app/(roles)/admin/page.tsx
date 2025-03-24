@@ -194,9 +194,8 @@ export default function AdminDashboard() {
               <span>Enable Result for Professors</span>
             </div>
             <div className="flex items-left gap-2 flex-col">
-              <p> Number of Dropped Projects: {counts.drops}</p>
+              <p> Number of Active Projects: {counts.drops}</p>
               <p>
-                {" "}
                 Max capacity of all active projects: {counts.nonDroppedCapacity}
               </p>
               <p>
