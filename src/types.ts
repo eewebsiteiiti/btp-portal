@@ -4,7 +4,7 @@ export interface ProfessorI {
   email: string;
   password: string;
   // students: StudentI[];
-  studentsPreference?: { [key: string]: string[] };
+  studentsPreference?: { [key: string]: string[][] };
   projects: string[];
   submitStatus: boolean;
 }

@@ -9,6 +9,8 @@ export default function AdminDashboard() {
     professors: 0,
     students: 0,
     projects: 0,
+    nonDroppedCapacity: 0,
+    drops: 0,
   });
 
   const [controls, setControls] = useState({
@@ -190,6 +192,25 @@ export default function AdminDashboard() {
                 }
               />
               <span>Enable Result for Professors</span>
+            </div>
+            <div className="flex items-left gap-2 flex-col">
+              <p> Number of Dropped Projects: {counts.drops}</p>
+              <p>
+                {" "}
+                Max capacity of all active projects: {counts.nonDroppedCapacity}
+              </p>
+              <p>
+                {counts.nonDroppedCapacity < counts.students ? (
+                  <span className="text-red-500">
+                    Logic Violation! Capacity is less than students
+                  </span>
+                ) : (
+                  <span className="text-green-500">
+                    No Logic Violation! Capacity is greater than equal to
+                    students
+                  </span>
+                )}
+              </p>
             </div>
           </div>
           <div className="mt-auto flex justify-end">

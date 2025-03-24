@@ -23,30 +23,38 @@ const ProfessorPage = () => {
   const [students, setStudents] = useState<StudentI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [professor, setProfessor] = useState<ProfessorI | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      if (!session?.user?.email) {
+        setLoading(false);
+        return;
+      }
       try {
-        const [profRes, projRes, studRes] = await Promise.all([
+        const [profRes, projRes, studRes, profi] = await Promise.all([
           fetch("/api/professor/get"),
           fetch("/api/project/get"),
           fetch("/api/student/get"),
+          fetch(`/api/professor/get?email=${session?.user?.email}`),
         ]);
 
         if (!profRes.ok || !projRes.ok || !studRes.ok) {
           throw new Error("Failed to fetch data");
         }
 
-        const [profData, projData, studData] = await Promise.all([
+        const [profData, projData, studData, prof] = await Promise.all([
           profRes.json(),
           projRes.json(),
           studRes.json(),
+          profi.json(),
         ]);
 
         setProfessors(profData.professors);
         setProjects(projData.projects);
         setStudents(studData.students);
+        setProfessor(prof.professor);
       } catch (error) {
         setError((error as Error).message);
       } finally {
@@ -55,10 +63,14 @@ const ProfessorPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [session]);
+  console.log(professor);
 
   const getProjectTitle = (projectId: string) =>
     projects.find((p) => p._id === projectId)?.Title || "Unknown Project";
+
+  const getProjectStatus = (projectId: string) =>
+    projects?.find((p) => p._id === projectId)?.dropProject || false;
 
   const getStudent = (studentId: string) => {
     const s = students.find((s) => s._id === studentId);
@@ -119,7 +131,7 @@ const ProfessorPage = () => {
               <h2 className="text-2xl font-bold text-gray-800">{prof.name}</h2>
               <p className="text-gray-600">{prof.email}</p>
               <p>
-                Status:{" "}
+                Status:
                 {prof.submitStatus ? (
                   <span className="text-green-500">Submitted</span>
                 ) : (
@@ -131,37 +143,57 @@ const ProfessorPage = () => {
             {/* Projects (Grid) */}
             <div className="grid grid-cols-2 gap-4">
               {prof.projects?.map((projectId) => (
-                <Card
-                  key={projectId}
-                  className="p-4 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    {getProjectTitle(projectId)}
-                  </h3>
-
-                  {/* Students (Scrollable) */}
-                  {prof.studentsPreference?.[projectId]?.length ? (
-                    <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-gray-50">
-                      <ul className="space-y-1 text-sm text-gray-700">
-                        {prof.studentsPreference[projectId]
-                          .flat()
-                          .map((studentId, index) => (
-                            <li
-                              key={studentId}
-                              className="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded-md"
-                            >
-                              <span>{getStudent(studentId)}</span>
-                              <span className="text-xs text-gray-500">
-                                #{index + 1}
-                              </span>
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
+                <>
+                  {getProjectStatus(projectId) ? (
+                    <>
+                      <Card className="p-4 items-center justify-center border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow text-gray-400">
+                        This project has been dropped.
+                      </Card>
+                    </>
                   ) : (
-                    <p className="text-sm text-gray-400">No Students</p>
+                    <>
+                      {" "}
+                      <Card
+                        key={projectId}
+                        className="p-4 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                          {getProjectTitle(projectId)}
+                          {/* {getProjectStatus(projectId) ? "true" : "false"} */}
+                        </h3>
+
+                        {/* Students (Scrollable) */}
+                        {prof.studentsPreference?.[projectId]?.length ? (
+                          <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-gray-50">
+                            <ul className="space-y-1 text-sm text-gray-700">
+                              {prof.studentsPreference[projectId].map(
+                                (studentsId, index1) => (
+                                  <>
+                                    {studentsId.map((studentId) => (
+                                      <>
+                                        <li
+                                          key={studentId}
+                                          className="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded-md"
+                                        >
+                                          <span>{getStudent(studentId)}</span>
+                                          <span className="text-xs text-gray-500">
+                                            #{index1 + 1}
+                                          </span>
+                                        </li>
+                                      </>
+                                    ))}
+                                  </>
+                                )
+                              )}
+                            </ul>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-400">No Students</p>
+                        )}
+                      </Card>
+                    </>
                   )}
-                </Card>
+                </>
               ))}
             </div>
           </Card>
