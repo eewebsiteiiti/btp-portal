@@ -35,6 +35,7 @@ import { ControlsI } from "@/types";
 import ProfessorResult from "@/components/ProfessorPage/ProfessorResult";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Link from "next/link";
 
 const ProfessorDashboard = () => {
   const { data: session } = useSession();
@@ -239,6 +240,15 @@ const ProfessorDashboard = () => {
         <CardContent>
           <div className="mt-4">
             <LogoutButton />
+          </div>
+        </CardContent>
+        <CardContent>
+          <div className="mt-4">
+            <Button asChild>
+              <Link href="/professor/your-preference">
+                <p className="text-secondary">Your Preference</p>
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
