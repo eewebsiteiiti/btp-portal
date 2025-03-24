@@ -23,7 +23,7 @@ const ProfessorPage = () => {
   const [students, setStudents] = useState<StudentI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [professor, setProfessor] = useState<ProfessorI | null>(null);
+  // const [professor, setProfessor] = useState<ProfessorI | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,7 +33,7 @@ const ProfessorPage = () => {
         return;
       }
       try {
-        const [profRes, projRes, studRes, profi] = await Promise.all([
+        const [profRes, projRes, studRes] = await Promise.all([
           fetch("/api/professor/get"),
           fetch("/api/project/get"),
           fetch("/api/student/get"),
@@ -44,17 +44,16 @@ const ProfessorPage = () => {
           throw new Error("Failed to fetch data");
         }
 
-        const [profData, projData, studData, prof] = await Promise.all([
+        const [profData, projData, studData] = await Promise.all([
           profRes.json(),
           projRes.json(),
           studRes.json(),
-          profi.json(),
         ]);
 
         setProfessors(profData.professors);
         setProjects(projData.projects);
         setStudents(studData.students);
-        setProfessor(prof.professor);
+        // setProfessor(prof.professor);
       } catch (error) {
         setError((error as Error).message);
       } finally {
@@ -64,7 +63,7 @@ const ProfessorPage = () => {
 
     fetchData();
   }, [session]);
-  console.log(professor);
+  // console.log(professor);
 
   const getProjectTitle = (projectId: string) =>
     projects.find((p) => p._id === projectId)?.Title || "Unknown Project";

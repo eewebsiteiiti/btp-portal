@@ -155,6 +155,16 @@ const fun = async () => {
       return result;
     };
 
+    const fillMinVal = (
+      result: number[][],
+      mask: [number, number][] // [i,j]
+    ): number[][] => {
+      mask.map((idx) => {
+        result[idx[0]][idx[1]] = 1e5;
+      });
+      return result;
+    };
+
     const fillProf = (
       prof: { [key: string]: number },
       result: number[][],
@@ -196,8 +206,12 @@ const fun = async () => {
 
     let finalMapping: ([number, number] | [string, string])[] = [];
     let minVal = 1e5 - 1;
+    // let iter = 0;
     while (new Set(result.flat()).size !== 1) {
+      // while (iter < 100) {
+      // iter++;
       minVal = Math.min(...result.flat());
+      // console.log(minVal);
       const mask: [number, number][] = [];
       result.forEach((row, i) => {
         row.forEach((val, j) => {
@@ -206,7 +220,7 @@ const fun = async () => {
           }
         });
       });
-
+      // console.log(mask);
       const sameRowIndex: [number, number][] = [];
       // const sameColIndex: [number, number][] = []
       const nonClashIndex: [number, number][] = [];
@@ -264,6 +278,8 @@ const fun = async () => {
 
         const professorId = projProfMap[proj_ob_id];
         if (
+          // 1)if student not in group
+
           profStudentCountMap[professorId] <= limit[professorId] &&
           !checkGroup &&
           !checkRowFill(result, i) &&
@@ -296,11 +312,13 @@ const fun = async () => {
 
           const partnerIndex = studentIndexMap[partner];
           result[partnerIndex].fill(1e5);
-          console.log(projectCapacity);
+          // console.log(projectCapacity);
           projectCapacity[proj_ob_id] -= 2;
           if (projectCapacity[proj_ob_id] <= 0) {
             result.forEach((row) => (row[j] = 1e5));
           }
+        } else {
+          result = fillMinVal(result, mask); // fill because of being partner
         }
       });
       finalMapping = [...finalMapping, ...mapping];
