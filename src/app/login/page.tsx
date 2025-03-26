@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -115,6 +116,11 @@ export default function Login() {
               {loading ? <Loader2 className="animate-spin" /> : "Login"}
             </Button>
           </form>
+          {role === "professor" ? (
+            <Button asChild className="w-full" variant="link">
+              <Link href="login/forgot-password">Forgot Password?</Link>
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
     </div>
