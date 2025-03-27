@@ -23,6 +23,7 @@ export interface StudentI {
   password: string;
   preferences: PreferenceI[];
   submitStatus: boolean;
+  cpi: number;
 }
 export interface ProjectI {
   Domain: string;

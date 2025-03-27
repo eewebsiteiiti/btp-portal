@@ -346,7 +346,12 @@ const ProfessorDashboard = () => {
                                         <CardContent>
                                           <div>
                                             {studentGroup.map(
-                                              ({ name, roll_no, email }) => (
+                                              ({
+                                                name,
+                                                roll_no,
+                                                email,
+                                                cpi,
+                                              }) => (
                                                 <div key={roll_no}>
                                                   <h3 className="text-lg font-medium">
                                                     {name}
@@ -356,6 +361,9 @@ const ProfessorDashboard = () => {
                                                   </p>
                                                   <p className="text-sm text-muted-foreground">
                                                     Roll Number: {roll_no}
+                                                  </p>
+                                                  <p className="text-sm text-muted-foreground">
+                                                    CPI: {cpi}
                                                   </p>
                                                 </div>
                                               )
