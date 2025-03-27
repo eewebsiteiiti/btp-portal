@@ -38,7 +38,6 @@ const Page = () => {
     fetchData();
   }, []);
 
-  // Map student_id to full student object and sort by CPI
   const getSortedStudents = (studentIds: string[]) => {
     return studentIds
       .map((id) => allStudents.find((student) => student._id === id))
