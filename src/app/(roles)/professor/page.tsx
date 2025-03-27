@@ -185,7 +185,7 @@ const ProfessorDashboard = () => {
       "Are you sure you want to save the changes? This will update the student order."
     );
     if (!confirmSubmit) return;
-
+    setLoading(true);
     try {
       await Promise.all([
         fetch("api/project/update/drop", {
@@ -208,6 +208,8 @@ const ProfessorDashboard = () => {
     } catch (error) {
       console.error("Error updating student order:", error);
       alert("Failed to update student order.");
+    } finally {
+      setLoading(false);
     }
   };
 
