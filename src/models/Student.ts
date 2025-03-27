@@ -14,6 +14,7 @@ const StudentSchema = new mongoose.Schema({
     },
   ],
   submitStatus: { type: Boolean, required: true, default: false },
+  cpi: { type: Number, required: false },
 });
 
 export default mongoose.models.Student ||

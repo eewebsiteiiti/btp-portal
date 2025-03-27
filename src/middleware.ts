@@ -29,6 +29,6 @@ export const config = {
     "/admin/:path*",
     "/professor/:path*",
     "/student/:path*",
-    "/api/:path*",
+    // "/api/:path*",
   ],
 };
