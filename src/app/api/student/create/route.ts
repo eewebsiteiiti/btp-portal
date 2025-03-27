@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
           partnerRollNumber: "",
           status: "Pending",
         })),
+        cpi: student.cpi,
       };
 
       studentsData.push(studentData);
