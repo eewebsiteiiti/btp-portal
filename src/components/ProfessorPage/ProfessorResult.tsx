@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { StudentI, ProjectI } from "@/types";
+import Loading from "../Loading";
 
 const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
   const [projectStudents, setProjectStudents] = useState<
@@ -9,10 +10,12 @@ const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
   >({});
   const [allProjects, setAllProjects] = useState<ProjectI[]>([]);
   const [allStudents, setAllStudents] = useState<StudentI[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const [assignedProjectsRes, projectsRes, studentsRes] =
           await Promise.all([
             fetch("/api/admin/assigned-projects").then((res) => res.json()),
@@ -25,6 +28,8 @@ const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
         setAllStudents(studentsRes.students || []);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -37,7 +42,9 @@ const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
       .map((id) => allStudents.find((student) => student._id === id))
       .filter((student): student is StudentI => student !== undefined);
 
-  // Export data to Excel
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <div className="p-6">
@@ -124,7 +131,7 @@ const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 mt-2">
-                    Allotment process not started yet.
+                    Project has been dropped
                   </p>
                 )}
               </div>
