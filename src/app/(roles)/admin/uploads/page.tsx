@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ProfessorI, ProjectI, StudentI } from "@/types";
+import { toast } from "sonner";
 
 export default function AdminUploads() {
   const [professors, setProfessors] = useState<ProfessorI[]>([]);
@@ -43,7 +44,7 @@ export default function AdminUploads() {
     data: ProfessorI[] | StudentI[] | ProjectI[]
   ) => {
     if (data.length === 0) {
-      alert(`No ${type} data to upload`);
+      toast.error(`No ${type} data to upload`);
       return;
     }
     setLoading(true);
@@ -55,13 +56,13 @@ export default function AdminUploads() {
         body: JSON.stringify({ data }),
       });
       if (response.ok) {
-        alert(`${type} data uploaded successfully`);
+        toast.success(`${type} data uploaded successfully`);
       } else {
-        alert(`Failed to upload ${type} data`);
+        toast.error(`Failed to upload ${type} data`);
       }
     } catch (error) {
       console.error(`Error uploading ${type} data:`, error);
-      alert(`Error uploading ${type} data`);
+      toast.error(`Error uploading ${type} data`);
     }
     setLoading(false);
   };

@@ -21,6 +21,8 @@ import {
 } from "@dnd-kit/sortable";
 import SortableItem from "@/components/SortableItem";
 import { ProjectI, ControlsI, StudentI } from "@/types";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { toast } from "sonner";
 
 const StudentProjectSelector = ({
   student,
@@ -41,6 +43,7 @@ const StudentProjectSelector = ({
   const [projectMap, setProjectMap] = useState<{
     [key: string]: { partnerRollNumber: string; status: string };
   }>({});
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     const fetchStudentPreferences = async () => {
@@ -154,7 +157,7 @@ const StudentProjectSelector = ({
       });
 
       if (!response.ok) throw new Error();
-      if (!flag) alert("Preferences saved successfully!");
+      if (!flag) toast.success("Preferences saved successfully!");
 
       // Refresh list after submitting
       const fetchStudentPreferences = async () => {
@@ -187,6 +190,24 @@ const StudentProjectSelector = ({
     }
   };
 
+  const checkGroupBreak = async () => {
+    try {
+      const response = await fetch("/api/student/checkgroupbreak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roll_no: student?.rollNo,
+        }),
+      });
+
+      const data = await response.json();
+      return data.groupBreak;
+    } catch {
+      setError("Error checking group break");
+      return false;
+    }
+  };
+
   const submitPreferences = async () => {
     if (!session?.user) return;
 
@@ -200,41 +221,23 @@ const StudentProjectSelector = ({
     });
 
     if (pendingRequests.length > 0) {
-      alert("Please make sure all group requests are resolved before submitting");
+      toast.error("Please make sure all group requests are resolved before submitting");
       return;
     }
 
     savePreferences(true);
 
-    const checkGroupBreak = async () => {
-      try {
-        const response = await fetch("/api/student/checkgroupbreak", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            roll_no: student?.rollNo,
-          }),
-        });
-
-        const data = await response.json();
-        return data.groupBreak;
-      } catch {
-        setError("Error checking group break");
-        return false;
-      }
-    };
-
     if (await checkGroupBreak()) {
-      alert(
-        "Group break detected. Please resolve the issue before submitting preferences"
-      );
+      toast.error("Group break detected. Please resolve the issue before submitting preferences");
       return;
     }
 
-    const confirmSubmit = window.confirm(
-      "Are you sure you want to submit your preferences? Once submitted, you cannot modify them."
-    );
-    if (!confirmSubmit) return;
+    setShowConfirm(true);
+  };
+
+  const confirmSubmitPreferences = async () => {
+    if (!session?.user) return;
+    setShowConfirm(false);
 
     try {
       const response = await fetch("/api/student/preference/put", {
@@ -253,15 +256,23 @@ const StudentProjectSelector = ({
 
       if (!response.ok) throw new Error();
 
-      alert("Preferences submitted successfully!");
+      toast.success("Preferences submitted successfully!");
       setStudent({ ...student, submitStatus: true } as StudentI);
     } catch {
-      setError("Error saving preferences");
+      toast.error("Error saving preferences");
     }
   };
 
   return (
     <>
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title="Submit Preferences"
+        description="Are you sure you want to submit your preferences? Once submitted, you cannot modify them."
+        confirmText="Submit"
+        onConfirm={confirmSubmitPreferences}
+      />
       <h2 className="font-semibold text-gray-800">
         Order Your Preferred Projects
       </h2>

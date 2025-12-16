@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card } from "@/components/ui/card";
 import { SortableItemProps } from "@/types";
 import { Button } from "./ui/button";
+import { toast } from "sonner";
 
 export default function SortableItem({
   id,
@@ -25,7 +26,7 @@ export default function SortableItem({
 
   const handleRollNumberAdd = () => {
     if (student.rollNo === rollNumber) {
-      alert("You cannot add yourself as a partner");
+      toast.error("You cannot add yourself as a partner");
       return;
     }
     setProjectMap((project_map) => ({

@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { toast } from "sonner";
 import {
   Users,
   GraduationCap,
@@ -14,6 +15,15 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
+
+type ConfirmDialogState = {
+  open: boolean;
+  title: string;
+  description: string;
+  confirmText: string;
+  variant: "default" | "destructive";
+  onConfirm: () => void;
+};
 
 export default function AdminDashboard() {
   const [counts, setCounts] = useState({
@@ -37,6 +47,23 @@ export default function AdminDashboard() {
   const [isResetting, setIsResetting] = useState(false);
   const [isDevFilling, setIsDevFilling] = useState(false);
 
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
+    open: false,
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "default",
+    onConfirm: () => {},
+  });
+
+  const closeDialog = () => {
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+  };
+
+  const showConfirmDialog = (config: Omit<ConfirmDialogState, "open">) => {
+    setConfirmDialog({ ...config, open: true });
+  };
+
   const fetchCounts = async () => {
     try {
       const res = await fetch("/api/data/count");
@@ -44,6 +71,7 @@ export default function AdminDashboard() {
       setCounts(updatedData);
     } catch (error) {
       console.error("Error fetching updated counts:", error);
+      toast.error("Failed to fetch counts");
     }
   };
 
@@ -54,6 +82,7 @@ export default function AdminDashboard() {
       setControls(data);
     } catch (error) {
       console.error("Error fetching admin controls:", error);
+      toast.error("Failed to fetch admin controls");
     }
   };
 
@@ -70,44 +99,58 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
       });
       setControls((prev) => ({ ...prev, [type]: enabled }));
+      toast.success(`Setting updated successfully`);
     } catch (error) {
       console.error("Error updating admin controls:", error);
+      toast.error("Failed to update setting");
     }
   };
 
-  const handleStartAllocation = async () => {
-    if (!window.confirm("Are you sure you want to start the project allocation? This will assign students to projects based on preferences.")) {
-      return;
-    }
-    setIsAllocating(true);
-    try {
-      const res = await fetch("/api/admin/projectallotment");
-      if (!res.ok) throw new Error("Failed to start allocation");
-      alert("Project allocation completed successfully!");
-    } catch (error) {
-      console.error("Error starting project allocation:", error);
-      alert("Failed to start project allocation.");
-    } finally {
-      setIsAllocating(false);
-    }
+  const handleStartAllocation = () => {
+    showConfirmDialog({
+      title: "Start Project Allocation",
+      description: "Are you sure you want to start the project allocation? This will assign students to projects based on their preferences.",
+      confirmText: "Start Allocation",
+      variant: "default",
+      onConfirm: async () => {
+        closeDialog();
+        setIsAllocating(true);
+        try {
+          const res = await fetch("/api/admin/projectallotment");
+          if (!res.ok) throw new Error("Failed to start allocation");
+          toast.success("Project allocation completed successfully!");
+        } catch (error) {
+          console.error("Error starting project allocation:", error);
+          toast.error("Failed to start project allocation");
+        } finally {
+          setIsAllocating(false);
+        }
+      },
+    });
   };
 
-  const handleResetAllocation = async () => {
-    if (!window.confirm("Are you sure you want to reset the allocation? This will remove all current project assignments.")) {
-      return;
-    }
-    setIsResetting(true);
-    try {
-      const res = await fetch("/api/admin/resetallotment");
-      if (!res.ok) throw new Error("Failed to reset allocation");
-      alert("Project allocation reset successfully!");
-      fetchCounts();
-    } catch (error) {
-      console.error("Error resetting project allocation:", error);
-      alert("Failed to reset project allocation.");
-    } finally {
-      setIsResetting(false);
-    }
+  const handleResetAllocation = () => {
+    showConfirmDialog({
+      title: "Reset Allocation",
+      description: "Are you sure you want to reset the allocation? This will remove all current project assignments.",
+      confirmText: "Reset Allocation",
+      variant: "destructive",
+      onConfirm: async () => {
+        closeDialog();
+        setIsResetting(true);
+        try {
+          const res = await fetch("/api/admin/resetallotment");
+          if (!res.ok) throw new Error("Failed to reset allocation");
+          toast.success("Project allocation reset successfully!");
+          fetchCounts();
+        } catch (error) {
+          console.error("Error resetting project allocation:", error);
+          toast.error("Failed to reset project allocation");
+        } finally {
+          setIsResetting(false);
+        }
+      },
+    });
   };
 
   const handleDevFill = async () => {
@@ -115,74 +158,115 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/admin/test1");
       if (!res.ok) throw new Error("Failed to auto-fill");
-      alert("Done filling student preferences.");
+      toast.success("Done filling student preferences");
       fetchCounts();
     } catch (error) {
       console.error("Error in dev-fill:", error);
-      alert("Failed to auto-fill student preferences.");
+      toast.error("Failed to auto-fill student preferences");
     } finally {
       setIsDevFilling(false);
     }
   };
 
-  const clearProfessors = async () => {
-    if (!window.confirm("Are you sure you want to delete ALL professors? This action cannot be undone.")) {
-      return;
-    }
-    try {
-      await fetch("/api/professor/delete", { method: "DELETE" });
-      fetchCounts();
-    } catch (error) {
-      console.error("Error deleting professors:", error);
-    }
+  const clearProfessors = () => {
+    showConfirmDialog({
+      title: "Delete All Professors",
+      description: "Are you sure you want to delete ALL professors? This action cannot be undone.",
+      confirmText: "Delete All",
+      variant: "destructive",
+      onConfirm: async () => {
+        closeDialog();
+        try {
+          await fetch("/api/professor/delete", { method: "DELETE" });
+          toast.success("All professors deleted successfully");
+          fetchCounts();
+        } catch (error) {
+          console.error("Error deleting professors:", error);
+          toast.error("Failed to delete professors");
+        }
+      },
+    });
   };
 
-  const clearStudents = async () => {
-    if (!window.confirm("Are you sure you want to delete ALL students? This action cannot be undone.")) {
-      return;
-    }
-    try {
-      await fetch("/api/student/delete", { method: "DELETE" });
-      fetchCounts();
-    } catch (error) {
-      console.error("Error deleting students:", error);
-    }
+  const clearStudents = () => {
+    showConfirmDialog({
+      title: "Delete All Students",
+      description: "Are you sure you want to delete ALL students? This action cannot be undone.",
+      confirmText: "Delete All",
+      variant: "destructive",
+      onConfirm: async () => {
+        closeDialog();
+        try {
+          await fetch("/api/student/delete", { method: "DELETE" });
+          toast.success("All students deleted successfully");
+          fetchCounts();
+        } catch (error) {
+          console.error("Error deleting students:", error);
+          toast.error("Failed to delete students");
+        }
+      },
+    });
   };
 
-  const clearProjects = async () => {
-    if (!window.confirm("Are you sure you want to delete ALL projects? This action cannot be undone.")) {
-      return;
-    }
-    try {
-      await fetch("/api/project/delete", { method: "DELETE" });
-      fetchCounts();
-    } catch (error) {
-      console.error("Error deleting projects:", error);
-    }
+  const clearProjects = () => {
+    showConfirmDialog({
+      title: "Delete All Projects",
+      description: "Are you sure you want to delete ALL projects? This action cannot be undone.",
+      confirmText: "Delete All",
+      variant: "destructive",
+      onConfirm: async () => {
+        closeDialog();
+        try {
+          await fetch("/api/project/delete", { method: "DELETE" });
+          toast.success("All projects deleted successfully");
+          fetchCounts();
+        } catch (error) {
+          console.error("Error deleting projects:", error);
+          toast.error("Failed to delete projects");
+        }
+      },
+    });
   };
 
-  const handleClearDatabase = async () => {
-    if (!window.confirm("⚠️ WARNING: Are you sure you want to clear the ENTIRE database? This will delete ALL students, professors, projects, and allocations. This action CANNOT be undone!")) {
-      return;
-    }
-    try {
-      const res = await fetch("/api/admin/clear-database", {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to clear database");
-      alert("Database cleared successfully!");
-      fetchCounts();
-      fetchAdminControls();
-    } catch (error) {
-      console.error("Error clearing database:", error);
-      alert("Failed to clear database.");
-    }
+  const handleClearDatabase = () => {
+    showConfirmDialog({
+      title: "Clear Entire Database",
+      description: "WARNING: Are you sure you want to clear the ENTIRE database? This will delete ALL students, professors, projects, and allocations. This action CANNOT be undone!",
+      confirmText: "Clear Everything",
+      variant: "destructive",
+      onConfirm: async () => {
+        closeDialog();
+        try {
+          const res = await fetch("/api/admin/clear-database", {
+            method: "POST",
+          });
+          if (!res.ok) throw new Error("Failed to clear database");
+          toast.success("Database cleared successfully!");
+          fetchCounts();
+          fetchAdminControls();
+        } catch (error) {
+          console.error("Error clearing database:", error);
+          toast.error("Failed to clear database");
+        }
+      },
+    });
   };
 
   const capacityStatus = counts.nonDroppedCapacity >= counts.students;
 
   return (
     <div className="space-y-6">
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmText={confirmDialog.confirmText}
+        onConfirm={confirmDialog.onConfirm}
+        variant={confirmDialog.variant}
+      />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -228,7 +312,7 @@ export default function AdminDashboard() {
           <CardContent>
             <div className="text-3xl font-bold">{counts.projects}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {counts.drops} active • Total capacity: {counts.nonDroppedCapacity}
+              {counts.drops} active | Total capacity: {counts.nonDroppedCapacity}
             </p>
           </CardContent>
         </Card>

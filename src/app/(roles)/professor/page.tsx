@@ -36,6 +36,8 @@ import ProfessorResult from "@/components/ProfessorPage/ProfessorResult";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { toast } from "sonner";
 
 const ProfessorDashboard = () => {
   const { data: session } = useSession();
@@ -50,6 +52,7 @@ const ProfessorDashboard = () => {
   const [activeProjectCount, setActiveProjectCount] = useState(0);
   const [maxCapacity, setMaxCapacity] = useState(0);
   const [error, setError] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Calculate max capacity whenever projects change
   useEffect(() => {
@@ -175,16 +178,16 @@ const ProfessorDashboard = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (activeProjectCount < 3 || activeProjectCount > 4) {
-      alert("Error: Student count must be between 3 and 4 (inclusive).");
+      toast.error("Student count must be between 3 and 4 (inclusive).");
       return;
     }
+    setShowConfirm(true);
+  };
 
-    const confirmSubmit = window.confirm(
-      "Are you sure you want to save the changes? This will update the student order."
-    );
-    if (!confirmSubmit) return;
+  const confirmSubmit = async () => {
+    setShowConfirm(false);
     setLoading(true);
     try {
       await Promise.all([
@@ -204,10 +207,10 @@ const ProfessorDashboard = () => {
         }),
       ]);
 
-      alert("Student order updated successfully!");
+      toast.success("Student order updated successfully!");
     } catch (error) {
       console.error("Error updating student order:", error);
-      alert("Failed to update student order.");
+      toast.error("Failed to update student order.");
     } finally {
       setLoading(false);
     }
@@ -226,6 +229,15 @@ const ProfessorDashboard = () => {
 
   return (
     <div className="space-y-6 p-6 bg-background w-full flex flex-col">
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title="Save Changes"
+        description="Are you sure you want to save the changes? This will update the student order."
+        confirmText="Save Changes"
+        onConfirm={confirmSubmit}
+      />
+
       {/* Professor Info */}
       <Card className="w-full shadow-sm">
         <CardHeader>
