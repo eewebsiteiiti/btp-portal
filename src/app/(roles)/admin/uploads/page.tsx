@@ -5,6 +5,8 @@ import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { ProfessorI, ProjectI, StudentI } from "@/types";
 import { toast } from "sonner";
 
@@ -13,6 +15,7 @@ export default function AdminUploads() {
   const [students, setStudents] = useState<StudentI[]>([]);
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [loading, setLoading] = useState(false);
+  const [sendEmails, setSendEmails] = useState(false);
 
   const handleFileUpload = (
     event: ChangeEvent<HTMLInputElement>,
@@ -50,10 +53,13 @@ export default function AdminUploads() {
     setLoading(true);
     try {
       const endpoint = `/api/${type}/create`;
+      const body = type === "student"
+        ? { data, sendEmails }
+        : { data };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data }),
+        body: JSON.stringify(body),
       });
       if (response.ok) {
         toast.success(`${type} data uploaded successfully`);
@@ -71,27 +77,67 @@ export default function AdminUploads() {
     <Card className="p-6">
       <h2 className="text-4xl font-bold text-center mb-6">Upload Data</h2>
       <CardContent className="space-y-4">
-        {[
-          { label: "Professor", type: "professor", data: professors },
-          { label: "Student", type: "student", data: students },
-          { label: "Project", type: "project", data: projects },
-        ].map(({ label, type, data }) => (
-          <div key={type} className="border p-4 rounded-lg">
-            <label className="block mb-2">Upload {label} Data</label>
-            <Input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={(e) => handleFileUpload(e, type)}
-            />
+        {/* Project Upload */}
+        <div className="border p-4 rounded-lg">
+          <label className="block mb-2">Upload Project Data</label>
+          <Input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={(e) => handleFileUpload(e, "project")}
+          />
+          <Button
+            className="mt-4"
+            onClick={() => handleUpload("project", projects)}
+            disabled={loading}
+          >
+            {loading ? "Uploading Project..." : "Upload Project"}
+          </Button>
+        </div>
+
+        {/* Professor Upload */}
+        <div className="border p-4 rounded-lg">
+          <label className="block mb-2">Upload Professor Data</label>
+          <Input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={(e) => handleFileUpload(e, "professor")}
+          />
+          <Button
+            className="mt-4"
+            onClick={() => handleUpload("professor", professors)}
+            disabled={loading}
+          >
+            {loading ? "Uploading Professor..." : "Upload Professor"}
+          </Button>
+        </div>
+
+        {/* Student Upload with Email Toggle */}
+        <div className="border p-4 rounded-lg">
+          <label className="block mb-2">Upload Student Data</label>
+          <Input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={(e) => handleFileUpload(e, "student")}
+          />
+          <div className="flex items-center justify-between mt-4">
             <Button
-              className="mt-4"
-              onClick={() => handleUpload(type, data)}
+              onClick={() => handleUpload("student", students)}
               disabled={loading}
             >
-              {loading ? `Uploading ${label}...` : `Upload ${label}`}
+              {loading ? "Uploading Student..." : "Upload Student"}
             </Button>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="send-emails"
+                checked={sendEmails}
+                onCheckedChange={setSendEmails}
+              />
+              <Label htmlFor="send-emails" className="text-sm">
+                Send credential emails
+              </Label>
+            </div>
           </div>
-        ))}
+        </div>
       </CardContent>
     </Card>
   );

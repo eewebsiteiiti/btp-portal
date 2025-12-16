@@ -40,8 +40,9 @@ interface StudentInput {
 
 export async function POST(req: NextRequest) {
   try {
-    let data = await req.json();
-    data = data.data;
+    const body = await req.json();
+    const data = body.data;
+    const sendEmails = body.sendEmails ?? false;
 
     if (!Array.isArray(data)) {
       return NextResponse.json(
@@ -66,13 +67,17 @@ export async function POST(req: NextRequest) {
       const password = generateRandomPassword();
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Send email with credentials
-      try {
-        await sendEmail(student.email, password);
-        await delay(500); // Add a delay of 500ms between emails
-      } catch (emailError) {
-        console.error(`Failed to send email to ${student.email}:`, emailError);
-        // Continue even if email fails
+      // Send email with credentials if enabled
+      if (sendEmails) {
+        try {
+          await sendEmail(student.email, password);
+          await delay(500); // Add a delay of 500ms between emails
+        } catch (emailError) {
+          console.error(`Failed to send email to ${student.email}:`, emailError);
+          // Continue even if email fails
+        }
+      } else {
+        console.log(`[INFO] Email disabled - ${student.email}, password: ${password}`);
       }
 
       // Create student with preferences for all projects

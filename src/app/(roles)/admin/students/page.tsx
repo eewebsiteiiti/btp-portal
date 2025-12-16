@@ -21,7 +21,7 @@ const StudentsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [projectIdNumberMap, setProjectIdNumberMap] = useState<{
-    [key: string]: number;
+    [key: string]: string;
   }>({});
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 

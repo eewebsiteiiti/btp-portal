@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { ProfessorI, ProjectI, StudentI } from "@/types";
-import Loading from "@/components/Loading"; // Create a reusable Loading component
+import { ProfessorI, StudentI } from "@/types";
+import Loading from "@/components/Loading";
 
 const ProfessorPage = () => {
   const [professors, setProfessors] = useState<ProfessorI[]>([]);
-  const [projects, setProjects] = useState<ProjectI[]>([]);
   const [students, setStudents] = useState<StudentI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,24 +15,21 @@ const ProfessorPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [profRes, projRes, studRes] = await Promise.all([
+        const [profRes, studRes] = await Promise.all([
           fetch("/api/professor/get"),
-          fetch("/api/project/get"),
           fetch("/api/student/get"),
         ]);
 
-        if (!profRes.ok || !projRes.ok || !studRes.ok) {
+        if (!profRes.ok || !studRes.ok) {
           throw new Error("Failed to fetch data");
         }
 
-        const [profData, projData, studData] = await Promise.all([
+        const [profData, studData] = await Promise.all([
           profRes.json(),
-          projRes.json(),
           studRes.json(),
         ]);
 
         setProfessors(profData.professors);
-        setProjects(projData.projects);
         setStudents(studData.students);
       } catch (error) {
         setError((error as Error).message);
@@ -44,9 +40,6 @@ const ProfessorPage = () => {
 
     fetchData();
   }, []);
-
-  const getProjectTitle = (projectId: string) =>
-    projects.find((p) => p.id === projectId)?.title || "Unknown Project";
 
   const getStudent = (studentId: string) => {
     const s = students.find((s) => s.id === studentId);
@@ -91,24 +84,24 @@ const ProfessorPage = () => {
 
             {/* Projects (Grid) */}
             <div className="grid grid-cols-2 gap-4">
-              {prof.projects?.map((projectId) => (
+              {prof.projects?.map((project) => (
                 <Card
-                  key={projectId}
+                  key={project.id}
                   className="p-4 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow"
                 >
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    {getProjectTitle(projectId)}
+                    {project.title}
                   </h3>
 
                   {/* Students (Scrollable) */}
-                  {prof.studentsPreference?.[projectId]?.length ? (
+                  {prof.studentsPreference?.[project.id]?.length ? (
                     <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-gray-50">
                       <ul className="space-y-1 text-sm text-gray-700">
-                        {prof.studentsPreference[projectId]
+                        {prof.studentsPreference[project.id]
                           .flat()
                           .map((studentId, index) => (
                             <li
-                              key={studentId}
+                              key={`${studentId}-${index}`}
                               className="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded-md"
                             >
                               <span>{getStudent(studentId)}</span>
