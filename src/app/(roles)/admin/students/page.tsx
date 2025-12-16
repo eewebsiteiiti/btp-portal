@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -152,9 +152,8 @@ const StudentsPage = () => {
               <TableBody>
                 {students.length > 0 ? (
                   students.map((student, index) => (
-                    <>
+                    <React.Fragment key={student.id}>
                       <TableRow
-                        key={student.id}
                         className={`transition-all ${
                           index % 2 === 0 ? "bg-gray-50" : "bg-white"
                         } hover:bg-gray-100`}
@@ -248,7 +247,7 @@ const StudentsPage = () => {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </React.Fragment>
                   ))
                 ) : (
                   <TableRow>

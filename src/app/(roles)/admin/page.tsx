@@ -46,6 +46,7 @@ export default function AdminDashboard() {
   const [isAllocating, setIsAllocating] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isDevFilling, setIsDevFilling] = useState(false);
+  const [isClearingPreferences, setIsClearingPreferences] = useState(false);
 
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
     open: false,
@@ -166,6 +167,32 @@ export default function AdminDashboard() {
     } finally {
       setIsDevFilling(false);
     }
+  };
+
+  const handleClearPreferences = () => {
+    showConfirmDialog({
+      title: "Clear All Preferences",
+      description: "Are you sure you want to clear ALL student and professor preferences? This will reset all submitted preferences and set everyone's submit status back to pending.",
+      confirmText: "Clear Preferences",
+      variant: "destructive",
+      onConfirm: async () => {
+        closeDialog();
+        setIsClearingPreferences(true);
+        try {
+          const res = await fetch("/api/admin/clear-preferences", {
+            method: "POST",
+          });
+          if (!res.ok) throw new Error("Failed to clear preferences");
+          toast.success("All preferences cleared successfully!");
+          fetchCounts();
+        } catch (error) {
+          console.error("Error clearing preferences:", error);
+          toast.error("Failed to clear preferences");
+        } finally {
+          setIsClearingPreferences(false);
+        }
+      },
+    });
   };
 
   const clearProfessors = () => {
@@ -511,6 +538,20 @@ export default function AdminDashboard() {
                 </>
               ) : (
                 "Dev-Fill"
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleClearPreferences}
+              disabled={isClearingPreferences}
+            >
+              {isClearingPreferences ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                "Clear Preferences"
               )}
             </Button>
           </div>

@@ -335,15 +335,15 @@ const ProfessorDashboard = () => {
                             >
                               <SortableContext
                                 items={projectWiseStudents[project.id].map(
-                                  (item) => item.studentGroup[0].id
+                                  (item, index) => item.studentGroup[0]?.id || `group-${index}`
                                 )}
                                 strategy={verticalListSortingStrategy}
                               >
                                 {projectWiseStudents[project.id].map(
-                                  ({ studentGroup, pref }) => (
+                                  ({ studentGroup, pref }, index) => (
                                     <SortableItemPP
-                                      key={studentGroup[0].id}
-                                      id={studentGroup[0].id}
+                                      key={`${project.id}-${studentGroup[0]?.id || index}`}
+                                      id={studentGroup[0]?.id || `group-${index}`}
                                     >
                                       <Card className="p-4 my-4 shadow-sm hover:bg-accent">
                                         <CardContent>

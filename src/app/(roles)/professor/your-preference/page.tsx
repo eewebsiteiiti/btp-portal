@@ -55,8 +55,12 @@ const ProfessorPage = () => {
   const processedProjects = useMemo(() => {
     if (!professor || !professor.projects) return [];
 
-    return professor.projects.map((projectId): ProjectData => {
-      const project = projects.find((p) => p.id === projectId);
+    return professor.projects.map((projectItem): ProjectData => {
+      // Handle both cases: projectItem could be an object or a string ID
+      const projectId = typeof projectItem === 'string' ? projectItem : projectItem.id;
+      const project = typeof projectItem === 'string'
+        ? projects.find((p) => p.id === projectId)
+        : projectItem;
       const isDropped = project?.dropProject || false;
 
       const projectStudents =
