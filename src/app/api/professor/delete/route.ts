@@ -1,17 +1,26 @@
-import {  NextResponse } from "next/server";
-import Professor from "@/models/Professor";
-import { dbConnect } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 export async function DELETE() {
   try {
-    await dbConnect();
-    const professors = await Professor.deleteMany({});
+    // Disconnect projects from professors first
+    await prisma.project.updateMany({
+      data: { professorId: null },
+    });
+
+    // Delete all professors
+    const result = await prisma.professor.deleteMany({});
+
     return NextResponse.json(
-      { message: "DELETE request received", professors },
+      { message: "All professors deleted successfully", count: result.count },
       { status: 200 }
     );
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    console.error("Error deleting professors:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error deleting professors", error: errorMessage },
+      { status: 500 }
+    );
   }
 }

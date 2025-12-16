@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import Professor from "@/models/Professor";
-import { dbConnect } from "@/lib/mongodb";
-import Student from "@/models/Student";
-import Project from "@/models/Project";
+import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    await dbConnect();
     const { email } = await req.json();
-    const professor = await Professor.findOne({ email });
+
+    if (!email) {
+      return NextResponse.json(
+        { message: "Email is required" },
+        { status: 400 }
+      );
+    }
+
+    const professor = await prisma.professor.findUnique({
+      where: { email },
+      include: { projects: true },
+    });
 
     if (!professor) {
       return NextResponse.json(
@@ -17,54 +24,76 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const students = await Student.find();
+    const students = await prisma.student.findMany({
+      include: {
+        preferences: {
+          orderBy: { orderIndex: "asc" },
+        },
+      },
+    });
+
+    const projectDetails = await prisma.project.findMany({
+      where: {
+        id: { in: professor.projects.map((p) => p.id) },
+      },
+    });
+
+    // Build project-wise students map
     const projectWiseStudents: {
       [key: string]: { [key: number]: Set<string> };
     } = {};
-    const projectDetails = await Project.find({
-      _id: { $in: professor.projects },
-    });
 
     for (const project of professor.projects) {
-      projectWiseStudents[project.toString()] = {};
+      projectWiseStudents[project.id] = {};
 
       for (const student of students) {
-        const preference = student.preferences;
+        for (let i = 0; i < student.preferences.length; i++) {
+          const prefer = student.preferences[i];
 
-        for (let i = 0; i < preference.length; i++) {
-          const prefer = preference[i];
-
-          if (prefer.project.toString() === project.toString()) {
+          if (prefer.projectId === project.id) {
             const studentGroup = [student];
 
+            // If it's a group preference with success status, find partner
             if (prefer.isGroup && prefer.status === "Success") {
               const partner = students.find(
-                (s) => s.roll_no === prefer.partnerRollNumber
+                (s) => s.rollNo === prefer.partnerRollNumber
               );
               if (partner) studentGroup.push(partner);
             }
 
-            studentGroup.sort((a, b) => Number(a.roll_no) - Number(b.roll_no)); // Sort for consistency
-            const setObject = JSON.stringify(
-              studentGroup.map((s) => s.toObject())
-            ); // Store full student objects
+            // Sort for consistency
+            studentGroup.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
-            if (!projectWiseStudents[project.toString()][i]) {
-              projectWiseStudents[project.toString()][i] = new Set<string>();
+            const setObject = JSON.stringify(
+              studentGroup.map((s) => ({
+                id: s.id,
+                _id: s.id, // For backwards compatibility
+                rollNo: s.rollNo,
+                roll_no: s.rollNo, // For backwards compatibility
+                name: s.name,
+                email: s.email,
+                cpi: s.cpi,
+                submitStatus: s.submitStatus,
+              }))
+            );
+
+            if (!projectWiseStudents[project.id][i]) {
+              projectWiseStudents[project.id][i] = new Set<string>();
             }
-            projectWiseStudents[project.toString()][i].add(setObject);
+            projectWiseStudents[project.id][i].add(setObject);
           }
         }
       }
     }
 
+    // Convert Sets to Arrays
     const data = Object.fromEntries(
       Object.entries(projectWiseStudents).map(([projectId, preferences]) => [
         projectId,
         Object.fromEntries(
           Object.entries(preferences).map(([rank, studentSet]) => [
             rank,
-            Array.from(studentSet).map((str) => JSON.parse(str)), // Convert Set to Array of student objects
+            Array.from(studentSet).map((str) => JSON.parse(str)),
           ])
         ),
       ])
@@ -75,7 +104,11 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    console.error("Error getting students by professor:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error retrieving data", error: errorMessage },
+      { status: 500 }
+    );
   }
 }

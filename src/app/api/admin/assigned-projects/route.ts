@@ -1,29 +1,35 @@
-import { dbConnect } from "@/lib/mongodb";
-import AssignedProjects from "@/models/AssignedProjects";
 import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    await dbConnect();
-
-    // Fetch assigned projects, students, and projects
-    const assignedProjects = await AssignedProjects.find({});
-    const projectStudenGroupMap: { [key: string]: string[] } = {};
-    assignedProjects.forEach((assignedProject) => {
-      if (!projectStudenGroupMap[assignedProject.projectId])
-        projectStudenGroupMap[assignedProject.projectId] = [];
-      projectStudenGroupMap[assignedProject.projectId].push(
-        assignedProject.studentId
-      );
+    const assignedProjects = await prisma.assignedProject.findMany({
+      include: {
+        student: true,
+        project: true,
+      },
     });
+
+    // Group students by project
+    const projectStudentGroupMap: { [key: string]: string[] } = {};
+
+    assignedProjects.forEach((assignment) => {
+      if (!projectStudentGroupMap[assignment.projectId]) {
+        projectStudentGroupMap[assignment.projectId] = [];
+      }
+      projectStudentGroupMap[assignment.projectId].push(assignment.studentId);
+    });
+
     return NextResponse.json({
       message: "Success",
-      data: projectStudenGroupMap,
+      data: projectStudentGroupMap,
     });
-
-    // Create a map to store project details with assigned students
   } catch (error) {
     console.error("Error fetching assigned projects:", error);
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error fetching assigned projects", error: errorMessage },
+      { status: 500 }
+    );
   }
 }

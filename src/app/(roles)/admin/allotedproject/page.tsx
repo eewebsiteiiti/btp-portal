@@ -40,7 +40,7 @@ const Page = () => {
 
   const getSortedStudents = (studentIds: string[]) => {
     return studentIds
-      .map((id) => allStudents.find((student) => student._id === id))
+      .map((id) => allStudents.find((student) => student.id === id))
       .filter((student): student is StudentI => student !== undefined);
   };
 
@@ -49,28 +49,28 @@ const Page = () => {
     const exportData: unknown[] = [];
 
     allProjects.forEach((project) => {
-      const students = getSortedStudents(projectStudents[project._id] || []);
+      const students = getSortedStudents(projectStudents[project.id] || []);
 
       if (students.length > 0) {
         students.forEach((student) => {
           exportData.push({
-            "Project No": project.Project_No,
-            "Project Title": project.Title,
-            Domain: project.Domain,
-            Supervisor: project.Supervisor,
-            "Co-Supervisor": project.Cosupervisor || "N/A",
+            "Project No": project.projectNo,
+            "Project Title": project.title,
+            Domain: project.domain,
+            Supervisor: project.supervisor,
+            "Co-Supervisor": project.cosupervisor || "N/A",
             "Student Name": student.name,
             "Student Email": student.email,
-            "Roll No": student.roll_no,
+            "Roll No": student.rollNo,
           });
         });
       } else {
         exportData.push({
-          "Project No": project.Project_No,
-          "Project Title": project.Title,
-          Domain: project.Domain,
-          Supervisor: project.Supervisor,
-          "Co-Supervisor": project.Cosupervisor || "N/A",
+          "Project No": project.projectNo,
+          "Project Title": project.title,
+          Domain: project.domain,
+          Supervisor: project.supervisor,
+          "Co-Supervisor": project.cosupervisor || "N/A",
           "Student Name": "No student assigned",
           "Student Email": "-",
           "Roll No": "-",
@@ -112,26 +112,26 @@ const Page = () => {
         <div className="space-y-6">
           {allProjects.map((project) => (
             <div
-              key={project._id}
+              key={project.id}
               className="border rounded-xl shadow-lg p-6 bg-white"
             >
               {/* Project Info */}
               <div className="mb-4">
                 <h2 className="text-xl font-bold text-gray-800">
-                  {project.Project_No} - {project.Title}
+                  {project.projectNo} - {project.title}
                 </h2>
                 <p className="text-sm text-gray-600">
-                  <strong>Domain:</strong> {project.Domain}
+                  <strong>Domain:</strong> {project.domain}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <strong>Supervisor:</strong> {project.Supervisor}
+                  <strong>Supervisor:</strong> {project.supervisor}
                 </p>
                 <p className="text-sm text-gray-600">
                   <strong>Co-Supervisor:</strong>{" "}
-                  {project.Cosupervisor || "N/A"}
+                  {project.cosupervisor || "N/A"}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <strong>Capacity:</strong> {project.Capacity}
+                  <strong>Capacity:</strong> {project.capacity}
                 </p>
               </div>
 
@@ -139,7 +139,7 @@ const Page = () => {
               <h3 className="text-lg font-semibold mb-2 text-gray-700">
                 Assigned Students:
               </h3>
-              {projectStudents[project._id]?.length > 0 ? (
+              {projectStudents[project.id]?.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse border rounded-lg overflow-hidden">
                     <thead>
@@ -154,10 +154,10 @@ const Page = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {getSortedStudents(projectStudents[project._id]).map(
+                      {getSortedStudents(projectStudents[project.id]).map(
                         (student) => (
                           <tr
-                            key={student._id}
+                            key={student.id}
                             className="hover:bg-gray-50 transition duration-200"
                           >
                             <td className="px-4 py-2 border-b">
@@ -167,7 +167,7 @@ const Page = () => {
                               {student.email}
                             </td>
                             <td className="px-4 py-2 border-b">
-                              {student.roll_no}
+                              {student.rollNo}
                             </td>
                           </tr>
                         )
@@ -177,7 +177,7 @@ const Page = () => {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 mt-2">
-                  No Studnets assigned.
+                  No students assigned.
                 </p>
               )}
             </div>

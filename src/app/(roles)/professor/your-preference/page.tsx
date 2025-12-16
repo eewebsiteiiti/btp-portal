@@ -46,7 +46,7 @@ const ProfessorPage = () => {
   // Memoize student lookup for better performance
   const studentLookup = useMemo(() => {
     return students.reduce((acc: Record<string, string>, student) => {
-      acc[student._id] = `${student.name} (${student.roll_no})`;
+      acc[student.id] = `${student.name} (${student.rollNo})`;
       return acc;
     }, {});
   }, [students]);
@@ -56,7 +56,7 @@ const ProfessorPage = () => {
     if (!professor || !professor.projects) return [];
 
     return professor.projects.map((projectId): ProjectData => {
-      const project = projects.find((p) => p._id === projectId);
+      const project = projects.find((p) => p.id === projectId);
       const isDropped = project?.dropProject || false;
 
       const projectStudents =
@@ -64,7 +64,7 @@ const ProfessorPage = () => {
 
       return {
         id: projectId,
-        title: project?.Title || "Unknown Project",
+        title: project?.title || "Unknown Project",
         isDropped,
         students: projectStudents.map((studentId, index) => ({
           id: studentId,

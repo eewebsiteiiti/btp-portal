@@ -1,33 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
-import Professor from "@/models/Professor";
-import { dbConnect } from "@/lib/mongodb";
-import Project from "@/models/Project";
+import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+
+interface ProfessorInput {
+  name: string;
+  email: string;
+  password: string;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    await dbConnect();
     let data = await req.json();
     data = data.data;
-    data = Object.setPrototypeOf(data, Array.prototype);
 
-    // Fetch projects for each professor and add them to the data
-    for (const professor of data) {
-      const projects = await Project.find({
-        Supervisor_email: professor.email,
-      });
-
-      professor.projects = projects; // Adding projects to professor object
+    if (!Array.isArray(data)) {
+      return NextResponse.json(
+        { message: "Invalid data format. Expected an array of professors." },
+        { status: 400 }
+      );
     }
 
-    // Insert updated professor data
-    const professors = await Professor.insertMany(data);
+    const createdProfessors = [];
+
+    for (const professor of data as ProfessorInput[]) {
+      // Validate required fields
+      if (!professor.name || !professor.email || !professor.password) {
+        continue; // Skip invalid entries
+      }
+
+      // Find projects that belong to this professor
+      const projects = await prisma.project.findMany({
+        where: { supervisorEmail: professor.email },
+        select: { id: true },
+      });
+
+      // Hash the password (FIX: professors now use hashed passwords)
+      const hashedPassword = await bcrypt.hash(professor.password, 10);
+
+      const createdProfessor = await prisma.professor.create({
+        data: {
+          name: professor.name,
+          email: professor.email,
+          password: hashedPassword,
+          studentsPreference: "{}",
+          projects: {
+            connect: projects.map((p) => ({ id: p.id })),
+          },
+        },
+        include: { projects: true },
+      });
+
+      createdProfessors.push(createdProfessor);
+    }
 
     return NextResponse.json(
-      { message: "Professors added successfully", professors },
+      { message: "Professors added successfully", professors: createdProfessors },
       { status: 200 }
     );
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    console.error("Error creating professors:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error creating professors", error: errorMessage },
+      { status: 500 }
+    );
   }
 }

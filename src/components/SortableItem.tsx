@@ -22,37 +22,36 @@ export default function SortableItem({
     transform: CSS.Transform.toString(transform),
     transition: isOverlay ? "none" : transition || "transform 0.2s ease",
   };
+
   const handleRollNumberAdd = () => {
-    // projectMap[project._id] = { partnerRollNumber: rollNumber, status: "Pending" };
-    if (student.roll_no === rollNumber) {
+    if (student.rollNo === rollNumber) {
       alert("You cannot add yourself as a partner");
       return;
     }
     setProjectMap((project_map) => ({
       ...project_map,
-      [project._id]: { partnerRollNumber: rollNumber, status: "Pending" },
+      [project.id]: { partnerRollNumber: rollNumber, status: "Pending" },
     }));
     setRollNumber("");
   };
 
   const handleDisable = () => {
-    return false; //developemtn
     if (rollNumber === "") {
-      return false;
-    }
-    if (rollNumber.length === 9) {
-      return false;
-    } else {
       return true;
     }
+    if (rollNumber.length >= 6) {
+      return false;
+    }
+    return true;
   };
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className={`cursor-grab active:cursor-grabbing p-4 rounded-xl border shadow-sm transition-all duration-200 
+      className={`cursor-grab active:cursor-grabbing p-4 rounded-xl border shadow-sm transition-all duration-200
         bg-background border-border ${
           isOverlay ? "opacity-50 scale-105" : ""
         } flex items-center gap-4`}
@@ -64,61 +63,57 @@ export default function SortableItem({
           </div>
           <div className="flex flex-col">
             <h3 className="text-base font-medium text-foreground">
-              {project.Title}
+              {project.title}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Supervisor: {project.Supervisor}
+              Supervisor: {project.supervisor}
             </p>
-            {project.Cosupervisor && (
+            {project.cosupervisor && (
               <p className="text-xs text-muted-foreground">
-                Co-Supervisor: {project.Cosupervisor}
+                Co-Supervisor: {project.cosupervisor}
               </p>
             )}
             <p className="text-xs text-muted-foreground truncate">
-              {project.Comments}
+              {project.comments}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              Domain: {project.Domain}
+              Domain: {project.domain}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              Project No: {project.Project_No}
+              Project No: {project.projectNo}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               Nature of Work:{" "}
-              {project.Nature_of_work.length > 100
-                ? `${project.Nature_of_work.substring(0, 100)}...`
-                : project.Nature_of_work}
+              {project.natureOfWork.length > 100
+                ? `${project.natureOfWork.substring(0, 100)}...`
+                : project.natureOfWork}
             </p>
-            {/* <Button onClick={()=>setProjectMap()}>submit</Button> */}
             <p className="text-xs text-muted-foreground">
-              Capacity: {project.Capacity}
+              Capacity: {project.capacity}
             </p>
 
-            {project.Capacity == 2 &&
-            projectMap[id].partnerRollNumber !== "" ? (
+            {project.capacity === 2 &&
+            projectMap[id]?.partnerRollNumber !== "" ? (
               <>
                 <p className="text-sm">
-                  {" "}
-                  Partner&apos;s Roll Number: {projectMap[id].partnerRollNumber}
+                  Partner&apos;s Roll Number: {projectMap[id]?.partnerRollNumber}
                   <span
                     className={`italic ${
-                      projectMap[project._id]?.status === "Pending"
+                      projectMap[project.id]?.status === "Pending"
                         ? "text-red-500"
                         : "text-green-500"
                     }`}
                   >
                     {" "}
-                    ({projectMap[project._id]?.status})
+                    ({projectMap[project.id]?.status})
                   </span>
                 </p>
               </>
-            ) : (
-              <></>
-            )}
+            ) : null}
           </div>
         </div>
         <div className="flex items-center gap-4">
-          {project.Capacity == 2 ? (
+          {project.capacity === 2 ? (
             <>
               <input
                 type="text"
@@ -129,14 +124,12 @@ export default function SortableItem({
               />
 
               <Button onClick={handleRollNumberAdd} disabled={handleDisable()}>
-                {projectMap[project._id]?.partnerRollNumber === ""
+                {projectMap[project.id]?.partnerRollNumber === ""
                   ? "Add"
-                  : "Remove/Update"}
+                  : "Update"}
               </Button>
             </>
-          ) : (
-            <></>
-          )}
+          ) : null}
         </div>
       </div>
     </Card>

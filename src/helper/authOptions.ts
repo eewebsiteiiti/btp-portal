@@ -1,9 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { dbConnect } from "@/lib/mongodb";
-import Student from "@/models/Student";
-import Professor from "@/models/Professor";
-import { StudentI, ProfessorI } from "@/types";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
@@ -16,72 +13,87 @@ export const authOptions: NextAuthOptions = {
         role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
-        if (credentials?.role === "admin") {
+        if (!credentials?.email || !credentials?.password || !credentials?.role) {
+          throw new Error("Missing credentials");
+        }
+
+        const { email, password, role } = credentials;
+
+        // Admin login
+        if (role === "admin") {
           if (
-            credentials?.email !== process.env.ADMIN_EMAIL ||
-            credentials?.password !== process.env.ADMIN_PASSWORD
+            email !== process.env.ADMIN_EMAIL ||
+            password !== process.env.ADMIN_PASSWORD
           ) {
             throw new Error("Invalid email or password");
           }
-
           return { id: "admin", name: "Admin", email: "", role: "admin" };
         }
-        if (credentials?.role === "student") {
-          await dbConnect();
-          const user = (await Student.findOne({
-            email: credentials?.email,
-          }).lean()) as unknown as StudentI;
-          // if (!user || user?.password !== credentials?.password) {
-          //   throw new Error("Invalid email or password");
-          // }
-          if (
-            !user ||
-            !bcrypt.compareSync(credentials?.password || "", user.password)
-          ) {
+
+        // Student login
+        if (role === "student") {
+          const student = await prisma.student.findUnique({
+            where: { email },
+          });
+
+          if (!student) {
             throw new Error("Invalid email or password");
           }
+
+          const isValidPassword = await bcrypt.compare(password, student.password);
+          if (!isValidPassword) {
+            throw new Error("Invalid email or password");
+          }
+
           return {
-            id: user._id,
-            roll_no: user.roll_no,
-            email: user.email,
+            id: student.id,
+            rollNo: student.rollNo,
+            email: student.email,
             role: "student",
-            name: user.name,
+            name: student.name,
           };
         }
-        if (credentials?.role === "professor") {
-          await dbConnect();
 
-          const user = (await Professor.findOne({
-            email: credentials?.email,
-          }).lean()) as unknown as ProfessorI;
+        // Professor login
+        if (role === "professor") {
+          const professor = await prisma.professor.findUnique({
+            where: { email },
+          });
 
-          if (!user || user?.password !== credentials?.password) {
+          if (!professor) {
             throw new Error("Invalid email or password");
           }
-          // if (
-          //   !user ||
-          //   !bcrypt.compareSync(credentials?.password || "", user.password)
-          // ) {
-          //   throw new Error("Invalid email or password");
-          // }
+
+          // Now professors also use hashed passwords
+          const isValidPassword = await bcrypt.compare(password, professor.password);
+          if (!isValidPassword) {
+            throw new Error("Invalid email or password");
+          }
+
           return {
-            id: user._id,
-            email: user.email,
+            id: professor.id,
+            email: professor.email,
             role: "professor",
-            name: user.name,
+            name: professor.name,
           };
-        } else return null;
+        }
+
+        return null;
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.role = user.role;
+      if (user) {
+        token.role = user.role;
+        token.id = user.id;
+      }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.role = token.role as "admin" | "professor" | "student";
+        session.user.id = token.id as string;
       }
       return session;
     },
@@ -89,5 +101,9 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login",
   },
 };

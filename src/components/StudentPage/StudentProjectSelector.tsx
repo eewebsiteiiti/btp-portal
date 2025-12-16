@@ -21,6 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import SortableItem from "@/components/SortableItem";
 import { ProjectI, ControlsI, StudentI } from "@/types";
+
 const StudentProjectSelector = ({
   student,
   setStudent,
@@ -34,10 +35,13 @@ const StudentProjectSelector = ({
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [activeProject, setActiveProject] = useState<ProjectI | null>(null);
   const [error, setError] = useState("");
-  const [preferenceArray, setPreferenceArray] = useState([]);
+  const [preferenceArray, setPreferenceArray] = useState<
+    { project: string; projectId?: string }[]
+  >([]);
   const [projectMap, setProjectMap] = useState<{
     [key: string]: { partnerRollNumber: string; status: string };
   }>({});
+
   useEffect(() => {
     const fetchStudentPreferences = async () => {
       if (!session?.user?.email) return;
@@ -50,7 +54,13 @@ const StudentProjectSelector = ({
         setStudent(data.student);
 
         if (data.student?.preferences) {
-          setPreferenceArray(data.student.preferences);
+          // Map preferences to use projectId
+          const mappedPrefs = data.student.preferences.map(
+            (p: { projectId: string; project?: { id: string } }) => ({
+              project: p.projectId || p.project?.id,
+            })
+          );
+          setPreferenceArray(mappedPrefs);
         } else {
           setPreferenceArray([]);
         }
@@ -89,7 +99,7 @@ const StudentProjectSelector = ({
               status?: string;
             }
           ) => {
-            acc[project.project._id] = {
+            acc[project.project.id] = {
               partnerRollNumber: project.partnerRollNumber || "",
               status: project.status || "Pending",
             };
@@ -119,8 +129,8 @@ const StudentProjectSelector = ({
 
     if (over && active.id !== over.id) {
       setProjects((prev) => {
-        const oldIndex = prev.findIndex((p) => p._id === active.id);
-        const newIndex = prev.findIndex((p) => p._id === over.id);
+        const oldIndex = prev.findIndex((p) => p.id === active.id);
+        const newIndex = prev.findIndex((p) => p.id === over.id);
         return arrayMove(prev, oldIndex, newIndex);
       });
     }
@@ -136,9 +146,9 @@ const StudentProjectSelector = ({
         body: JSON.stringify({
           email: session.user.email,
           preference: projects.map((p) => ({
-            project: p._id,
-            isGroup: !!projectMap[p._id]?.partnerRollNumber,
-            partnerRollNumber: projectMap[p._id]?.partnerRollNumber || "",
+            project: p.id,
+            isGroup: !!projectMap[p.id]?.partnerRollNumber,
+            partnerRollNumber: projectMap[p.id]?.partnerRollNumber || "",
           })),
         }),
       });
@@ -157,7 +167,12 @@ const StudentProjectSelector = ({
           const data = await response.json();
           setStudent(data.student);
           if (data.student?.preferences) {
-            setPreferenceArray(data.student.preferences);
+            const mappedPrefs = data.student.preferences.map(
+              (p: { projectId: string }) => ({
+                project: p.projectId,
+              })
+            );
+            setPreferenceArray(mappedPrefs);
           } else {
             setPreferenceArray([]);
           }
@@ -171,28 +186,33 @@ const StudentProjectSelector = ({
       setError("Error saving preferences");
     }
   };
+
   const submitPreferences = async () => {
     if (!session?.user) return;
 
     const pendingRequests = projects.filter((p) => {
-      if (projectMap[p._id]?.partnerRollNumber !== "") {
-        if (projectMap[p._id]?.status === "Pending") {
+      if (projectMap[p.id]?.partnerRollNumber !== "") {
+        if (projectMap[p.id]?.status === "Pending") {
           return true;
         }
       }
+      return false;
     });
+
     if (pendingRequests.length > 0) {
-      alert("Please make sure all requests are resolved before saving");
+      alert("Please make sure all group requests are resolved before submitting");
       return;
     }
+
     savePreferences(true);
+
     const checkGroupBreak = async () => {
       try {
         const response = await fetch("/api/student/checkgroupbreak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            roll_no: student?.roll_no,
+            roll_no: student?.rollNo,
           }),
         });
 
@@ -200,14 +220,17 @@ const StudentProjectSelector = ({
         return data.groupBreak;
       } catch {
         setError("Error checking group break");
+        return false;
       }
     };
+
     if (await checkGroupBreak()) {
       alert(
         "Group break detected. Please resolve the issue before submitting preferences"
       );
       return;
     }
+
     const confirmSubmit = window.confirm(
       "Are you sure you want to submit your preferences? Once submitted, you cannot modify them."
     );
@@ -220,9 +243,9 @@ const StudentProjectSelector = ({
         body: JSON.stringify({
           email: session.user.email,
           preference: projects.map((p) => ({
-            project: p._id,
-            isGroup: !!projectMap[p._id]?.partnerRollNumber,
-            partnerRollNumber: projectMap[p._id]?.partnerRollNumber || "",
+            project: p.id,
+            isGroup: !!projectMap[p.id]?.partnerRollNumber,
+            partnerRollNumber: projectMap[p.id]?.partnerRollNumber || "",
           })),
           submitStatus: "true",
         }),
@@ -230,12 +253,13 @@ const StudentProjectSelector = ({
 
       if (!response.ok) throw new Error();
 
-      alert("Preferences submited successfully!");
+      alert("Preferences submitted successfully!");
       setStudent({ ...student, submitStatus: true } as StudentI);
     } catch {
       setError("Error saving preferences");
     }
   };
+
   return (
     <>
       <h2 className="font-semibold text-gray-800">
@@ -247,24 +271,24 @@ const StudentProjectSelector = ({
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={(event) => {
-            const project = projects.find((p) => p._id === event.active.id);
+            const project = projects.find((p) => p.id === event.active.id);
             setActiveProject(project || null);
           }}
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveProject(null)}
         >
           <SortableContext
-            items={projects.map((p) => p._id)}
+            items={projects.map((p) => p.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-3">
               {projects.map((project, index) => (
                 <div
-                  key={project._id}
+                  key={project.id}
                   className="flex flex-col space-y-2 border rounded-md p-3 shadow-sm"
                 >
                   <SortableItem
-                    id={project._id}
+                    id={project.id}
                     project={project}
                     index={index + 1}
                     setProjectMap={setProjectMap}
@@ -278,7 +302,7 @@ const StudentProjectSelector = ({
           <DragOverlay>
             {activeProject && (
               <SortableItem
-                id={activeProject._id}
+                id={activeProject.id}
                 project={activeProject}
                 setProjectMap={setProjectMap}
                 projectMap={projectMap}
@@ -293,27 +317,21 @@ const StudentProjectSelector = ({
         <p className="text-xs text-gray-600">
           Total Projects: {projects.length}
         </p>
-        <div>
+        <div className="flex gap-2">
           <Button
             onClick={() => savePreferences(false)}
-            className="bg-green-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all mx-2"
+            variant="outline"
+            className="text-xs"
           >
-            Save
+            Save Draft
           </Button>
-          {controls?.submitEnableStudentProjects ? (
-            <>
-              <Button
-                onClick={submitPreferences}
-                className="bg-blue-500 text-white text-xs px-4 py-2 rounded-md hover:bg-green-600 transition-all"
-              >
-                Submit
-              </Button>
-            </>
-          ) : (
-            <></>
+          {controls?.submitEnableStudentProjects && (
+            <Button onClick={submitPreferences} className="text-xs">
+              Submit Final
+            </Button>
           )}
         </div>
-      </div>{" "}
+      </div>
     </>
   );
 };

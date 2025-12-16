@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { dbConnect } from "@/lib/mongodb";
-import Professor from "@/models/Professor";
+import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
@@ -13,16 +13,26 @@ export async function POST(req: Request) {
       );
     }
 
-    await dbConnect();
-
-    const user = await Professor.findOne({ email });
-
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    if (newPassword.length < 6) {
+      return NextResponse.json(
+        { message: "New password must be at least 6 characters" },
+        { status: 400 }
+      );
     }
 
-    // const isMatch = await bcrypt.compare(currentPassword, user.password);
-    const isMatch = currentPassword === user.password;
+    const professor = await prisma.professor.findUnique({
+      where: { email },
+    });
+
+    if (!professor) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Compare with hashed password
+    const isMatch = await bcrypt.compare(currentPassword, professor.password);
 
     if (!isMatch) {
       return NextResponse.json(
@@ -31,15 +41,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = newPassword;
-    await user.save();
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.professor.update({
+      where: { id: professor.id },
+      data: { password: hashedPassword },
+    });
 
     return NextResponse.json({ message: "Password updated successfully" });
   } catch (error) {
     console.error("Error updating password:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: "Something went wrong" },
+      { message: "Something went wrong", error: errorMessage },
       { status: 500 }
     );
   }

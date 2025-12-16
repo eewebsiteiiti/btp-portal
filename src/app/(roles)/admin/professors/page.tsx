@@ -46,13 +46,13 @@ const ProfessorPage = () => {
   }, []);
 
   const getProjectTitle = (projectId: string) =>
-    projects.find((p) => p._id === projectId)?.Title || "Unknown Project";
+    projects.find((p) => p.id === projectId)?.title || "Unknown Project";
 
   const getStudent = (studentId: string) => {
-    const s = students.find((s) => s._id === studentId);
+    const s = students.find((s) => s.id === studentId);
     const name = s?.name;
-    const roll_no = s?.roll_no;
-    return `${name}(${roll_no})`;
+    const rollNo = s?.rollNo;
+    return `${name}(${rollNo})`;
   };
 
   return (
@@ -72,7 +72,7 @@ const ProfessorPage = () => {
       ) : (
         professors.map((prof) => (
           <Card
-            key={prof._id}
+            key={prof.id}
             className="p-6 shadow-md rounded-2xl border border-gray-200 space-y-4"
           >
             {/* Professor Info */}

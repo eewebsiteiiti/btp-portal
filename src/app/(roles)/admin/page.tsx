@@ -3,6 +3,17 @@
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Users,
+  GraduationCap,
+  FolderKanban,
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 export default function AdminDashboard() {
   const [counts, setCounts] = useState({
@@ -24,6 +35,7 @@ export default function AdminDashboard() {
 
   const [isAllocating, setIsAllocating] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isDevFilling, setIsDevFilling] = useState(false);
 
   const fetchCounts = async () => {
     try {
@@ -64,11 +76,14 @@ export default function AdminDashboard() {
   };
 
   const handleStartAllocation = async () => {
+    if (!window.confirm("Are you sure you want to start the project allocation? This will assign students to projects based on preferences.")) {
+      return;
+    }
     setIsAllocating(true);
     try {
       const res = await fetch("/api/admin/projectallotment");
       if (!res.ok) throw new Error("Failed to start allocation");
-      alert("Project allocation started successfully!");
+      alert("Project allocation completed successfully!");
     } catch (error) {
       console.error("Error starting project allocation:", error);
       alert("Failed to start project allocation.");
@@ -78,6 +93,9 @@ export default function AdminDashboard() {
   };
 
   const handleResetAllocation = async () => {
+    if (!window.confirm("Are you sure you want to reset the allocation? This will remove all current project assignments.")) {
+      return;
+    }
     setIsResetting(true);
     try {
       const res = await fetch("/api/admin/resetallotment");
@@ -92,22 +110,25 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleAutoAllocation = async () => {
-    setIsResetting(true);
+  const handleDevFill = async () => {
+    setIsDevFilling(true);
     try {
       const res = await fetch("/api/admin/test1");
-      if (!res.ok) throw new Error("Failed to auto-allocate");
+      if (!res.ok) throw new Error("Failed to auto-fill");
       alert("Done filling student preferences.");
       fetchCounts();
     } catch (error) {
-      console.error("Error in auto-allocation:", error);
-      alert("Failed to auto-allocate.");
+      console.error("Error in dev-fill:", error);
+      alert("Failed to auto-fill student preferences.");
     } finally {
-      setIsResetting(false);
+      setIsDevFilling(false);
     }
   };
 
-  const clearProfessor = async () => {
+  const clearProfessors = async () => {
+    if (!window.confirm("Are you sure you want to delete ALL professors? This action cannot be undone.")) {
+      return;
+    }
     try {
       await fetch("/api/professor/delete", { method: "DELETE" });
       fetchCounts();
@@ -117,6 +138,9 @@ export default function AdminDashboard() {
   };
 
   const clearStudents = async () => {
+    if (!window.confirm("Are you sure you want to delete ALL students? This action cannot be undone.")) {
+      return;
+    }
     try {
       await fetch("/api/student/delete", { method: "DELETE" });
       fetchCounts();
@@ -126,6 +150,9 @@ export default function AdminDashboard() {
   };
 
   const clearProjects = async () => {
+    if (!window.confirm("Are you sure you want to delete ALL projects? This action cannot be undone.")) {
+      return;
+    }
     try {
       await fetch("/api/project/delete", { method: "DELETE" });
       fetchCounts();
@@ -135,163 +162,276 @@ export default function AdminDashboard() {
   };
 
   const handleClearDatabase = async () => {
-    if (confirm("Are you sure you want to clear the entire database?")) {
-      try {
-        const res = await fetch("/api/admin/clear-database", {
-          method: "POST",
-        });
-        if (!res.ok) throw new Error("Failed to clear database");
-        alert("Database cleared successfully!");
-        fetchCounts();
-        fetchAdminControls();
-      } catch (error) {
-        console.error("Error clearing database:", error);
-        alert("Failed to clear database.");
-      }
+    if (!window.confirm("⚠️ WARNING: Are you sure you want to clear the ENTIRE database? This will delete ALL students, professors, projects, and allocations. This action CANNOT be undone!")) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/clear-database", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to clear database");
+      alert("Database cleared successfully!");
+      fetchCounts();
+      fetchAdminControls();
+    } catch (error) {
+      console.error("Error clearing database:", error);
+      alert("Failed to clear database.");
     }
   };
 
+  const capacityStatus = counts.nonDroppedCapacity >= counts.students;
+
   return (
     <div className="space-y-6">
-      <h2 className="text-4xl font-bold">Admin Dashboard</h2>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">Manage the BTP allocation process</p>
+      </div>
 
-      {/* Stats and Controls */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Professors */}
-        <div className="p-6 bg-secondary text-primary rounded-lg shadow-md space-y-4 flex flex-col">
-          <div>
-            <span className="text-xl font-semibold">Professors</span>
-            <span className="block text-2xl font-bold">
-              {counts.professors}
-            </span>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={controls.submitEnableProfessorStudents}
-                onCheckedChange={(enabled) =>
-                  updateControl("submitEnableProfessorStudents", enabled)
-                }
-              />
-              <span>Enable Professor Submission</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={controls.studentViewEnableProfessor}
-                onCheckedChange={(enabled) =>
-                  updateControl("studentViewEnableProfessor", enabled)
-                }
-              />
-              <span>Enable View of Students for Professors</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={controls.professorViewResult}
-                onCheckedChange={(enabled) =>
-                  updateControl("professorViewResult", enabled)
-                }
-              />
-              <span>Enable Result for Professors</span>
-            </div>
-            <div className="flex items-left gap-2 flex-col">
-              <p> Number of Active Projects: {counts.drops}</p>
-              <p>
-                Max capacity of all active projects: {counts.nonDroppedCapacity}
-              </p>
-              <p>
-                {counts.nonDroppedCapacity < counts.students ? (
-                  <span className="text-red-500">
-                    Logic Violation! Capacity is less than students
-                  </span>
-                ) : (
-                  <span className="text-green-500">
-                    No Logic Violation! Capacity is greater than equal to
-                    students
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="mt-auto flex justify-end">
-            <Button variant="destructive" onClick={clearProfessor}>
-              Clear Professors
-            </Button>
-          </div>
-        </div>
+        {/* Professors Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Professors
+            </CardTitle>
+            <Users className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{counts.professors}</div>
+          </CardContent>
+        </Card>
 
-        {/* Students */}
-        <div className="p-6 bg-secondary text-primary rounded-lg shadow-md space-y-4 flex flex-col">
-          <div>
-            <span className="text-xl font-semibold">Students</span>
-            <span className="block text-2xl font-bold">{counts.students}</span>
+        {/* Students Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Students
+            </CardTitle>
+            <GraduationCap className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{counts.students}</div>
+          </CardContent>
+        </Card>
+
+        {/* Projects Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Projects
+            </CardTitle>
+            <FolderKanban className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{counts.projects}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {counts.drops} active • Total capacity: {counts.nonDroppedCapacity}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Capacity Status */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            {capacityStatus ? (
+              <>
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-green-700">
+                  Capacity OK: {counts.nonDroppedCapacity} slots available for {counts.students} students
+                </span>
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                <span className="text-red-700">
+                  Capacity Warning: Only {counts.nonDroppedCapacity} slots for {counts.students} students
+                </span>
+              </>
+            )}
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={controls.submitEnableStudentProjects}
-                onCheckedChange={(enabled) =>
-                  updateControl("submitEnableStudentProjects", enabled)
-                }
-              />
-              <span>Enable Student Submission</span>
-            </div>
-            <div className="flex items-center gap-2">
+        </CardContent>
+      </Card>
+
+      {/* Controls Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Student Controls */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5" />
+              Student Controls
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">View Projects</span>
               <Switch
                 checked={controls.projectViewEnableStudent}
                 onCheckedChange={(enabled) =>
                   updateControl("projectViewEnableStudent", enabled)
                 }
               />
-              <span>Enable View of Projects for Students</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Submit Preferences</span>
+              <Switch
+                checked={controls.submitEnableStudentProjects}
+                onCheckedChange={(enabled) =>
+                  updateControl("submitEnableStudentProjects", enabled)
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">View Results</span>
               <Switch
                 checked={controls.studentViewResult}
                 onCheckedChange={(enabled) =>
                   updateControl("studentViewResult", enabled)
                 }
               />
-              <span>Enable Result for Students</span>
             </div>
-          </div>
-          <div className="mt-auto flex justify-end">
-            <Button variant="destructive" onClick={clearStudents}>
-              Clear Students
+            <Separator />
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={clearStudents}
+            >
+              Clear All Students
             </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Projects */}
-        <div className="p-6 bg-secondary text-primary rounded-lg shadow-md space-y-4 flex flex-col">
-          <div>
-            <span className="text-xl font-semibold">Projects</span>
-            <span className="block text-2xl font-bold">{counts.projects}</span>
-          </div>
-          <div className="mt-auto flex justify-end">
-            <Button variant="destructive" onClick={clearProjects}>
-              Clear Projects
+        {/* Professor Controls */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Professor Controls
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">View Students</span>
+              <Switch
+                checked={controls.studentViewEnableProfessor}
+                onCheckedChange={(enabled) =>
+                  updateControl("studentViewEnableProfessor", enabled)
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Submit Preferences</span>
+              <Switch
+                checked={controls.submitEnableProfessorStudents}
+                onCheckedChange={(enabled) =>
+                  updateControl("submitEnableProfessorStudents", enabled)
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">View Results</span>
+              <Switch
+                checked={controls.professorViewResult}
+                onCheckedChange={(enabled) =>
+                  updateControl("professorViewResult", enabled)
+                }
+              />
+            </div>
+            <Separator />
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={clearProfessors}
+            >
+              Clear All Professors
             </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-center gap-4">
-        <Button
-          onClick={handleStartAllocation}
-          disabled={isAllocating || isResetting}
-        >
-          {isAllocating ? "Starting..." : "Start Allocation"}
-        </Button>
-        <Button
-          onClick={handleResetAllocation}
-          disabled={isAllocating || isResetting}
-        >
-          {isResetting ? "Resetting..." : "Reset Allocation"}
-        </Button>
-        <Button onClick={handleAutoAllocation}>Dev-Fill</Button>
-        <Button onClick={handleClearDatabase}>Clear Database</Button>
-      </div>
+      {/* Projects Control */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FolderKanban className="h-5 w-5" />
+            Project Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={clearProjects}
+          >
+            Clear All Projects
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Allocation Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Allocation Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            <Button
+              onClick={handleStartAllocation}
+              disabled={isAllocating || isResetting}
+            >
+              {isAllocating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Allocating...
+                </>
+              ) : (
+                "Start Allocation"
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleResetAllocation}
+              disabled={isAllocating || isResetting}
+            >
+              {isResetting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Resetting...
+                </>
+              ) : (
+                "Reset Allocation"
+              )}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearDatabase}
+            >
+              Clear Entire Database
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleDevFill}
+              disabled={isDevFilling}
+            >
+              {isDevFilling ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Filling...
+                </>
+              ) : (
+                "Dev-Fill"
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

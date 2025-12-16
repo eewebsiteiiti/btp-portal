@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import Student from "@/models/Student";
-import Project from "@/models/Project";
-import { dbConnect } from "@/lib/mongodb";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 
-const generateRandomPassword = () => {
+const generateRandomPassword = (): string => {
   return crypto.randomBytes(8).toString("hex"); // 16 characters
 };
 
-const sendEmail = async (email: string, password: string) => {
+const sendEmail = async (email: string, password: string): Promise<void> => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER, // Your Gmail address
-      pass: process.env.EMAIL_PASS, // App password (generated from Google)
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
   });
 
@@ -30,62 +28,85 @@ const sendEmail = async (email: string, password: string) => {
 };
 
 // Delay function to prevent rate limiting (500ms between emails)
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+interface StudentInput {
+  roll_no: string;
+  name: string;
+  email: string;
+  cpi?: number;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    await dbConnect();
     let data = await req.json();
     data = data.data;
 
     if (!Array.isArray(data)) {
       return NextResponse.json(
-        { message: "Invalid data format" },
+        { message: "Invalid data format. Expected an array of students." },
         { status: 400 }
       );
     }
 
     // Fetch all projects
-    const projects = await Project.find({}, "_id");
+    const projects = await prisma.project.findMany({
+      select: { id: true },
+    });
 
-    const studentsData = [];
+    const createdStudents = [];
 
-    for (const student of data) {
+    for (const student of data as StudentInput[]) {
+      // Validate required fields
+      if (!student.roll_no || !student.name || !student.email) {
+        continue; // Skip invalid entries
+      }
+
       const password = generateRandomPassword();
       const hashedPassword = await bcrypt.hash(password, 10);
-      // const password = "a";
-      // const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Send email with a delay to avoid rate limiting
-      await sendEmail(student.email, password);
-      await delay(500); // Add a delay of 500ms between emails
+      // Send email with credentials
+      try {
+        await sendEmail(student.email, password);
+        await delay(500); // Add a delay of 500ms between emails
+      } catch (emailError) {
+        console.error(`Failed to send email to ${student.email}:`, emailError);
+        // Continue even if email fails
+      }
 
-      const studentData = {
-        roll_no: student.roll_no,
-        name: student.name,
-        email: student.email,
-        password: hashedPassword,
-        preferences: projects.map((project) => ({
-          project: project._id,
-          isGroup: false,
-          partnerRollNumber: "",
-          status: "Pending",
-        })),
-        cpi: student.cpi,
-      };
+      // Create student with preferences for all projects
+      const createdStudent = await prisma.student.create({
+        data: {
+          rollNo: student.roll_no,
+          name: student.name,
+          email: student.email,
+          password: hashedPassword,
+          cpi: student.cpi || null,
+          preferences: {
+            create: projects.map((project, index) => ({
+              projectId: project.id,
+              orderIndex: index,
+              isGroup: false,
+              partnerRollNumber: "",
+              status: "Pending",
+            })),
+          },
+        },
+        include: {
+          preferences: true,
+        },
+      });
 
-      studentsData.push(studentData);
+      createdStudents.push(createdStudent);
     }
 
-    // Insert all students at once after processing
-    const students = await Student.insertMany(studentsData);
-
     return NextResponse.json(
-      { message: "Students added successfully", students },
+      { message: "Students added successfully", students: createdStudents },
       { status: 201 }
     );
   } catch (error) {
-    console.error(error);
+    console.error("Error creating students:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(

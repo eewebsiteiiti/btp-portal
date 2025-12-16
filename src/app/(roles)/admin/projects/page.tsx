@@ -83,7 +83,7 @@ const ProjectsPage = () => {
                     Co-Supervisor
                   </TableHead>
                   <TableHead className="py-3 px-4 text-left font-semibold text-gray-600">
-                    Project-Droped
+                    Dropped
                   </TableHead>
                   {/* <TableHead className="py-3 px-4 text-center font-semibold text-gray-600">
                     Actions
@@ -96,49 +96,49 @@ const ProjectsPage = () => {
                 {projects && projects.length > 0 ? (
                   projects.map((project, index) => (
                     <TableRow
-                      key={project._id}
+                      key={project.id}
                       className={`transition-all ${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-100`}
                     >
                       {/* Domain */}
                       <TableCell className="py-4 px-4 text-gray-800 font-medium">
-                        {project.Domain || "—"}
+                        {project.domain || "—"}
                       </TableCell>
 
                       {/* Project No */}
                       <TableCell className="py-4 px-4 text-gray-800">
-                        {project.Project_No || "—"}
+                        {project.projectNo || "—"}
                       </TableCell>
 
                       {/* Title */}
                       <TableCell className="py-4 px-4 text-gray-800">
-                        {project.Title || "—"}
+                        {project.title || "—"}
                       </TableCell>
 
                       {/* Capacity */}
                       <TableCell className="py-4 px-4 text-gray-600">
-                        {project.Capacity || "—"}
+                        {project.capacity || "—"}
                       </TableCell>
 
                       {/* Nature of Work */}
                       <TableCell className="py-4 px-4 text-gray-600">
-                        {project.Nature_of_work || "—"}
+                        {project.natureOfWork || "—"}
                       </TableCell>
 
                       {/* Comments */}
                       <TableCell className="py-4 px-4 text-gray-600">
-                        {project.Comments || "—"}
+                        {project.comments || "—"}
                       </TableCell>
 
                       {/* Supervisor */}
                       <TableCell className="py-4 px-4 text-gray-600">
-                        {project.Supervisor || "—"}
+                        {project.supervisor || "—"}
                       </TableCell>
 
                       {/* Co-Supervisor */}
                       <TableCell className="py-4 px-4 text-gray-600">
-                        {project.Cosupervisor || "—"}
+                        {project.cosupervisor || "—"}
                       </TableCell>
 
                       {/* Project-Drop */}

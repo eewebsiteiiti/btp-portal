@@ -1,31 +1,22 @@
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div
-      className="flex items-center justify-center min-h-screen bg-cover bg-center"
-      style={{ backgroundImage: "url('/background.jpg')" }}
-    >
-      {/* Background Overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-
-      <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-md text-center max-w-lg z-10">
-        <h1 className="text-3xl font-bold mb-4">
-          Welcome to the BTP Allocation Portal
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-blue-800">
+      <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-lg mx-4">
+        <h1 className="text-3xl font-bold mb-4 text-gray-800">
+          BTP Allocation Portal
         </h1>
-        <p className="text-gray-600 mb-6">
-          Welcome to the EE department BTP allocation portal - Spring 2025.
-          Please login to continue.
+        <p className="text-gray-600 mb-2">
+          EE Department, IIT Indore
         </p>
-        <form action="/logout" method="post"></form>
-        <form action="/login">
-          <Button
-            className="w-full bg-blue-600 hover:bg-blue-700 transition-colors duration-300"
-            type="submit"
-          >
-            Login
-          </Button>
-        </form>
+        <p className="text-gray-500 mb-6 text-sm">
+          Manage your Bachelor&apos;s Thesis Project preferences and allocations
+        </p>
+        <Button asChild className="w-full" size="lg">
+          <Link href="/login">Login to Continue</Link>
+        </Button>
       </div>
     </div>
   );

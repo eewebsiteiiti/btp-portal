@@ -54,7 +54,7 @@ const ProfessorDashboard = () => {
   // Calculate max capacity whenever projects change
   useEffect(() => {
     const totalCapacity = projects.reduce(
-      (sum, project) => sum + project.Capacity,
+      (sum, project) => sum + project.capacity,
       0
     );
     setMaxCapacity(totalCapacity);
@@ -63,7 +63,7 @@ const ProfessorDashboard = () => {
   // Initialize dropProject state based on projects
   useEffect(() => {
     const initialDropProject = projects.reduce((acc, project) => {
-      acc[project._id] = project.dropProject;
+      acc[project.id] = project.dropProject;
       return acc;
     }, {} as Record<string, boolean>);
     setDropProject(initialDropProject);
@@ -71,15 +71,15 @@ const ProfessorDashboard = () => {
 
   // Update error state based on active project count
   useEffect(() => {
-    setError(activeProjectCount < 3 || activeProjectCount > 4); // Error when less than 3 or greater than 4
+    setError(activeProjectCount < 3 || activeProjectCount > 4);
   }, [activeProjectCount]);
 
   // Calculate active project count based on dropProject and projects
   useEffect(() => {
     const activeCount = Object.keys(dropProject).reduce((count, key) => {
       if (!dropProject[key]) {
-        const project = projects.find((p) => p._id === key);
-        count += project?.Capacity || 0;
+        const project = projects.find((p) => p.id === key);
+        count += project?.capacity || 0;
       }
       return count;
     }, 0);
@@ -160,10 +160,10 @@ const ProfessorDashboard = () => {
       setProjectWiseStudents((prev) => {
         const updatedStudents = [...prev[projectId]];
         const oldIndex = updatedStudents.findIndex(
-          (item) => item.studentGroup[0]._id === active.id
+          (item) => item.studentGroup[0].id === active.id
         );
         const newIndex = updatedStudents.findIndex(
-          (item) => item.studentGroup[0]._id === over?.id
+          (item) => item.studentGroup[0].id === over?.id
         );
         const newOrder = arrayMove(updatedStudents, oldIndex, newIndex);
 
@@ -198,7 +198,7 @@ const ProfessorDashboard = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             students: projectWiseStudents,
-            professor: professor?._id,
+            professor: professor?.id,
             submitStatus: true,
           }),
         }),
@@ -239,19 +239,11 @@ const ProfessorDashboard = () => {
             {professor?.email}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="mt-4">
-            <LogoutButton />
-          </div>
-        </CardContent>
-        <CardContent>
-          <div className="mt-4">
-            <Button asChild>
-              <Link href="/professor/your-preference">
-                <p className="text-secondary">Your Preference</p>
-              </Link>
-            </Button>
-          </div>
+        <CardContent className="flex gap-4">
+          <LogoutButton />
+          <Button asChild variant="outline">
+            <Link href="/professor/your-preference">Your Preference</Link>
+          </Button>
         </CardContent>
       </Card>
 
@@ -263,15 +255,15 @@ const ProfessorDashboard = () => {
             <>
               {/* Project Tabs */}
               {projects.length > 0 ? (
-                <Tabs defaultValue={projects[0]._id} className="w-full">
+                <Tabs defaultValue={projects[0].id} className="w-full">
                   <TabsList className="flex border-b bg-background">
-                    {projects.map(({ _id, Project_No }) => (
+                    {projects.map(({ id, projectNo }) => (
                       <TabsTrigger
-                        key={_id}
-                        value={_id}
+                        key={id}
+                        value={id}
                         className="text-md mx-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                       >
-                        {Project_No}
+                        {projectNo}
                       </TabsTrigger>
                     ))}
                   </TabsList>
@@ -287,87 +279,79 @@ const ProfessorDashboard = () => {
 
                   {projects.map((project) => (
                     <TabsContent
-                      key={project._id}
-                      value={project._id}
+                      key={project.id}
+                      value={project.id}
                       className="p-6 border rounded-lg bg-background shadow-sm"
                     >
                       <div className="flex justify-between items-center mb-4">
                         <div>
                           <h2 className="text-xl font-semibold mb-2">
-                            {project.Title}
+                            {project.title}
                           </h2>
                           <p className="text-muted-foreground mb-4">
-                            {project.Comments}
+                            {project.comments}
                           </p>
                           <p className="text-muted-foreground mb-4">
-                            Capacity: {project.Capacity}
+                            Capacity: {project.capacity}
                           </p>
                         </div>
                         {maxCapacity > 4 && (
                           <div className="flex items-center gap-4">
                             <Switch
-                              checked={dropProject[project._id]}
+                              checked={dropProject[project.id]}
                               onCheckedChange={() =>
-                                handleSwitchChange(project._id)
+                                handleSwitchChange(project.id)
                               }
                             />
                             <Label>Drop this project</Label>
                           </div>
                         )}
                       </div>
-                      {dropProject[project._id] ? (
+                      {dropProject[project.id] ? (
                         <p className="text-muted-foreground">
-                          Project has been droped
+                          Project has been dropped
                         </p>
                       ) : (
                         <>
-                          {/* <ScrollArea className="flex-1 border rounded-md bg-background shadow-sm p-2"> */}
-                          {projectWiseStudents[project._id]?.length > 0 ? (
+                          {projectWiseStudents[project.id]?.length > 0 ? (
                             <DndContext
                               sensors={sensors}
                               collisionDetection={closestCenter}
                               onDragEnd={(event) =>
-                                handleDragEnd(event, project._id)
+                                handleDragEnd(event, project.id)
                               }
                             >
                               <SortableContext
-                                items={projectWiseStudents[project._id].map(
-                                  (item) => item.studentGroup[0]._id
+                                items={projectWiseStudents[project.id].map(
+                                  (item) => item.studentGroup[0].id
                                 )}
                                 strategy={verticalListSortingStrategy}
                               >
-                                {projectWiseStudents[project._id].map(
+                                {projectWiseStudents[project.id].map(
                                   ({ studentGroup, pref }) => (
                                     <SortableItemPP
-                                      key={studentGroup[0]._id}
-                                      id={studentGroup[0]._id}
+                                      key={studentGroup[0].id}
+                                      id={studentGroup[0].id}
                                     >
                                       <Card className="p-4 my-4 shadow-sm hover:bg-accent">
                                         <CardContent>
                                           <div>
-                                            {studentGroup.map(
-                                              ({
-                                                name,
-                                                roll_no,
-                                                email,
-                                                cpi,
-                                              }) => (
-                                                <div key={roll_no}>
-                                                  <h3 className="text-lg font-medium">
-                                                    {name}
-                                                  </h3>
-                                                  <p className="text-sm text-muted-foreground">
-                                                    Email: {email}
-                                                  </p>
-                                                  <p className="text-sm text-muted-foreground">
-                                                    Roll Number: {roll_no}
-                                                  </p>
-                                                  <p className="text-sm text-muted-foreground">
-                                                    CPI: {cpi}
-                                                  </p>
-                                                </div>
-                                              )
-                                            )}
+                                            {studentGroup.map((student) => (
+                                              <div key={student.rollNo || student.id}>
+                                                <h3 className="text-lg font-medium">
+                                                  {student.name}
+                                                </h3>
+                                                <p className="text-sm text-muted-foreground">
+                                                  Email: {student.email}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                  Roll Number: {student.rollNo}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                  CPI: {student.cpi || "N/A"}
+                                                </p>
+                                              </div>
+                                            ))}
                                           </div>
                                         </CardContent>
                                         <CardDescription className="text-sm font-bold mt-2 text-primary">
@@ -384,7 +368,6 @@ const ProfessorDashboard = () => {
                               No students have selected this project yet.
                             </p>
                           )}
-                          {/* </ScrollArea> */}
                         </>
                       )}
                       <div className="mt-4">
@@ -408,7 +391,7 @@ const ProfessorDashboard = () => {
           ) : (
             <Card className="flex justify-center items-center h-40">
               <CardDescription className="text-muted-foreground font-medium">
-                Allotment process yet to be started
+                Allotment process has not started yet
               </CardDescription>
             </Card>
           )}

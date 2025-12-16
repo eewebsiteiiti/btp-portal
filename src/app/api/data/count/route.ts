@@ -1,26 +1,28 @@
 import { NextResponse } from "next/server";
-import Student from "@/models/Student";
-import Professor from "@/models/Professor";
-import Project from "@/models/Project";
-import { dbConnect } from "@/lib/mongodb";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    await dbConnect();
-    const students = await Student.countDocuments({});
-    const professors = await Professor.countDocuments({});
-    const projects = await Project.countDocuments({});
-    const projectDetails = await Project.find({});
-    let drops = 0;
+    const [students, professors, projects, projectDetails] = await Promise.all([
+      prisma.student.count(),
+      prisma.professor.count(),
+      prisma.project.count(),
+      prisma.project.findMany({
+        select: { dropProject: true, capacity: true },
+      }),
+    ]);
+
+    let activeProjects = 0;
     let nonDroppedCapacity = 0;
-    projectDetails.map((p) => {
-      if (p.dropProject === false) {
-        drops += 1;
-        nonDroppedCapacity += p.Capacity;
+
+    projectDetails.forEach((p) => {
+      if (!p.dropProject) {
+        activeProjects++;
+        nonDroppedCapacity += p.capacity;
       }
     });
-    const nonDroppedCounts = projects - drops;
-    // count number of Dropped projects
+
+    const droppedProjects = projects - activeProjects;
 
     return NextResponse.json(
       {
@@ -28,14 +30,18 @@ export async function GET() {
         students,
         professors,
         projects,
-        drops,
-        nonDroppedCounts,
+        drops: activeProjects, // Active projects (not dropped)
+        nonDroppedCounts: droppedProjects, // Dropped projects
         nonDroppedCapacity,
       },
       { status: 200 }
     );
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    console.error("Error getting counts:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error getting counts", error: errorMessage },
+      { status: 500 }
+    );
   }
 }

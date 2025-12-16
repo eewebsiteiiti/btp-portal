@@ -1,74 +1,77 @@
 import { NextResponse } from "next/server";
-import { dbConnect } from "@/lib/mongodb";
-import AdminControls from "@/models/AdminControls";
+import prisma from "@/lib/prisma";
+
+const VALID_CONTROL_TYPES = [
+  "submitEnableStudentProjects",
+  "submitEnableProfessorStudents",
+  "projectViewEnableStudent",
+  "studentViewEnableProfessor",
+  "studentViewResult",
+  "professorViewResult",
+] as const;
+
+type ControlType = (typeof VALID_CONTROL_TYPES)[number];
 
 export async function GET() {
-  await dbConnect();
-
   try {
-    const controls = await AdminControls.findOne();
+    let controls = await prisma.adminControls.findFirst();
 
     if (!controls) {
       // Create default settings if they don't exist
-      const newControls = await AdminControls.create({});
-      return NextResponse.json(newControls);
+      controls = await prisma.adminControls.create({
+        data: {},
+      });
     }
 
     return NextResponse.json(controls);
   } catch (error) {
     console.error("Error fetching admin controls:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to fetch admin controls" },
+      { error: "Failed to fetch admin controls", details: errorMessage },
       { status: 500 }
     );
   }
 }
 
 export async function POST(req: Request) {
-  await dbConnect();
-
   try {
     const { type, enabled } = await req.json();
 
+    if (!type || typeof enabled !== "boolean") {
+      return NextResponse.json(
+        { error: "Type and enabled (boolean) are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!VALID_CONTROL_TYPES.includes(type as ControlType)) {
+      return NextResponse.json(
+        { error: "Invalid control type" },
+        { status: 400 }
+      );
+    }
+
     // Find existing controls or create default if not found
-    let controls = await AdminControls.findOne();
+    let controls = await prisma.adminControls.findFirst();
+
     if (!controls) {
-      controls = new AdminControls();
+      controls = await prisma.adminControls.create({
+        data: { [type]: enabled },
+      });
+    } else {
+      controls = await prisma.adminControls.update({
+        where: { id: controls.id },
+        data: { [type]: enabled },
+      });
     }
 
-    switch (type) {
-      case "submitEnableStudentProjects":
-        controls.submitEnableStudentProjects = enabled;
-        break;
-      case "submitEnableProfessorStudents":
-        controls.submitEnableProfessorStudents = enabled;
-        break;
-      case "projectViewEnableStudent":
-        controls.projectViewEnableStudent = enabled;
-        break;
-      case "studentViewEnableProfessor":
-        controls.studentViewEnableProfessor = enabled;
-        break;
-      case "studentViewResult":
-        controls.studentViewResult = enabled;
-        break;
-      case "professorViewResult":
-        controls.professorViewResult = enabled;
-        break;
-      default:
-        return NextResponse.json(
-          { error: "Invalid control type" },
-          { status: 400 }
-        );
-    }
-
-    await controls.save();
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, controls });
   } catch (error) {
     console.error("Error updating admin controls:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to update admin controls" },
+      { error: "Failed to update admin controls", details: errorMessage },
       { status: 500 }
     );
   }

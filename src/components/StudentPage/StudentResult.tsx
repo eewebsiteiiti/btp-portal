@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { StudentI, ProjectI } from "@/types";
 
 interface Props {
-  roll_no: string;
+  rollNo: string;
 }
 
-const StudentResult = ({ roll_no }: Props) => {
+const StudentResult = ({ rollNo }: Props) => {
   const [projectStudents, setProjectStudents] = useState<
     Record<string, string[]>
   >({});
@@ -52,67 +52,67 @@ const StudentResult = ({ roll_no }: Props) => {
 
   const getSortedStudents = (studentIds: string[]) => {
     return studentIds
-      .map((id) => allStudents.find((student) => student._id === id))
+      .map((id) => allStudents.find((student) => student.id === id))
       .filter((student): student is StudentI => student !== undefined);
   };
 
   // Find the project where the student with the roll number is assigned
   const filteredProjects = allProjects.filter((project) => {
-    const students = getSortedStudents(projectStudents[project._id] || []);
-    return students.some((student) => student.roll_no === roll_no);
+    const students = getSortedStudents(projectStudents[project.id] || []);
+    return students.some((student) => student.rollNo === rollNo);
   });
 
   // Find partner (if assigned to the same project)
   const findPartner = (projectId: string) => {
     const students = getSortedStudents(projectStudents[projectId] || []);
-    return students.filter((student) => student.roll_no !== roll_no);
+    return students.filter((student) => student.rollNo !== rollNo);
   };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold">
-          Assigned Project for {roll_no}
+          Assigned Project for {rollNo}
         </h1>
       </div>
 
       {filteredProjects.length === 0 ? (
         <div className="text-center text-gray-500">
-          No project assigned for roll number {roll_no}.
+          No project assigned for roll number {rollNo}.
         </div>
       ) : (
         <div className="space-y-6">
           {filteredProjects.map((project) => {
             const assignedStudents = getSortedStudents(
-              projectStudents[project._id] || []
+              projectStudents[project.id] || []
             );
             const mainStudent = assignedStudents.find(
-              (student) => student.roll_no === roll_no
+              (student) => student.rollNo === rollNo
             );
-            const partners = findPartner(project._id);
+            const partners = findPartner(project.id);
 
             return (
               <div
-                key={project._id}
+                key={project.id}
                 className="border rounded-xl shadow-lg p-6 bg-white"
               >
                 {/* Project Info */}
                 <div className="mb-4">
                   <h2 className="text-xl font-bold text-gray-800">
-                    {project.Project_No} - {project.Title}
+                    {project.projectNo} - {project.title}
                   </h2>
                   <p className="text-sm text-gray-600">
-                    <strong>Domain:</strong> {project.Domain}
+                    <strong>Domain:</strong> {project.domain}
                   </p>
                   <p className="text-sm text-gray-600">
-                    <strong>Supervisor:</strong> {project.Supervisor}
+                    <strong>Supervisor:</strong> {project.supervisor}
                   </p>
                   <p className="text-sm text-gray-600">
                     <strong>Co-Supervisor:</strong>{" "}
-                    {project.Cosupervisor || "N/A"}
+                    {project.cosupervisor || "N/A"}
                   </p>
                   <p className="text-sm text-gray-600">
-                    <strong>Capacity:</strong> {project.Capacity}
+                    <strong>Capacity:</strong> {project.capacity}
                   </p>
                 </div>
 
@@ -143,13 +143,13 @@ const StudentResult = ({ roll_no }: Props) => {
                             {mainStudent.email}
                           </td>
                           <td className="px-4 py-2 border-b">
-                            {mainStudent.roll_no}
+                            {mainStudent.rollNo}
                           </td>
                         </tr>
                       )}
                       {partners.map((partner) => (
                         <tr
-                          key={partner._id}
+                          key={partner.id}
                           className="hover:bg-gray-50 transition duration-200"
                         >
                           <td className="px-4 py-2 border-b">{partner.name}</td>
@@ -157,7 +157,7 @@ const StudentResult = ({ roll_no }: Props) => {
                             {partner.email}
                           </td>
                           <td className="px-4 py-2 border-b">
-                            {partner.roll_no}
+                            {partner.rollNo}
                           </td>
                         </tr>
                       ))}

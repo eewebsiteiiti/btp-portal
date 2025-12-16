@@ -1,17 +1,27 @@
-import {  NextResponse } from "next/server";
-import Student from "@/models/Student";
-import { dbConnect } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 export async function DELETE() {
   try {
-    await dbConnect();
-    const students = await Student.deleteMany({});
+    // Delete all preferences first (due to foreign key constraint)
+    await prisma.preference.deleteMany({});
+
+    // Delete all assigned projects
+    await prisma.assignedProject.deleteMany({});
+
+    // Delete all students
+    const result = await prisma.student.deleteMany({});
+
     return NextResponse.json(
-      { message: "DELETE request received", students },
+      { message: "All students deleted successfully", count: result.count },
       { status: 200 }
     );
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    console.error("Error deleting students:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error deleting students", error: errorMessage },
+      { status: 500 }
+    );
   }
 }

@@ -10,9 +10,11 @@ const StudentHeader = ({ student }: { student: StudentI }) => {
         <h2 className="font-semibold text-gray-800">Student Information</h2>
         <p className="text-gray-600">Name: {student?.name}</p>
         <p className="text-gray-600">Email: {student?.email}</p>
-        <p className="text-gray-600">Roll Number: {student?.roll_no}</p>
-
-        <LogoutButton />
+        <p className="text-gray-600">Roll Number: {student?.rollNo}</p>
+        {student?.cpi && <p className="text-gray-600">CPI: {student?.cpi}</p>}
+        <div className="mt-3">
+          <LogoutButton />
+        </div>
       </CardContent>
     </Card>
   );

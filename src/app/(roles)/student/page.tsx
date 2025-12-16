@@ -54,7 +54,7 @@ export default function StudentPage() {
     <div className="space-y-4 p-4 bg-gray-100 h-screen w-full flex flex-col">
       <StudentHeader student={student as StudentI} />
       {controls?.studentViewResult ? (
-        <StudentResult roll_no={student?.roll_no || ""} />
+        <StudentResult rollNo={student?.rollNo || ""} />
       ) : !student?.submitStatus ? (
         controls?.projectViewEnableStudent ? (
           <StudentProjectSelector

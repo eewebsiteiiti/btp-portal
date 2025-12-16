@@ -1,32 +1,37 @@
 import { NextResponse, NextRequest } from "next/server";
-import Project from "@/models/Project";
-import { dbConnect } from "@/lib/mongodb";
+import prisma from "@/lib/prisma";
 
 export async function PUT(req: NextRequest) {
   try {
-    await dbConnect();
-    const body = await req.json(); // {id:bool}
+    const body = await req.json(); // {id: boolean}
 
-    const projectUpdates = Object.entries(body).map(
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { message: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    const updatePromises = Object.entries(body).map(
       async ([projectId, drop]) => {
-        await Project.updateOne(
-          { _id: projectId },
-          { $set: { dropProject: drop } }
-        );
+        await prisma.project.update({
+          where: { id: projectId },
+          data: { dropProject: drop as boolean },
+        });
       }
     );
-    // console.log(projectUpdates);
 
-    await Promise.all(projectUpdates);
+    await Promise.all(updatePromises);
 
     return NextResponse.json(
       { message: "Projects updated successfully" },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error updating projects:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: "Error updating projects", error },
+      { message: "Error updating projects", error: errorMessage },
       { status: 500 }
     );
   }

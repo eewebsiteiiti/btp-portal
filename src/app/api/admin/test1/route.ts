@@ -1,39 +1,40 @@
 import { NextResponse } from "next/server";
-import Professor from "@/models/Professor";
-import Student from "@/models/Student";
-import { dbConnect } from "@/lib/mongodb";
+import prisma from "@/lib/prisma";
 
+// Test route to initialize professor student preferences
 export async function GET() {
   try {
-    await dbConnect();
+    const professors = await prisma.professor.findMany({
+      include: { projects: true },
+    });
 
-    const professors = await Professor.find({});
-    const students = await Student.find({});
+    const students = await prisma.student.findMany();
 
     for (const professor of professors) {
+      const studentsPreference: Record<string, string[][]> = {};
+
       for (const project of professor.projects) {
-        const temp = [];
-        for (const student of students) {
-          temp.push([student._id]);
-        }
-        professor.studentsPreference.set(project, temp);
+        // Initialize with all students as individual preferences
+        studentsPreference[project.id] = students.map((student) => [student.id]);
       }
 
-      // Mark modified since it's a Map
-      professor.markModified("studentsPreference");
-
-      // Save the updated professor document
-      await professor.save();
+      await prisma.professor.update({
+        where: { id: professor.id },
+        data: {
+          studentsPreference: JSON.stringify(studentsPreference),
+        },
+      });
     }
 
     return NextResponse.json({
       message: "Success",
-      data: professors, // Optional: return professors if needed
+      data: professors.length,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error processing request:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: "Error processing request", error: (error as Error).message },
+      { message: "Error processing request", error: errorMessage },
       { status: 500 }
     );
   }

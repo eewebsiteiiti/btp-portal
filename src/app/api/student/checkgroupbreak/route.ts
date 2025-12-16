@@ -1,40 +1,75 @@
-import { dbConnect } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
-import Student from "@/models/Student";
+import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
-  await dbConnect();
-  const data = await req.json();
+  try {
+    const data = await req.json();
 
-  const students = await Student.find();
-  const check_student = await Student.findOne({ roll_no: data.roll_no });
-  for (const student of students) {
-    if (student.submitStatus === true) {
-      // Check if the student has submitted the preferences
+    if (!data.roll_no) {
+      return NextResponse.json(
+        { message: "Roll number is required", groupBreak: false },
+        { status: 400 }
+      );
+    }
+
+    const checkStudent = await prisma.student.findUnique({
+      where: { rollNo: data.roll_no },
+      include: {
+        preferences: {
+          orderBy: { orderIndex: "asc" },
+        },
+      },
+    });
+
+    if (!checkStudent) {
+      return NextResponse.json(
+        { message: "Student not found", groupBreak: false },
+        { status: 404 }
+      );
+    }
+
+    // Get all students who have submitted preferences
+    const students = await prisma.student.findMany({
+      where: { submitStatus: true },
+      include: {
+        preferences: {
+          orderBy: { orderIndex: "asc" },
+        },
+      },
+    });
+
+    for (const student of students) {
       for (const preference of student.preferences) {
+        // Check if this student has the check_student as a group partner
         if (
-          preference.isGroup === true &&
-          preference.partnerRollNumber === check_student.roll_no
+          preference.isGroup &&
+          preference.partnerRollNumber === checkStudent.rollNo
         ) {
-          //found the project in common
-          for (const check_preference of check_student.preferences) {
-            // console.log(check_preference.project);
-            if (
-              check_preference.project.toString() ===
-                preference.project.toString() &&
-              check_preference.partnerRollNumber !== student.roll_no
-            ) {
-              return NextResponse.json({
-                message: "Group Break",
-                groupBreak: true,
-              });
-              // console.log("roll", check_preference.partnerRollNumber);
-            }
+          // Found a potential group - check if check_student has a different partner for same project
+          const checkPreference = checkStudent.preferences.find(
+            (p) => p.projectId === preference.projectId
+          );
+
+          if (
+            checkPreference &&
+            checkPreference.partnerRollNumber !== student.rollNo
+          ) {
+            return NextResponse.json({
+              message: "Group Break",
+              groupBreak: true,
+            });
           }
         }
       }
     }
-  }
 
-  return NextResponse.json({ message: "Hello", groupBreak: false });
+    return NextResponse.json({ message: "No group break", groupBreak: false });
+  } catch (error) {
+    console.error("Error checking group break:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error checking group break", error: errorMessage, groupBreak: false },
+      { status: 500 }
+    );
+  }
 }

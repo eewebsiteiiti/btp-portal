@@ -1,74 +1,111 @@
 import { NextResponse, NextRequest } from "next/server";
-import Student from "@/models/Student";
-import { dbConnect } from "@/lib/mongodb";
+import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
-  await dbConnect();
-
   try {
-    const students = await Student.find({});
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("email");
 
+    if (email) {
+      const student = await prisma.student.findUnique({
+        where: { email },
+        include: {
+          preferences: {
+            orderBy: { orderIndex: "asc" },
+            include: { project: true },
+          },
+        },
+      });
+
+      if (!student) {
+        return NextResponse.json(
+          { message: "Student not found" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(
+        { message: "GET request received", student },
+        { status: 200 }
+      );
+    }
+
+    // Get all students with their preferences
+    const students = await prisma.student.findMany({
+      include: {
+        preferences: {
+          orderBy: { orderIndex: "asc" },
+          include: { project: true },
+        },
+      },
+    });
+
+    // Update group preference statuses
     for (const student of students) {
-      if (!student.preferences) continue;
-
-      for (const [index, preference] of student.preferences.entries()) {
+      for (const preference of student.preferences) {
         if (preference.isGroup && preference.partnerRollNumber) {
-          const partner = await Student.findOne({
-            roll_no: preference.partnerRollNumber,
+          const partner = await prisma.student.findUnique({
+            where: { rollNo: preference.partnerRollNumber },
+            include: {
+              preferences: {
+                orderBy: { orderIndex: "asc" },
+              },
+            },
           });
-          if (partner && partner.preferences) {
-            interface Preference {
-              project: string;
-              isGroup: boolean;
-              partnerRollNumber?: string;
-              status?: string;
-            }
-            const partner_preference_index: number =
-              partner.preferences.findIndex(
-                (p: Preference) =>
-                  p.project.toString() === preference.project.toString()
+
+          if (partner) {
+            const partnerPref = partner.preferences.find(
+              (p) => p.projectId === preference.projectId
+            );
+
+            if (partnerPref) {
+              const partnerPrefIndex = partner.preferences.findIndex(
+                (p) => p.projectId === preference.projectId
               );
 
-            if (partner_preference_index !== -1) {
-              if (
-                partner_preference_index === index &&
-                partner.preferences[index].isGroup
-              ) {
-                preference.status = "Success";
-                partner.preferences[partner_preference_index].status =
-                  "Success";
-              } else {
-                preference.status = "Pending";
-                partner.preferences[partner_preference_index].status =
-                  "Pending";
-              }
+              const newStatus =
+                partnerPrefIndex === preference.orderIndex && partnerPref.isGroup
+                  ? "Success"
+                  : "Pending";
 
-              await student.save();
-              await partner.save();
+              // Update both preferences if status changed
+              if (preference.status !== newStatus) {
+                await prisma.preference.update({
+                  where: { id: preference.id },
+                  data: { status: newStatus },
+                });
+
+                await prisma.preference.update({
+                  where: { id: partnerPref.id },
+                  data: { status: newStatus },
+                });
+              }
             }
           }
         }
       }
     }
 
-    // Handle email-based filtering
-    const { searchParams } = new URL(req.url);
-    const email = searchParams.get("email");
+    // Refetch students after updates
+    const updatedStudents = await prisma.student.findMany({
+      include: {
+        preferences: {
+          orderBy: { orderIndex: "asc" },
+          include: { project: true },
+        },
+      },
+    });
 
-    if (email) {
-      const student = await Student.findOne({ email });
-      return NextResponse.json(
-        { message: "GET request received", student },
-        { status: 200 }
-      );
-    } else {
-      return NextResponse.json(
-        { message: "GET request received", students },
-        { status: 200 }
-      );
-    }
+    return NextResponse.json(
+      { message: "GET request received", students: updatedStudents },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error:", error);
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error fetching students", error: errorMessage },
+      { status: 500 }
+    );
   }
 }

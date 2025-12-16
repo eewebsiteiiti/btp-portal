@@ -45,7 +45,7 @@ const StudentsPage = () => {
         const data = await response.json();
         const tempMap: { [key: string]: number } = {};
         for (const proj of data.projects) {
-          tempMap[proj._id] = proj.Project_No;
+          tempMap[proj.id] = proj.projectNo;
         }
         setProjectIdNumberMap(tempMap);
       } catch (error) {
@@ -72,7 +72,7 @@ const StudentsPage = () => {
   // Export to Excel
   const handleExportToExcel = () => {
     const formattedData = students.map((student) => ({
-      Roll_No: student.roll_no,
+      Roll_No: student.rollNo,
       Name: student.name,
       Email: student.email,
       Top_3_Preferences: student.preferences
@@ -80,7 +80,7 @@ const StudentsPage = () => {
         .map(
           (pref, index) =>
             `${index + 1}. Project No: ${
-              projectIdNumberMap[pref.project] || "N/A"
+              projectIdNumberMap[pref.projectId] || "N/A"
             } ${pref.isGroup ? `(Group)` : `(Solo)`}`
         )
         .join(", "),
@@ -88,7 +88,7 @@ const StudentsPage = () => {
         .map(
           (pref, index) =>
             `${index + 1}. Project No: ${
-              projectIdNumberMap[pref.project] || "N/A"
+              projectIdNumberMap[pref.projectId] || "N/A"
             } ${pref.isGroup ? `(Group)` : `(Solo)`}`
         )
         .join(", "),
@@ -154,13 +154,13 @@ const StudentsPage = () => {
                   students.map((student, index) => (
                     <>
                       <TableRow
-                        key={student._id}
+                        key={student.id}
                         className={`transition-all ${
                           index % 2 === 0 ? "bg-gray-50" : "bg-white"
                         } hover:bg-gray-100`}
                       >
                         <TableCell className="py-2 text-gray-800 font-medium">
-                          {student.roll_no}
+                          {student.rollNo}
                         </TableCell>
                         <TableCell className="py-2 text-gray-800">
                           {student.name}
@@ -170,9 +170,9 @@ const StudentsPage = () => {
                         </TableCell>
                         <TableCell className="py-2 text-gray-600">
                           {student.preferences.slice(0, 3).map((pref, key) => (
-                            <div key={pref.project} className="mb-1">
+                            <div key={pref.projectId} className="mb-1">
                               {key + 1}. Project No:{" "}
-                              {projectIdNumberMap[pref.project] || "N/A"}{" "}
+                              {projectIdNumberMap[pref.projectId] || "N/A"}{" "}
                               {pref.isGroup ? `(Group)` : `(Solo)`}
                             </div>
                           ))}
@@ -180,10 +180,10 @@ const StudentsPage = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toggleRow(student._id)}
+                              onClick={() => toggleRow(student.id)}
                               className="mt-2 text-blue-600"
                             >
-                              {expandedRows.has(student._id) ? (
+                              {expandedRows.has(student.id) ? (
                                 <>
                                   Hide All <ChevronUp size={16} />
                                 </>
@@ -206,18 +206,18 @@ const StudentsPage = () => {
                       </TableRow>
 
                       {/* Expanded Row */}
-                      {expandedRows.has(student._id) && (
+                      {expandedRows.has(student.id) && (
                         <TableRow>
                           <TableCell colSpan={5} className="bg-gray-100 p-4">
                             <div className="grid grid-cols-2 gap-4">
                               {student.preferences.map((pref, key) => (
-                                <div key={pref.project} className="border p-3">
+                                <div key={pref.projectId} className="border p-3">
                                   <p>
                                     <strong>Preference {key + 1}</strong>
                                   </p>
                                   <p>
                                     Project No:{" "}
-                                    {projectIdNumberMap[pref.project] || "N/A"}
+                                    {projectIdNumberMap[pref.projectId] || "N/A"}
                                   </p>
                                   <p>
                                     {pref.isGroup

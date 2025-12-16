@@ -17,7 +17,7 @@ const SortableStudentGroup: React.FC<SortableStudentGroupProps> = ({
   index,
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: group[0].roll_no });
+    useSortable({ id: group[0].rollNo });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -37,13 +37,13 @@ const SortableStudentGroup: React.FC<SortableStudentGroupProps> = ({
           <h3 className="text-md font-semibold">Group #{index + 1}</h3>
           <Badge variant="secondary">Preference #{index + 1}</Badge>
         </div>
-        {group.map(({ roll_no, name, email }) => (
+        {group.map(({ rollNo, name, email }) => (
           <div
-            key={roll_no}
+            key={rollNo}
             className="p-2 border rounded-md bg-white shadow-sm"
           >
             <h4 className="font-medium">
-              {name} ({roll_no})
+              {name} ({rollNo})
             </h4>
             <p className="text-sm text-gray-500">Email: {email}</p>
           </div>

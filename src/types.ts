@@ -1,45 +1,61 @@
+// Database model types (matching Prisma schema)
 export interface ProfessorI {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   password: string;
-  // students: StudentI[];
-  studentsPreference?: { [key: string]: string[][] };
-  projects: string[];
+  studentsPreference: Record<string, string[][]>;
+  studentLimit: number;
   submitStatus: boolean;
+  projects?: ProjectI[];
 }
+
 export interface PreferenceI {
-  project: string;
+  id: string;
+  projectId: string;
+  project?: ProjectI;
   isGroup: boolean;
-  preferences: string;
-  status: "Pending" | "Success";
   partnerRollNumber: string;
+  status: "Pending" | "Success";
+  orderIndex: number;
 }
+
 export interface StudentI {
-  _id: string;
-  roll_no: string;
+  id: string;
+  rollNo: string;
   name: string;
   email: string;
   password: string;
   preferences: PreferenceI[];
   submitStatus: boolean;
-  cpi: number;
+  cpi: number | null;
 }
+
 export interface ProjectI {
-  Domain: string;
-  _id: string;
-  Project_No: string;
-  Title: string;
-  Capacity: number;
-  Nature_of_work: string;
-  Comments: string;
-  Supervisor: string;
-  Cosupervisor?: string;
-  studentLimit: number;
-  Supervisor_email: string;
+  id: string;
+  domain: string;
+  projectNo: string;
+  title: string;
+  capacity: number;
+  natureOfWork: string;
+  comments: string;
+  supervisor: string;
+  cosupervisor?: string | null;
+  supervisorEmail: string;
   dropProject: boolean;
+  professorId?: string | null;
 }
+
+export interface AssignedProjectI {
+  id: string;
+  studentId: string;
+  projectId: string;
+  student?: StudentI;
+  project?: ProjectI;
+}
+
 export interface ControlsI {
+  id?: string;
   submitEnableStudentProjects: boolean;
   submitEnableProfessorStudents: boolean;
   projectViewEnableStudent: boolean;
@@ -47,8 +63,9 @@ export interface ControlsI {
   studentViewResult: boolean;
   professorViewResult: boolean;
 }
+
 export interface UserI {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   password: string;
@@ -67,4 +84,36 @@ export interface SortableItemProps {
   >;
   projectMap: { [key: string]: { partnerRollNumber: string; status: string } };
   student: StudentI;
+}
+
+// API Response types
+export interface ApiResponse<T = unknown> {
+  message: string;
+  data?: T;
+  error?: string;
+}
+
+export interface StudentCreateInput {
+  rollNo: string;
+  name: string;
+  email: string;
+  cpi?: number;
+}
+
+export interface ProfessorCreateInput {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface ProjectCreateInput {
+  domain: string;
+  projectNo: string;
+  title: string;
+  capacity: number;
+  natureOfWork: string;
+  comments: string;
+  supervisor: string;
+  cosupervisor?: string;
+  supervisorEmail: string;
 }

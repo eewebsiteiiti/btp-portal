@@ -1,17 +1,22 @@
-import {  NextResponse } from "next/server";
-import Project from "@/models/Project";
-import { dbConnect } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    await dbConnect();
-    const projects = await Project.find({});
+    const projects = await prisma.project.findMany({
+      orderBy: { createdAt: "asc" },
+    });
+
     return NextResponse.json(
       { message: "GET request received", projects },
       { status: 200 }
     );
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    console.error("Error fetching projects:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { message: "Error fetching projects", error: errorMessage },
+      { status: 500 }
+    );
   }
 }

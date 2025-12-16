@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id              String           @id @default(cuid())
+  rollNo          String           @unique @map("roll_no")
+  name            String
+  email           String           @unique
+  password        String
+  submitStatus    Boolean          @default(false) @map("submit_status")
+  cpi             Float?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  assignedProject AssignedProject?
+  preferences     Preference[]
+
+  @@map("students")
+}
+
+model Professor {
+  id                 String    @id @default(cuid())
+  name               String
+  email              String    @unique
+  password           String
+  studentLimit       Int       @default(4) @map("student_limit")
+  submitStatus       Boolean   @default(false) @map("submit_status")
+  studentsPreference String    @default("{}") @map("students_preference")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  projects           Project[]
+
+  @@map("professors")
+}
+
+model Project {
+  id               String            @id @default(cuid())
+  domain           String
+  projectNo        String            @map("project_no")
+  title            String
+  capacity         Int
+  natureOfWork     String            @map("nature_of_work")
+  comments         String
+  supervisor       String
+  cosupervisor     String?
+  supervisorEmail  String            @map("supervisor_email")
+  dropProject      Boolean           @default(false) @map("drop_project")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  professorId      String?           @map("professor_id")
+  assignedProjects AssignedProject[]
+  preferences      Preference[]
+  professor        Professor?        @relation(fields: [professorId], references: [id])
+
+  @@map("projects")
+}
+
+model Preference {
+  id                String   @id @default(cuid())
+  orderIndex        Int      @map("order_index")
+  isGroup           Boolean  @default(false) @map("is_group")
+  partnerRollNumber String   @default("") @map("partner_roll_number")
+  status            String   @default("Pending")
+  studentId         String   @map("student_id")
+  projectId         String   @map("project_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, projectId])
+  @@map("preferences")
+}
+
+model AssignedProject {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  studentId String   @unique @map("student_id")
+  projectId String   @map("project_id")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("assigned_projects")
+}
+
+model AdminControls {
+  id                            String  @id @default(cuid())
+  submitEnableStudentProjects   Boolean @default(false) @map("submit_enable_student_projects")
+  submitEnableProfessorStudents Boolean @default(false) @map("submit_enable_professor_students")
+  projectViewEnableStudent      Boolean @default(false) @map("project_view_enable_student")
+  studentViewEnableProfessor    Boolean @default(false) @map("student_view_enable_professor")
+  studentViewResult             Boolean @default(false) @map("student_view_result")
+  professorViewResult           Boolean @default(false) @map("professor_view_result")
+
+  @@map("admin_controls")
+}

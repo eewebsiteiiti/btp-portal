@@ -1,7 +1,24 @@
-// /app/admin/layout.tsx
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
+import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
+  Upload,
+  Users,
+  GraduationCap,
+  FolderKanban,
+  ClipboardCheck,
+} from "lucide-react";
+
+const navItems = [
+  { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
+  { label: "Uploads", path: "/admin/uploads", icon: Upload },
+  { label: "Professors", path: "/admin/professors", icon: Users },
+  { label: "Students", path: "/admin/students", icon: GraduationCap },
+  { label: "Projects", path: "/admin/projects", icon: FolderKanban },
+  { label: "Allotted Projects", path: "/admin/allotedproject", icon: ClipboardCheck },
+];
 
 export default function AdminLayout({
   children,
@@ -9,35 +26,45 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   return (
     <div className="flex h-screen">
       {/* Fixed Sidebar */}
-      <div className="fixed top-0 left-0 h-full w-64 bg-primary text-secondary p-4 flex flex-col">
-        <h2 className="text-2xl font-bold mb-6">Admin Panel</h2>
-        {[
-          { label: "Dashboard", path: "/admin" },
-          { label: "Uploads", path: "/admin/uploads" },
-          { label: "Professors", path: "/admin/professors" },
-          { label: "Students", path: "/admin/students" },
-          { label: "Projects", path: "/admin/projects" },
-          { label: "Alloted Project", path: "/admin/allotedproject" },
-        ].map(({ label, path }) => (
-          <button
-            key={path}
-            onClick={() => router.push(path)}
-            className="w-full py-2 px-4 mb-2 text-left hover:bg-secondary hover:text-primary rounded transition"
-          >
-            {label}
-          </button>
-        ))}
-        <div className="mt-auto ">
+      <div className="fixed top-0 left-0 h-full w-64 bg-primary text-primary-foreground p-4 flex flex-col shadow-lg">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold">Admin Panel</h2>
+          <p className="text-sm text-primary-foreground/70 mt-1">BTP Allocation Portal</p>
+        </div>
+
+        <nav className="flex-1 space-y-1">
+          {navItems.map(({ label, path, icon: Icon }) => {
+            const isActive = pathname === path;
+            return (
+              <button
+                key={path}
+                onClick={() => router.push(path)}
+                className={cn(
+                  "w-full py-3 px-4 text-left rounded-lg transition-all flex items-center gap-3",
+                  isActive
+                    ? "bg-secondary text-secondary-foreground font-medium"
+                    : "hover:bg-primary-foreground/10 text-primary-foreground"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                {label}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="pt-4 border-t border-primary-foreground/20">
           <LogoutButton />
         </div>
       </div>
 
       {/* Scrollable Content */}
-      <div className="ml-64 w-[calc(100%-16rem)] overflow-y-auto p-6">
+      <div className="ml-64 w-[calc(100%-16rem)] overflow-y-auto p-6 bg-gray-50 min-h-screen">
         {children}
       </div>
     </div>
