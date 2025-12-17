@@ -10,8 +10,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ChevronDown,
+  ChevronUp,
+  GraduationCap,
+  CheckCircle,
+  Clock,
+  Search,
+  Download,
+  Users,
+  User,
+} from "lucide-react";
 import { StudentI } from "@/types";
 import * as XLSX from "xlsx";
 import Loading from "@/components/Loading";
@@ -24,6 +36,7 @@ const StudentsPage = () => {
     [key: string]: string;
   }>({});
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -69,7 +82,6 @@ const StudentsPage = () => {
     });
   };
 
-  // Export to Excel
   const handleExportToExcel = () => {
     const formattedData = students.map((student) => ({
       Roll_No: student.rollNo,
@@ -97,150 +109,227 @@ const StudentsPage = () => {
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
-
-    // Generate and trigger download
     XLSX.writeFile(workbook, "StudentData.xlsx");
   };
 
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        📚 Student Management
-      </h1>
+  const filteredStudents = students.filter(
+    (student) =>
+      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-      {/* Export Button */}
-      <div className="flex justify-end mb-4">
-        <Button
-          onClick={handleExportToExcel}
-          className="bg-green-600 text-white"
-        >
+  const stats = {
+    total: students.length,
+    submitted: students.filter((s) => s.submitStatus).length,
+    pending: students.filter((s) => !s.submitStatus).length,
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Students</h1>
+          <p className="text-muted-foreground">
+            Manage student data and view their project preferences
+          </p>
+        </div>
+        <Button onClick={handleExportToExcel} className="gap-2">
+          <Download className="h-4 w-4" />
           Export to Excel
         </Button>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Students
+            </CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Submitted
+            </CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.submitted}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Pending
+            </CardTitle>
+            <Clock className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name, roll no, or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Table */}
       {loading ? (
-        // <p className="text-center text-lg font-medium">Loading students...</p>
         <Loading message="Loading students..." />
       ) : error ? (
-        <p className="text-red-500 text-center text-lg">{error}</p>
+        <Card className="p-6">
+          <p className="text-center text-red-500">{error}</p>
+        </Card>
       ) : (
-        <Card className="p-4 shadow-lg rounded-xl">
+        <Card>
           <div className="overflow-x-auto">
-            <Table className="w-full border border-gray-200 rounded-lg">
-              {/* Table Header */}
-              <TableHeader className="sticky top-0 bg-gray-200">
-                <TableRow>
-                  <TableHead className="font-bold py-3 text-gray-700">
-                    Roll No
-                  </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
-                    Name
-                  </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
-                    Email
-                  </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700">
-                    Top Preferences
-                  </TableHead>
-                  <TableHead className="font-bold py-3 text-gray-700 ">
-                    Submit Status
-                  </TableHead>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="font-semibold">Roll No</TableHead>
+                  <TableHead className="font-semibold">Name</TableHead>
+                  <TableHead className="font-semibold">Email</TableHead>
+                  <TableHead className="font-semibold">Preferences</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
                 </TableRow>
               </TableHeader>
-
-              {/* Table Body */}
               <TableBody>
-                {students.length > 0 ? (
-                  students.map((student, index) => (
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => (
                     <React.Fragment key={student.id}>
-                      <TableRow
-                        className={`transition-all ${
-                          index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                        } hover:bg-gray-100`}
-                      >
-                        <TableCell className="py-2 text-gray-800 font-medium">
+                      <TableRow className="hover:bg-muted/50">
+                        <TableCell className="font-medium">
                           {student.rollNo}
                         </TableCell>
-                        <TableCell className="py-2 text-gray-800">
-                          {student.name}
-                        </TableCell>
-                        <TableCell className="py-2 text-gray-600">
+                        <TableCell>{student.name}</TableCell>
+                        <TableCell className="text-muted-foreground">
                           {student.email}
                         </TableCell>
-                        <TableCell className="py-2 text-gray-600">
-                          {student.preferences.slice(0, 3).map((pref, key) => (
-                            <div key={pref.projectId} className="mb-1">
-                              {key + 1}. Project No:{" "}
-                              {projectIdNumberMap[pref.projectId] || "N/A"}{" "}
-                              {pref.isGroup ? `(Group)` : `(Solo)`}
-                            </div>
-                          ))}
-                          {student.preferences.length > 3 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleRow(student.id)}
-                              className="mt-2 text-blue-600"
-                            >
-                              {expandedRows.has(student.id) ? (
-                                <>
-                                  Hide All <ChevronUp size={16} />
-                                </>
-                              ) : (
-                                <>
-                                  Show All {student.preferences.length}{" "}
-                                  <ChevronDown size={16} />
-                                </>
+                        <TableCell>
+                          {student.preferences.length > 0 ? (
+                            <div className="space-y-1">
+                              {student.preferences.slice(0, 3).map((pref, key) => (
+                                <div
+                                  key={pref.projectId}
+                                  className="flex items-center gap-2 text-sm"
+                                >
+                                  <Badge variant="outline" className="text-xs w-5 h-5 p-0 justify-center">
+                                    {key + 1}
+                                  </Badge>
+                                  <span>
+                                    Project {projectIdNumberMap[pref.projectId] || "N/A"}
+                                  </span>
+                                  {pref.isGroup ? (
+                                    <Badge variant="secondary" className="text-xs gap-1">
+                                      <Users className="h-3 w-3" />
+                                      Group
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs gap-1">
+                                      <User className="h-3 w-3" />
+                                      Solo
+                                    </Badge>
+                                  )}
+                                </div>
+                              ))}
+                              {student.preferences.length > 3 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => toggleRow(student.id)}
+                                  className="h-7 px-2 text-xs text-primary"
+                                >
+                                  {expandedRows.has(student.id) ? (
+                                    <>
+                                      Hide <ChevronUp className="h-3 w-3 ml-1" />
+                                    </>
+                                  ) : (
+                                    <>
+                                      +{student.preferences.length - 3} more{" "}
+                                      <ChevronDown className="h-3 w-3 ml-1" />
+                                    </>
+                                  )}
+                                </Button>
                               )}
-                            </Button>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">
+                              No preferences
+                            </span>
                           )}
                         </TableCell>
                         <TableCell>
-                          {student.submitStatus ? (
-                            <span className="text-green-500">Submitted</span>
-                          ) : (
-                            <span className="text-red-500">Pending</span>
-                          )}{" "}
+                          <Badge variant={student.submitStatus ? "default" : "secondary"}>
+                            {student.submitStatus ? (
+                              <><CheckCircle className="h-3 w-3 mr-1" /> Submitted</>
+                            ) : (
+                              <><Clock className="h-3 w-3 mr-1" /> Pending</>
+                            )}
+                          </Badge>
                         </TableCell>
                       </TableRow>
 
                       {/* Expanded Row */}
                       {expandedRows.has(student.id) && (
                         <TableRow>
-                          <TableCell colSpan={5} className="bg-gray-100 p-4">
-                            <div className="grid grid-cols-2 gap-4">
+                          <TableCell colSpan={5} className="bg-muted/30 p-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                               {student.preferences.map((pref, key) => (
-                                <div key={pref.projectId} className="border p-3">
-                                  <p>
-                                    <strong>Preference {key + 1}</strong>
-                                  </p>
-                                  <p>
-                                    Project No:{" "}
-                                    {projectIdNumberMap[pref.projectId] || "N/A"}
-                                  </p>
-                                  <p>
-                                    {pref.isGroup
-                                      ? `Partner: ${pref.partnerRollNumber}`
-                                      : "Solo"}
-                                  </p>
-                                  <p>
+                                <div
+                                  key={pref.projectId}
+                                  className="border rounded-lg p-3 bg-background"
+                                >
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Badge variant="outline" className="text-xs">
+                                      #{key + 1}
+                                    </Badge>
+                                    <span className="font-medium text-sm">
+                                      Project {projectIdNumberMap[pref.projectId] || "N/A"}
+                                    </span>
+                                  </div>
+                                  <div className="space-y-1 text-xs text-muted-foreground">
                                     {pref.isGroup ? (
                                       <>
-                                        Status:
-                                        {pref.status === "Success" ? (
-                                          <span className="text-green-500">
-                                            Success
-                                          </span>
-                                        ) : (
-                                          <span className="text-red-500">
-                                            Pending
-                                          </span>
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                          <Users className="h-3 w-3" />
+                                          Partner: {pref.partnerRollNumber}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          Status:{" "}
+                                          {pref.status === "Success" ? (
+                                            <Badge variant="default" className="text-[10px] h-4">
+                                              Matched
+                                            </Badge>
+                                          ) : (
+                                            <Badge variant="secondary" className="text-[10px] h-4">
+                                              Pending
+                                            </Badge>
+                                          )}
+                                        </div>
                                       </>
                                     ) : (
-                                      <></>
+                                      <div className="flex items-center gap-1">
+                                        <User className="h-3 w-3" />
+                                        Solo project
+                                      </div>
                                     )}
-                                  </p>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -251,10 +340,7 @@ const StudentsPage = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center py-4 text-gray-500"
-                    >
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No students found.
                     </TableCell>
                   </TableRow>

@@ -25,7 +25,7 @@ import { ProjectI, ControlsI, StudentI } from "@/types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
-import { Search, Plus, X, GripVertical } from "lucide-react";
+import { Search, Plus, X, GripVertical, Trash2, RotateCcw, ListX } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -52,6 +52,7 @@ const StudentProjectSelector = ({
     [key: string]: { partnerRollNumber: string; status: string };
   }>({});
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -199,6 +200,21 @@ const StudentProjectSelector = ({
     });
   };
 
+  const clearAllPreferences = () => {
+    setSelectedProjects([]);
+    setProjectMap({});
+    setShowClearConfirm(false);
+    toast.success("All preferences cleared");
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setDomainFilter("all");
+    setSupervisorFilter("all");
+  };
+
+  const hasActiveFilters = searchQuery !== "" || domainFilter !== "all" || supervisorFilter !== "all";
+
   const savePreferences = async (flag: boolean) => {
     if (!session?.user) return;
 
@@ -316,7 +332,38 @@ const StudentProjectSelector = ({
         onConfirm={confirmSubmitPreferences}
       />
 
+      <ConfirmDialog
+        open={showClearConfirm}
+        onOpenChange={setShowClearConfirm}
+        title="Clear All Preferences"
+        description="Are you sure you want to clear all your preferences? This will remove all selected projects from your list."
+        confirmText="Clear All"
+        variant="destructive"
+        onConfirm={clearAllPreferences}
+      />
+
       <div className="flex flex-col h-full gap-4">
+        {/* Top Actions Bar */}
+        <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
+          <p className="text-sm text-gray-600">
+            Selected: <span className="font-medium">{selectedProjects.length}</span> / {allProjects.length} projects
+          </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => savePreferences(false)}
+              variant="outline"
+              size="sm"
+            >
+              Save Draft
+            </Button>
+            {controls?.submitEnableStudentProjects && (
+              <Button onClick={submitPreferences} size="sm">
+                Submit Final
+              </Button>
+            )}
+          </div>
+        </div>
+
         {error && <p className="text-red-500 font-medium">{error}</p>}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0">
@@ -367,6 +414,18 @@ const StudentProjectSelector = ({
                     ))}
                   </SelectContent>
                 </Select>
+
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={clearFilters}
+                    className="shrink-0"
+                    title="Clear filters"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -414,12 +473,27 @@ const StudentProjectSelector = ({
           {/* Right Panel - Selected Preferences (Drag & Drop) */}
           <div className="flex flex-col border rounded-lg bg-white shadow-md overflow-hidden">
             <div className="p-3 bg-gray-50 border-b">
-              <h3 className="font-semibold text-gray-800">
-                Your Preferences ({selectedProjects.length})
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                Drag to reorder. Top = highest priority.
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-800">
+                    Your Preferences ({selectedProjects.length})
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Drag to reorder. Top = highest priority.
+                  </p>
+                </div>
+                {selectedProjects.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowClearConfirm(true)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
             </div>
 
             <ScrollArea className="flex-1 p-2">
@@ -489,26 +563,6 @@ const StudentProjectSelector = ({
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
-          <p className="text-xs text-gray-600">
-            Selected: {selectedProjects.length} / {allProjects.length} projects
-          </p>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => savePreferences(false)}
-              variant="outline"
-              className="text-xs"
-            >
-              Save Draft
-            </Button>
-            {controls?.submitEnableStudentProjects && (
-              <Button onClick={submitPreferences} className="text-xs">
-                Submit Final
-              </Button>
-            )}
-          </div>
-        </div>
       </div>
     </>
   );

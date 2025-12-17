@@ -32,7 +32,7 @@ export default function Home() {
           {/* Description */}
           <p className="text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed">
             Streamline your Bachelor&apos;s Thesis Project allocation process.
-            Submit preferences, track assignments, and connect with faculty advisors.
+            Submit your preferences now.
           </p>
 
           {/* CTA Button */}

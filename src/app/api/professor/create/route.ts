@@ -23,24 +23,29 @@ export async function POST(req: NextRequest) {
     const createdProfessors = [];
 
     for (const professor of data as ProfessorInput[]) {
+      // Convert values to strings to handle Excel numeric types
+      const name = String(professor.name ?? "").trim();
+      const email = String(professor.email ?? "").trim();
+      const password = String(professor.password ?? "").trim();
+
       // Validate required fields
-      if (!professor.name || !professor.email || !professor.password) {
+      if (!name || !email || !password) {
         continue; // Skip invalid entries
       }
 
       // Find projects that belong to this professor
       const projects = await prisma.project.findMany({
-        where: { supervisorEmail: professor.email },
+        where: { supervisorEmail: email },
         select: { id: true },
       });
 
       // Hash the password (FIX: professors now use hashed passwords)
-      const hashedPassword = await bcrypt.hash(professor.password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       const createdProfessor = await prisma.professor.create({
         data: {
-          name: professor.name,
-          email: professor.email,
+          name,
+          email,
           password: hashedPassword,
           studentsPreference: "{}",
           projects: {

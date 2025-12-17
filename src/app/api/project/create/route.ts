@@ -28,36 +28,47 @@ export async function POST(req: NextRequest) {
     const createdProjects = [];
 
     for (const project of data as ProjectInput[]) {
+      // Convert values to strings/numbers to handle Excel type variations
+      const domain = String(project.Domain ?? "").trim();
+      const projectNo = String(project.Project_No ?? "").trim();
+      const title = String(project.Title ?? "").trim();
+      const capacity = Number(project.Capacity) || 0;
+      const natureOfWork = String(project.Nature_of_work ?? "").trim();
+      const comments = String(project.Comments ?? "").trim();
+      const supervisor = String(project.Supervisor ?? "").trim();
+      const cosupervisor = project.Cosupervisor ? String(project.Cosupervisor).trim() : null;
+      const supervisorEmail = String(project.Supervisor_email ?? "").trim();
+
       // Validate required fields
       if (
-        !project.Domain ||
-        !project.Project_No ||
-        !project.Title ||
-        !project.Capacity ||
-        !project.Nature_of_work ||
-        !project.Comments ||
-        !project.Supervisor ||
-        !project.Supervisor_email
+        !domain ||
+        !projectNo ||
+        !title ||
+        !capacity ||
+        !natureOfWork ||
+        !comments ||
+        !supervisor ||
+        !supervisorEmail
       ) {
         continue; // Skip invalid entries
       }
 
       // Find professor by email to link project
       const professor = await prisma.professor.findUnique({
-        where: { email: project.Supervisor_email },
+        where: { email: supervisorEmail },
       });
 
       const createdProject = await prisma.project.create({
         data: {
-          domain: project.Domain,
-          projectNo: project.Project_No,
-          title: project.Title,
-          capacity: project.Capacity,
-          natureOfWork: project.Nature_of_work,
-          comments: project.Comments,
-          supervisor: project.Supervisor,
-          cosupervisor: project.Cosupervisor || null,
-          supervisorEmail: project.Supervisor_email,
+          domain,
+          projectNo,
+          title,
+          capacity,
+          natureOfWork,
+          comments,
+          supervisor,
+          cosupervisor,
+          supervisorEmail,
           dropProject: false,
           professorId: professor?.id || null,
         },

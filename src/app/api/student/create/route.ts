@@ -51,16 +51,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch all projects
-    const projects = await prisma.project.findMany({
-      select: { id: true },
-    });
-
     const createdStudents = [];
 
     for (const student of data as StudentInput[]) {
+      // Convert values to strings to handle Excel numeric types
+      const rollNo = String(student.roll_no ?? "").trim();
+      const name = String(student.name ?? "").trim();
+      const email = String(student.email ?? "").trim();
+
       // Validate required fields
-      if (!student.roll_no || !student.name || !student.email) {
+      if (!rollNo || !name || !email) {
         continue; // Skip invalid entries
       }
 
@@ -70,36 +70,24 @@ export async function POST(req: NextRequest) {
       // Send email with credentials if enabled
       if (sendEmails) {
         try {
-          await sendEmail(student.email, password);
+          await sendEmail(email, password);
           await delay(500); // Add a delay of 500ms between emails
         } catch (emailError) {
-          console.error(`Failed to send email to ${student.email}:`, emailError);
+          console.error(`Failed to send email to ${email}:`, emailError);
           // Continue even if email fails
         }
       } else {
-        console.log(`[INFO] Email disabled - ${student.email}, password: ${password}`);
+        console.log(`[INFO] Email disabled - ${email}, password: ${password}`);
       }
 
-      // Create student with preferences for all projects
+      // Create student with empty preferences
       const createdStudent = await prisma.student.create({
         data: {
-          rollNo: student.roll_no,
-          name: student.name,
-          email: student.email,
+          rollNo,
+          name,
+          email,
           password: hashedPassword,
-          cpi: student.cpi || null,
-          preferences: {
-            create: projects.map((project, index) => ({
-              projectId: project.id,
-              orderIndex: index,
-              isGroup: false,
-              partnerRollNumber: "",
-              status: "Pending",
-            })),
-          },
-        },
-        include: {
-          preferences: true,
+          cpi: student.cpi ? Number(student.cpi) : null,
         },
       });
 
