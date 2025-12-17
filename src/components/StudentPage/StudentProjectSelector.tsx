@@ -260,8 +260,13 @@ const StudentProjectSelector = ({
   const submitPreferences = async () => {
     if (!session?.user) return;
 
-    if (selectedProjects.length === 0) {
-      toast.error("Please add at least one project to your preferences");
+    // Check if all projects are ranked
+    const availableProjectCount = allProjects.filter(p => !p.dropProject).length;
+    if (selectedProjects.length < availableProjectCount) {
+      const remaining = availableProjectCount - selectedProjects.length;
+      toast.error(
+        `Please rank all projects before submitting. ${remaining} project${remaining > 1 ? 's' : ''} remaining.`
+      );
       return;
     }
 
@@ -344,10 +349,22 @@ const StudentProjectSelector = ({
 
       <div className="flex flex-col h-full gap-4">
         {/* Top Actions Bar */}
-        <div className="p-3 bg-white shadow-md rounded-md flex justify-between items-center">
-          <p className="text-sm text-gray-600">
-            Selected: <span className="font-medium">{selectedProjects.length}</span> / {allProjects.length} projects
-          </p>
+        <div className="p-3 bg-white shadow-md rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <p className="text-sm text-gray-600">
+              Ranked: <span className="font-medium">{selectedProjects.length}</span> / {allProjects.filter(p => !p.dropProject).length} projects
+            </p>
+            {availableProjects.length > 0 && (
+              <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                {availableProjects.length} remaining to rank
+              </span>
+            )}
+            {availableProjects.length === 0 && selectedProjects.length > 0 && (
+              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                All projects ranked
+              </span>
+            )}
+          </div>
           <div className="flex gap-2">
             <Button
               onClick={() => savePreferences(false)}
@@ -357,7 +374,12 @@ const StudentProjectSelector = ({
               Save Draft
             </Button>
             {controls?.submitEnableStudentProjects && (
-              <Button onClick={submitPreferences} size="sm">
+              <Button
+                onClick={submitPreferences}
+                size="sm"
+                disabled={availableProjects.length > 0}
+                title={availableProjects.length > 0 ? "Rank all projects to submit" : ""}
+              >
                 Submit Final
               </Button>
             )}
