@@ -189,18 +189,6 @@ export default function Login() {
                 )}
               </Button>
             </form>
-
-            {/* Forgot Password Link (Professors only) */}
-            {role === "professor" && (
-              <div className="mt-4 text-center">
-                <Link
-                  href="/login/forgot-password"
-                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-            )}
           </CardContent>
         </Card>
 
