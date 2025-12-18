@@ -56,7 +56,7 @@ const StudentsPage = () => {
       try {
         const response = await fetch("/api/project/get");
         const data = await response.json();
-        const tempMap: { [key: string]: number } = {};
+        const tempMap: { [key: string]: string } = {};
         for (const proj of data.projects) {
           tempMap[proj.id] = proj.projectNo;
         }
