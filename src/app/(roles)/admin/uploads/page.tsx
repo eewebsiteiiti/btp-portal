@@ -30,7 +30,8 @@ export default function AdminUploads() {
   const [students, setStudents] = useState<StudentI[]>([]);
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [loadingType, setLoadingType] = useState<UploadType | null>(null);
-  const [sendEmails, setSendEmails] = useState(false);
+  const [sendStudentEmails, setSendStudentEmails] = useState(false);
+  const [sendProfessorEmails, setSendProfessorEmails] = useState(false);
   const [fileInfo, setFileInfo] = useState<Record<UploadType, FileInfo | null>>({
     project: null,
     professor: null,
@@ -96,7 +97,12 @@ export default function AdminUploads() {
     setLoadingType(type);
     try {
       const endpoint = `/api/${type}/create`;
-      const body = type === "student" ? { data, sendEmails } : { data };
+      const body =
+        type === "student"
+          ? { data, sendEmails: sendStudentEmails }
+          : type === "professor"
+            ? { data, sendEmails: sendProfessorEmails }
+            : { data };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -221,19 +227,19 @@ export default function AdminUploads() {
                 </button>
               )}
 
-              {/* Student email toggle */}
-              {type === "student" && (
+              {/* Email toggle for students and professors */}
+              {(type === "student" || type === "professor") && (
                 <div className="flex items-center justify-between mt-4 p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="send-emails" className="text-sm cursor-pointer">
+                    <Label htmlFor={`send-emails-${type}`} className="text-sm cursor-pointer">
                       Send credentials
                     </Label>
                   </div>
                   <Switch
-                    id="send-emails"
-                    checked={sendEmails}
-                    onCheckedChange={setSendEmails}
+                    id={`send-emails-${type}`}
+                    checked={type === "student" ? sendStudentEmails : sendProfessorEmails}
+                    onCheckedChange={type === "student" ? setSendStudentEmails : setSendProfessorEmails}
                   />
                 </div>
               )}

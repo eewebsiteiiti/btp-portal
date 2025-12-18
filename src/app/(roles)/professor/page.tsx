@@ -5,12 +5,10 @@ import { useSession } from "next-auth/react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import LogoutButton from "@/components/LogoutButton";
+import ProfessorHeader from "@/components/ProfessorPage/ProfessorHeader";
 import { ProfessorI, ProjectI, StudentI } from "@/types";
 import Loading from "@/components/Loading";
 import { Switch } from "@/components/ui/switch";
@@ -35,7 +33,6 @@ import { ControlsI } from "@/types";
 import ProfessorResult from "@/components/ProfessorPage/ProfessorResult";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import Link from "next/link";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 
@@ -239,25 +236,7 @@ const ProfessorDashboard = () => {
       />
 
       {/* Professor Info */}
-      <Card className="w-full shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            Professor Information
-          </CardTitle>
-          <CardDescription className="text-lg">
-            {professor?.name}
-          </CardDescription>
-          <CardDescription className="text-gray-500">
-            {professor?.email}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex gap-4">
-          <LogoutButton />
-          <Button asChild variant="outline">
-            <Link href="/professor/your-preference">Your Preference</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <ProfessorHeader professor={professor as ProfessorI} projectCount={projects.length} />
 
       {controls?.professorViewResult ? (
         <ProfessorResult professor_name={professor?.name || ""} />

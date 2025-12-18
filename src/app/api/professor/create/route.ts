@@ -1,17 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
+
+const generateRandomPassword = (): string => {
+  return crypto.randomBytes(8).toString("hex"); // 16 characters
+};
+
+const sendEmail = async (email: string, name: string, password: string): Promise<void> => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Your BTP Portal Credentials",
+    text: `Welcome to the BTP Portal, ${name}!\n\nYour login details are:\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after logging in.\n`,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+// Delay function to prevent rate limiting (500ms between emails)
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 interface ProfessorInput {
   name: string;
   email: string;
-  password: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    let data = await req.json();
-    data = data.data;
+    const body = await req.json();
+    const data = body.data;
+    const sendEmails = body.sendEmails ?? false;
 
     if (!Array.isArray(data)) {
       return NextResponse.json(
@@ -26,11 +55,26 @@ export async function POST(req: NextRequest) {
       // Convert values to strings to handle Excel numeric types
       const name = String(professor.name ?? "").trim();
       const email = String(professor.email ?? "").trim();
-      const password = String(professor.password ?? "").trim();
 
       // Validate required fields
-      if (!name || !email || !password) {
+      if (!name || !email) {
         continue; // Skip invalid entries
+      }
+
+      const password = generateRandomPassword();
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Send email with credentials if enabled
+      if (sendEmails) {
+        try {
+          await sendEmail(email, name, password);
+          await delay(500); // Add a delay of 500ms between emails
+        } catch (emailError) {
+          console.error(`Failed to send email to ${email}:`, emailError);
+          // Continue even if email fails
+        }
+      } else {
+        console.log(`[INFO] Email disabled - ${email}, password: ${password}`);
       }
 
       // Find projects that belong to this professor
@@ -38,9 +82,6 @@ export async function POST(req: NextRequest) {
         where: { supervisorEmail: email },
         select: { id: true },
       });
-
-      // Hash the password (FIX: professors now use hashed passwords)
-      const hashedPassword = await bcrypt.hash(password, 10);
 
       const createdProfessor = await prisma.professor.create({
         data: {
