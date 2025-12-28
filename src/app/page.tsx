@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 import { GraduationCap, Users, FolderKanban, ArrowRight } from "lucide-react";
 
 export default function Home() {
@@ -9,11 +10,15 @@ export default function Home() {
       {/* Hero Section */}
       <div className="flex flex-col items-center justify-center min-h-screen px-4">
         <div className="text-center max-w-3xl mx-auto">
-          {/* Logo/Icon */}
-          <div className="mb-8 flex justify-center">
-            <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-sm">
-              <GraduationCap className="h-16 w-16 text-white" />
-            </div>
+          {/* EE Logo */}
+          <div className="mt-8 mb-8 flex justify-center">
+            <Image
+              src="/ee-logo.jpg"
+              alt="Electrical Engineering Logo"
+              width={150}
+              height={150}
+              className="h-36 w-36 object-contain"
+            />
           </div>
 
           {/* Title */}
@@ -90,9 +95,20 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <p className="text-slate-400 text-sm mt-16">
-          IIT Indore - Department of Electrical Engineering
-        </p>
+        <div className="mt-10 flex flex-col items-center gap-2">
+          <div className="bg-white rounded-lg p-1">
+            <Image
+              src="/iit-indore-logo.jpg"
+              alt="IIT Indore Logo"
+              width={60}
+              height={60}
+              className="h-14 w-14 object-contain"
+            />
+          </div>
+          <p className="text-slate-400 text-sm">
+            IIT Indore - Department of Electrical Engineering
+          </p>
+        </div>
       </div>
     </div>
   );
