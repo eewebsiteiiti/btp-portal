@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ProfessorI, StudentI } from "@/types";
 import Loading from "@/components/Loading";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Users,
   Mail,
@@ -56,6 +58,23 @@ const ProfessorPage = () => {
   const getStudent = (studentId: string) => {
     const s = students.find((s) => s.id === studentId);
     return { name: s?.name || "Unknown", rollNo: s?.rollNo || "N/A" };
+  };
+
+  const toggleSubmitStatus = async (profId: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch("/api/professor/submit-status", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ professorId: profId, submitStatus: !currentStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+      setProfessors((prev) =>
+        prev.map((p) => (p.id === profId ? { ...p, submitStatus: !currentStatus } : p))
+      );
+      toast.success(`Marked as ${!currentStatus ? "submitted" : "pending"}`);
+    } catch {
+      toast.error("Failed to update submit status");
+    }
   };
 
   const filteredProfessors = professors.filter(
@@ -157,13 +176,22 @@ const ProfessorPage = () => {
                       </div>
                     </div>
                   </div>
-                  <Badge variant={prof.submitStatus ? "default" : "secondary"}>
-                    {prof.submitStatus ? (
-                      <><CheckCircle className="h-3 w-3 mr-1" /> Submitted</>
-                    ) : (
-                      <><Clock className="h-3 w-3 mr-1" /> Pending</>
-                    )}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={prof.submitStatus ? "default" : "secondary"}>
+                      {prof.submitStatus ? (
+                        <><CheckCircle className="h-3 w-3 mr-1" /> Submitted</>
+                      ) : (
+                        <><Clock className="h-3 w-3 mr-1" /> Pending</>
+                      )}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant={prof.submitStatus ? "outline" : "default"}
+                      onClick={() => toggleSubmitStatus(prof.id, prof.submitStatus)}
+                    >
+                      {prof.submitStatus ? "Mark Pending" : "Mark Submitted"}
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
