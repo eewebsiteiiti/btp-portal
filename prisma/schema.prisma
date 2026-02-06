@@ -96,6 +96,8 @@ model AdminControls {
   studentViewEnableProfessor    Boolean @default(false) @map("student_view_enable_professor")
   studentViewResult             Boolean @default(false) @map("student_view_result")
   professorViewResult           Boolean @default(false) @map("professor_view_result")
+  minCapacity                   Int     @default(3) @map("min_capacity")
+  maxCapacity                   Int     @default(4) @map("max_capacity")
 
   @@map("admin_controls")
 }

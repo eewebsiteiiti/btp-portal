@@ -62,6 +62,8 @@ export interface ControlsI {
   studentViewEnableProfessor: boolean;
   studentViewResult: boolean;
   professorViewResult: boolean;
+  minCapacity: number;
+  maxCapacity: number;
 }
 
 export interface UserI {

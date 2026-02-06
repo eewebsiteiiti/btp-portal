@@ -71,8 +71,10 @@ const ProfessorDashboard = () => {
 
   // Update error state based on active project count
   useEffect(() => {
-    setError(activeProjectCount < 3 || activeProjectCount > 4);
-  }, [activeProjectCount]);
+    const min = controls?.minCapacity ?? 3;
+    const max = controls?.maxCapacity ?? 4;
+    setError(activeProjectCount < min || activeProjectCount > max);
+  }, [activeProjectCount, controls]);
 
   // Calculate active project count based on dropProject and projects
   useEffect(() => {
@@ -176,8 +178,10 @@ const ProfessorDashboard = () => {
   };
 
   const handleSubmit = () => {
-    if (activeProjectCount < 3 || activeProjectCount > 4) {
-      toast.error("Student count must be between 3 and 4 (inclusive).");
+    const min = controls?.minCapacity ?? 3;
+    const max = controls?.maxCapacity ?? 4;
+    if (activeProjectCount < min || activeProjectCount > max) {
+      toast.error(`Student count must be between ${min} and ${max} (inclusive).`);
       return;
     }
     setShowConfirm(true);
@@ -258,12 +262,12 @@ const ProfessorDashboard = () => {
                       </TabsTrigger>
                     ))}
                   </TabsList>
-                  {(activeProjectCount < 3 || activeProjectCount > 4) && (
+                  {(activeProjectCount < (controls?.minCapacity ?? 3) || activeProjectCount > (controls?.maxCapacity ?? 4)) && (
                     <Alert variant="destructive" className="my-4">
                       <AlertDescription>
                         You currently support {activeProjectCount} student
                         capacity. Please adjust the projects to keep the
-                        capacity between 3 and 4 (inclusive).
+                        capacity between {controls?.minCapacity ?? 3} and {controls?.maxCapacity ?? 4} (inclusive).
                       </AlertDescription>
                     </Alert>
                   )}
@@ -286,7 +290,7 @@ const ProfessorDashboard = () => {
                             Capacity: {project.capacity}
                           </p>
                         </div>
-                        {maxCapacity > 4 && (
+                        {maxCapacity > (controls?.maxCapacity ?? 4) && (
                           <div className="flex items-center gap-4">
                             <Switch
                               checked={dropProject[project.id]}

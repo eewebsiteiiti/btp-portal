@@ -8,7 +8,11 @@ const VALID_CONTROL_TYPES = [
   "studentViewEnableProfessor",
   "studentViewResult",
   "professorViewResult",
+  "minCapacity",
+  "maxCapacity",
 ] as const;
+
+const NUMERIC_CONTROL_TYPES: readonly string[] = ["minCapacity", "maxCapacity"];
 
 type ControlType = (typeof VALID_CONTROL_TYPES)[number];
 
@@ -38,9 +42,10 @@ export async function POST(req: Request) {
   try {
     const { type, enabled } = await req.json();
 
-    if (!type || typeof enabled !== "boolean") {
+    const isNumeric = NUMERIC_CONTROL_TYPES.includes(type);
+    if (!type || (isNumeric ? typeof enabled !== "number" : typeof enabled !== "boolean")) {
       return NextResponse.json(
-        { error: "Type and enabled (boolean) are required" },
+        { error: "Type and enabled (boolean or number) are required" },
         { status: 400 }
       );
     }

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Users,
   GraduationCap,
@@ -41,6 +43,8 @@ export default function AdminDashboard() {
     studentViewEnableProfessor: false,
     studentViewResult: false,
     professorViewResult: false,
+    minCapacity: 3,
+    maxCapacity: 4,
   });
 
   const [isAllocating, setIsAllocating] = useState(false);
@@ -92,7 +96,7 @@ export default function AdminDashboard() {
     fetchAdminControls();
   }, []);
 
-  const updateControl = async (type: string, enabled: boolean) => {
+  const updateControl = async (type: string, enabled: boolean | number) => {
     try {
       await fetch("/api/admin/submit-control", {
         method: "POST",
@@ -427,6 +431,33 @@ export default function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <Label htmlFor="minCapacity" className="text-sm">Min Capacity</Label>
+                <Input
+                  id="minCapacity"
+                  type="number"
+                  value={controls.minCapacity}
+                  onChange={(e) =>
+                    updateControl("minCapacity", parseInt(e.target.value) || 0)
+                  }
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="maxCapacity" className="text-sm">Max Capacity</Label>
+                <Input
+                  id="maxCapacity"
+                  type="number"
+                  value={controls.maxCapacity}
+                  onChange={(e) =>
+                    updateControl("maxCapacity", parseInt(e.target.value) || 0)
+                  }
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <Separator />
             <div className="flex items-center justify-between">
               <span className="text-sm">View Students</span>
               <Switch
