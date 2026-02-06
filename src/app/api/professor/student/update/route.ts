@@ -151,6 +151,12 @@ export async function POST(req: NextRequest) {
         <p><strong>Location:</strong> Online Portal</p>
         <p>Attached is the Excel file containing all student preferences for your projects.</p>
         <p>Thank you for submitting your preferences.</p>
+        <p style="margin-top: 20px;">
+          <a href="https://eebtp.iiti.ac.in" style="color: #1e40af; text-decoration: underline;">https://eebtp.iiti.ac.in</a>
+        </p>
+        <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+          For any queries, please contact <a href="mailto:dugcee@iiti.ac.in" style="color: #1e40af;">dugcee@iiti.ac.in</a>.
+        </p>
       </div>
     `;
 

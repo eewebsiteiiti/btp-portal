@@ -44,8 +44,12 @@ const sendEmail = async (email: string, name: string, rollNo: string, password: 
           <li>Submit your project preferences in order of priority</li>
         </ol>
 
+        <p style="margin-top: 20px;">
+          <a href="https://eebtp.iiti.ac.in" style="color: #1e40af; text-decoration: underline;">https://eebtp.iiti.ac.in</a>
+        </p>
+
         <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-          If you have any issues, please contact the Department of Electrical Engineering.
+          For any queries, please contact <a href="mailto:dugcee@iiti.ac.in" style="color: #1e40af;">dugcee@iiti.ac.in</a>.
         </p>
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
