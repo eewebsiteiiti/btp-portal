@@ -203,7 +203,15 @@ const ProfessorPage = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {prof.projects.map((project) => {
-                        const studentPrefs = prof.studentsPreference?.[project.id]?.flat() || [];
+                        const rawPrefs = (prof.studentsPreference?.[project.id] || []).flat();
+                        // Handle both formats: plain string IDs or student objects
+                        const studentPrefs = rawPrefs.map((entry: unknown) => {
+                          if (typeof entry === "string") {
+                            return { id: entry };
+                          }
+                          const obj = entry as { id?: string; _id?: string; name?: string; rollNo?: string };
+                          return { id: obj.id || obj._id || "", name: obj.name, rollNo: obj.rollNo };
+                        });
                         return (
                           <div
                             key={project.id}
@@ -219,17 +227,19 @@ const ProfessorPage = () => {
                                   {studentPrefs.length} student{studentPrefs.length !== 1 && "s"} ranked
                                 </div>
                                 <div className="max-h-28 overflow-y-auto space-y-1">
-                                  {studentPrefs.map((studentId, index) => {
-                                    const student = getStudent(studentId);
+                                  {studentPrefs.map((s, index) => {
+                                    const student = getStudent(s.id);
+                                    const name = student.name !== "Unknown" ? student.name : s.name || "Unknown";
+                                    const rollNo = student.rollNo !== "N/A" ? student.rollNo : s.rollNo || "N/A";
                                     return (
                                       <div
-                                        key={`${studentId}-${index}`}
+                                        key={`${s.id}-${index}`}
                                         className="flex items-center justify-between text-xs bg-background rounded px-2 py-1"
                                       >
                                         <span className="truncate flex-1">
-                                          {student.name}
+                                          {name}
                                           <span className="text-muted-foreground ml-1">
-                                            ({student.rollNo})
+                                            ({rollNo})
                                           </span>
                                         </span>
                                         <Badge variant="outline" className="ml-2 text-[10px] h-5">

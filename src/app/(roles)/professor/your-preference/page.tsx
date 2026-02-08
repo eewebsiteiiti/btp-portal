@@ -63,18 +63,30 @@ const ProfessorPage = () => {
         : projectItem;
       const isDropped = project?.dropProject || false;
 
-      const projectStudents =
-        professor.studentsPreference?.[projectId]?.flat() || [];
+      const projectStudentGroups =
+        professor.studentsPreference?.[projectId] || [];
+
+      // Handle both formats: plain string IDs or student objects
+      const rawStudents = (projectStudentGroups as unknown[]).flat();
+      const flatStudents = rawStudents.map((entry: unknown) => {
+        if (typeof entry === "string") {
+          return { id: entry, name: undefined };
+        }
+        const obj = entry as { id?: string; _id?: string; name?: string };
+        return { id: obj.id || obj._id || "", name: obj.name };
+      });
 
       return {
         id: projectId,
         title: project?.title || "Unknown Project",
         isDropped,
-        students: projectStudents.map((studentId, index) => ({
-          id: studentId,
-          name: studentLookup[studentId] || "Unknown Student",
-          preferenceRank: index + 1,
-        })),
+        students: flatStudents.map((s, index) => {
+          return {
+            id: s.id,
+            name: studentLookup[s.id] || s.name || "Unknown Student",
+            preferenceRank: index + 1,
+          };
+        }),
       };
     });
   }, [professor, projects, studentLookup]);
@@ -248,9 +260,9 @@ const ProfessorPage = () => {
                   {project.students.length > 0 ? (
                     <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-gray-50">
                       <ul className="space-y-1 text-sm text-gray-700">
-                        {project.students.map((student) => (
+                        {project.students.map((student, idx) => (
                           <li
-                            key={student.id}
+                            key={`${student.id}-${idx}`}
                             className="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded-md"
                           >
                             <span>{student.name}</span>
