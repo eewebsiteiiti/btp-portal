@@ -27,6 +27,7 @@ import {
 import { StudentI } from "@/types";
 import * as XLSX from "xlsx";
 import Loading from "@/components/Loading";
+import { toast } from "sonner";
 
 const StudentsPage = () => {
   const [students, setStudents] = useState<StudentI[]>([]);
@@ -110,6 +111,25 @@ const StudentsPage = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
     XLSX.writeFile(workbook, "StudentData.xlsx");
+  };
+
+  const toggleSubmitStatus = async (studentId: string, current: boolean) => {
+    try {
+      const res = await fetch("/api/student/submit-status", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, submitStatus: !current }),
+      });
+      if (!res.ok) throw new Error();
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === studentId ? { ...s, submitStatus: !current } : s
+        )
+      );
+      toast.success(`Student marked as ${!current ? "submitted" : "pending"}`);
+    } catch {
+      toast.error("Failed to update submit status");
+    }
   };
 
   const filteredStudents = students.filter(
@@ -275,13 +295,22 @@ const StudentsPage = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={student.submitStatus ? "default" : "secondary"}>
-                            {student.submitStatus ? (
-                              <><CheckCircle className="h-3 w-3 mr-1" /> Submitted</>
-                            ) : (
-                              <><Clock className="h-3 w-3 mr-1" /> Pending</>
-                            )}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={student.submitStatus ? "default" : "secondary"}>
+                              {student.submitStatus ? (
+                                <><CheckCircle className="h-3 w-3 mr-1" /> Submitted</>
+                              ) : (
+                                <><Clock className="h-3 w-3 mr-1" /> Pending</>
+                              )}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant={student.submitStatus ? "outline" : "default"}
+                              onClick={() => toggleSubmitStatus(student.id, student.submitStatus)}
+                            >
+                              {student.submitStatus ? "Mark Pending" : "Mark Submitted"}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
 

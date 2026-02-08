@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import StudentResult from "@/components/StudentPage/StudentResult";
 import StudentHeader from "@/components/StudentPage/StudentHeader";
 import StudentProjectSelector from "@/components/StudentPage/StudentProjectSelector";
+import StudentSubmittedPreferences from "@/components/StudentPage/StudentSubmittedPreferences";
 import Loading from "@/components/Loading";
 
 export default function StudentPage() {
@@ -70,11 +71,7 @@ export default function StudentPage() {
           </div>
         )
       ) : (
-        <div className="flex justify-center items-center h-40 border rounded-md bg-white shadow-md">
-          <p className="text-gray-500 font-medium">
-            You have already submitted your preferences
-          </p>
-        </div>
+        <StudentSubmittedPreferences student={student as StudentI} />
       )}
     </div>
   );

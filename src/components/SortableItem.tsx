@@ -25,6 +25,10 @@ export default function SortableItem({
   };
 
   const handleRollNumberAdd = () => {
+    if (/[a-zA-Z]/.test(rollNumber)) {
+      toast.error("Please enter only the numeric roll number (e.g. 220003016)");
+      return;
+    }
     if (student.rollNo === rollNumber) {
       toast.error("You cannot add yourself as a partner");
       return;
