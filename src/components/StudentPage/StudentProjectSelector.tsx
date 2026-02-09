@@ -92,7 +92,12 @@ const StudentProjectSelector = ({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               preferences: data.student.preferences.map(
-                (p: { projectId: string }) => ({ project: p.projectId })
+                (p: { projectId: string; isGroup: boolean; partnerRollNumber: string; status: string }) => ({
+                  project: p.projectId,
+                  isGroup: p.isGroup,
+                  partnerRollNumber: p.partnerRollNumber,
+                  status: p.status,
+                })
               ),
             }),
           });
@@ -233,6 +238,24 @@ const StudentProjectSelector = ({
       });
 
       if (!response.ok) throw new Error();
+
+      const result = await response.json();
+      // Update projectMap with the latest statuses from the server
+      if (result.preferences) {
+        setProjectMap((prev) => {
+          const updated = { ...prev };
+          for (const pref of result.preferences) {
+            if (updated[pref.projectId]) {
+              updated[pref.projectId] = {
+                ...updated[pref.projectId],
+                status: pref.status,
+              };
+            }
+          }
+          return updated;
+        });
+      }
+
       if (!flag) toast.success("Preferences saved successfully!");
     } catch {
       setError("Error saving preferences");

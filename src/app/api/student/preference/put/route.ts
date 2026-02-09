@@ -40,6 +40,33 @@ export async function PUT(req: NextRequest) {
     const updatedPreferences: PreferenceInput[] = data.preference;
     let updatedCount = 0;
 
+    // Reset partner statuses for old group preferences that are being removed
+    const newProjectIds = new Set(updatedPreferences.map((p) => p.project));
+    for (const oldPref of student.preferences) {
+      if (oldPref.isGroup && oldPref.partnerRollNumber) {
+        const stillPairedWithSamePartner = updatedPreferences.some(
+          (p) =>
+            p.project === oldPref.projectId &&
+            p.partnerRollNumber === oldPref.partnerRollNumber
+        );
+        if (!stillPairedWithSamePartner) {
+          // This group pairing is being removed — reset partner's status
+          const partner = await prisma.student.findUnique({
+            where: { rollNo: oldPref.partnerRollNumber },
+          });
+          if (partner) {
+            await prisma.preference.updateMany({
+              where: {
+                studentId: partner.id,
+                projectId: oldPref.projectId,
+              },
+              data: { status: "Pending" },
+            });
+          }
+        }
+      }
+    }
+
     // Delete existing preferences and recreate them with new order
     await prisma.preference.deleteMany({
       where: { studentId: student.id },
@@ -143,11 +170,18 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    // Fetch the final state of preferences to return to the client
+    const finalPreferences = await prisma.preference.findMany({
+      where: { studentId: student.id },
+      orderBy: { orderIndex: "asc" },
+    });
+
     return NextResponse.json({
       message:
         updatedCount > 0
           ? "Preferences updated successfully, some statuses set to success"
           : "Preferences updated, status reset where needed",
+      preferences: finalPreferences,
       status: 200,
     });
   } catch (error) {
