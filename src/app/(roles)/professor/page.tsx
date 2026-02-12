@@ -42,6 +42,7 @@ const ProfessorDashboard = () => {
   const [controls, setControls] = useState<ControlsI>();
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [dropProject, setDropProject] = useState<Record<string, boolean>>({});
+  const [projectCapacity, setProjectCapacity] = useState<Record<string, number>>({});
   const [projectWiseStudents, setProjectWiseStudents] = useState<
     Record<string, { pref: number; studentGroup: StudentI[] }[]>
   >({});
@@ -50,6 +51,8 @@ const ProfessorDashboard = () => {
   const [maxCapacity, setMaxCapacity] = useState(0);
   const [error, setError] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showCapacityConfirm, setShowCapacityConfirm] = useState(false);
+  const [capacityToggleProjectId, setCapacityToggleProjectId] = useState<string | null>(null);
 
   // Calculate max capacity whenever projects change
   useEffect(() => {
@@ -60,13 +63,19 @@ const ProfessorDashboard = () => {
     setMaxCapacity(totalCapacity);
   }, [projects]);
 
-  // Initialize dropProject state based on projects
+  // Initialize dropProject and projectCapacity state based on projects
   useEffect(() => {
     const initialDropProject = projects.reduce((acc, project) => {
       acc[project.id] = project.dropProject;
       return acc;
     }, {} as Record<string, boolean>);
     setDropProject(initialDropProject);
+
+    const initialCapacity = projects.reduce((acc, project) => {
+      acc[project.id] = project.capacity;
+      return acc;
+    }, {} as Record<string, number>);
+    setProjectCapacity(initialCapacity);
   }, [projects]);
 
   // Update error state based on active project count
@@ -76,17 +85,16 @@ const ProfessorDashboard = () => {
     setError(activeProjectCount < min || activeProjectCount > max);
   }, [activeProjectCount, controls]);
 
-  // Calculate active project count based on dropProject and projects
+  // Calculate active project count based on dropProject and projectCapacity
   useEffect(() => {
     const activeCount = Object.keys(dropProject).reduce((count, key) => {
       if (!dropProject[key]) {
-        const project = projects.find((p) => p.id === key);
-        count += project?.capacity || 0;
+        count += projectCapacity[key] || 0;
       }
       return count;
     }, 0);
     setActiveProjectCount(activeCount);
-  }, [dropProject, projects]);
+  }, [dropProject, projectCapacity]);
 
   // Fetch professor and student data
   useEffect(() => {
@@ -153,6 +161,54 @@ const ProfessorDashboard = () => {
       ...prev,
       [projectId]: !prev[projectId],
     }));
+  };
+
+  const handleCapacityToggle = async (projectId: string, newCapacity: number) => {
+    // If reducing from 2 to 1, show confirmation dialog
+    if (newCapacity === 1 && projectCapacity[projectId] === 2) {
+      setCapacityToggleProjectId(projectId);
+      setShowCapacityConfirm(true);
+      return;
+    }
+    // If increasing from 1 to 2, update immediately
+    await updateCapacity(projectId, newCapacity);
+  };
+
+  const updateCapacity = async (projectId: string, newCapacity: number) => {
+    try {
+      const res = await fetch("/api/project/update/capacity", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, capacity: newCapacity }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "Failed to update capacity");
+        return;
+      }
+
+      setProjectCapacity((prev) => ({ ...prev, [projectId]: newCapacity }));
+
+      if (data.groupsBroken > 0) {
+        toast.success(
+          `Capacity updated. ${data.groupsBroken} group pairing(s) were reset to individual preferences.`
+        );
+      } else {
+        toast.success("Capacity updated successfully.");
+      }
+    } catch (error) {
+      console.error("Error updating capacity:", error);
+      toast.error("Failed to update capacity.");
+    }
+  };
+
+  const confirmCapacityToggle = async () => {
+    setShowCapacityConfirm(false);
+    if (capacityToggleProjectId) {
+      await updateCapacity(capacityToggleProjectId, 1);
+      setCapacityToggleProjectId(null);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent, projectId: string) => {
@@ -238,6 +294,15 @@ const ProfessorDashboard = () => {
         confirmText="Save Changes"
         onConfirm={confirmSubmit}
       />
+      <ConfirmDialog
+        open={showCapacityConfirm}
+        onOpenChange={setShowCapacityConfirm}
+        title="Reduce Capacity"
+        description="Changing capacity to 1 will break all group pairings for this project. Group members will be treated as individual preferences."
+        confirmText="Reduce Capacity"
+        variant="destructive"
+        onConfirm={confirmCapacityToggle}
+      />
 
       {/* Professor Info */}
       <ProfessorHeader professor={professor as ProfessorI} projectCount={projects.length} />
@@ -286,9 +351,35 @@ const ProfessorDashboard = () => {
                           <p className="text-muted-foreground mb-4">
                             {project.comments}
                           </p>
-                          <p className="text-muted-foreground mb-4">
-                            Capacity: {project.capacity}
-                          </p>
+                          <div className="flex items-center gap-3 mb-4">
+                            <span className="text-muted-foreground">Capacity:</span>
+                            {maxCapacity > (controls?.maxCapacity ?? 4) && project.capacity === 2 && !dropProject[project.id] ? (
+                              <div className="inline-flex items-center rounded-md border p-0.5 gap-0.5">
+                                <button
+                                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                                    projectCapacity[project.id] === 1
+                                      ? "bg-primary text-primary-foreground"
+                                      : "hover:bg-muted"
+                                  }`}
+                                  onClick={() => handleCapacityToggle(project.id, 1)}
+                                >
+                                  1
+                                </button>
+                                <button
+                                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                                    projectCapacity[project.id] === 2
+                                      ? "bg-primary text-primary-foreground"
+                                      : "hover:bg-muted"
+                                  }`}
+                                  onClick={() => handleCapacityToggle(project.id, 2)}
+                                >
+                                  2
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">{projectCapacity[project.id] ?? project.capacity}</span>
+                            )}
+                          </div>
                         </div>
                         {maxCapacity > (controls?.maxCapacity ?? 4) && (
                           <div className="flex items-center gap-4">
