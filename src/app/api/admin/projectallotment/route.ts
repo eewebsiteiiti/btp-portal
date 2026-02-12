@@ -23,7 +23,7 @@ interface ProjectData {
 interface ProfessorData {
   id: string;
   studentLimit: number;
-  studentsPreference: Record<string, string[][]>;
+  studentsPreference: Record<string, (string | { id: string })[][]>;
   projects: { id: string }[];
 }
 
@@ -96,7 +96,7 @@ async function runAllocationAlgorithm(): Promise<[string, string][]> {
 
   // Build project group info from professor preferences
   const projectGroupInfo: Record<string, Record<string, string>> = {};
-  const studentPrefList: Record<string, string[][]> = {};
+  const studentPrefList: Record<string, (string | { id: string })[][]> = {};
 
   for (const prof of parsedProfessors) {
     for (const [projectId, prefList] of Object.entries(prof.studentsPreference)) {
@@ -110,8 +110,8 @@ async function runAllocationAlgorithm(): Promise<[string, string][]> {
 
     for (const studs of listOfStudents) {
       if (studs.length > 1) {
-        const temp1 = studs[0].toString();
-        const temp2 = studs[1].toString();
+        const temp1 = typeof studs[0] === "object" ? studs[0].id : studs[0].toString();
+        const temp2 = typeof studs[1] === "object" ? studs[1].id : studs[1].toString();
         if (!projectGroupInfo[proj]) {
           projectGroupInfo[proj] = {};
         }
@@ -137,8 +137,9 @@ async function runAllocationAlgorithm(): Promise<[string, string][]> {
     if (!Array.isArray(studs)) continue;
 
     studs.forEach((studentGroup, prefIdx) => {
-      for (const studentId of studentGroup) {
-        const studentIdx = studentIndexMap[studentId.toString()];
+      for (const entry of studentGroup) {
+        const studentId = typeof entry === "object" ? entry.id : entry.toString();
+        const studentIdx = studentIndexMap[studentId];
         const projectIdx = projectIndexMap[proj];
         if (studentIdx !== undefined && projectIdx !== undefined) {
           professorMatrix[studentIdx][projectIdx] = prefIdx;
