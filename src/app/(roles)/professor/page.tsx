@@ -33,6 +33,15 @@ import { ControlsI } from "@/types";
 import ProfessorResult from "@/components/ProfessorPage/ProfessorResult";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 
@@ -53,6 +62,7 @@ const ProfessorDashboard = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showCapacityConfirm, setShowCapacityConfirm] = useState(false);
   const [capacityToggleProjectId, setCapacityToggleProjectId] = useState<string | null>(null);
+  const [showFixDialog, setShowFixDialog] = useState(false);
 
   // Calculate max capacity whenever projects change
   useEffect(() => {
@@ -190,6 +200,27 @@ const ProfessorDashboard = () => {
 
       setProjectCapacity((prev) => ({ ...prev, [projectId]: newCapacity }));
 
+      // If capacity reduced to 1, split any pairs in this project into individuals
+      if (newCapacity === 1) {
+        setProjectWiseStudents((prev) => {
+          const projectStudents = prev[projectId];
+          if (!projectStudents) return prev;
+          return {
+            ...prev,
+            [projectId]: projectStudents.flatMap((entry) => {
+              if (entry.studentGroup.length > 1) {
+                // Split the group into individual entries with the same pref
+                return entry.studentGroup.map((student) => ({
+                  pref: entry.pref,
+                  studentGroup: [student],
+                }));
+              }
+              return [entry];
+            }),
+          };
+        });
+      }
+
       if (data.groupsBroken > 0) {
         toast.success(
           `Capacity updated. ${data.groupsBroken} group pairing(s) were reset to individual preferences.`
@@ -304,6 +335,99 @@ const ProfessorDashboard = () => {
         onConfirm={confirmCapacityToggle}
       />
 
+      <Dialog open={showFixDialog} onOpenChange={setShowFixDialog}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Adjust Project Capacity</DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
+              Your total active capacity is <span className="font-semibold text-destructive">{activeProjectCount}</span>, but it must be between{" "}
+              <span className="font-semibold">{controls?.minCapacity ?? 3}</span> and{" "}
+              <span className="font-semibold">{controls?.maxCapacity ?? 4}</span> (inclusive).
+              For each project below you can:
+            </DialogDescription>
+            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1 mt-1">
+              <li><span className="font-medium text-foreground">Drop a project</span> &mdash; remove it entirely so it no longer counts toward your capacity.</li>
+              <li><span className="font-medium text-foreground">Reduce capacity</span> &mdash; for projects with capacity 2, lower it to 1 to free up one slot.</li>
+            </ul>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {projects.map((project) => {
+              const isDropped = dropProject[project.id];
+              const capacity = projectCapacity[project.id] ?? project.capacity;
+              return (
+                <div
+                  key={project.id}
+                  className={`rounded-lg border p-4 transition-colors ${isDropped ? "bg-muted/50 opacity-60" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">
+                        {project.projectNo} &mdash; {project.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        Current capacity: <span className="font-medium text-foreground">{capacity}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4 pt-2 border-t">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={isDropped}
+                        onCheckedChange={() => handleSwitchChange(project.id)}
+                      />
+                      <Label className="text-sm font-medium cursor-pointer">
+                        {isDropped ? "Dropped" : "Drop this project"}
+                      </Label>
+                    </div>
+                    {project.capacity === 2 && !isDropped && (
+                      <div className="flex items-center gap-2 ml-auto">
+                        <Label className="text-sm text-muted-foreground">Capacity:</Label>
+                        <div className="inline-flex items-center rounded-lg border bg-muted/40 p-1 gap-1">
+                          <button
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                              capacity === 1
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "hover:bg-background"
+                            }`}
+                            onClick={() => handleCapacityToggle(project.id, 1)}
+                          >
+                            1
+                          </button>
+                          <button
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                              capacity === 2
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "hover:bg-background"
+                            }`}
+                            onClick={() => handleCapacityToggle(project.id, 2)}
+                          >
+                            2
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter className="flex items-center sm:justify-between mt-4 pt-4 border-t">
+            <div className="flex flex-col gap-1">
+              <p className={`text-sm font-medium ${error ? "text-destructive" : "text-green-600"}`}>
+                Active capacity: {activeProjectCount} / {controls?.minCapacity ?? 3}&ndash;{controls?.maxCapacity ?? 4}
+                {error ? " — out of bounds" : " — within bounds"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Drop changes take effect when you click &ldquo;Save Changes&rdquo; on the main page.
+              </p>
+            </div>
+            <DialogClose asChild>
+              <Button disabled={error}>Done</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Professor Info */}
       <ProfessorHeader professor={professor as ProfessorI} projectCount={projects.length} />
 
@@ -329,11 +453,20 @@ const ProfessorDashboard = () => {
                   </TabsList>
                   {(activeProjectCount < (controls?.minCapacity ?? 3) || activeProjectCount > (controls?.maxCapacity ?? 4)) && (
                     <Alert variant="destructive" className="my-4">
-                      <AlertDescription>
-                        You currently support {activeProjectCount} student
-                        capacity. Please adjust the projects to keep the
-                        capacity between {controls?.minCapacity ?? 3} and {controls?.maxCapacity ?? 4} (inclusive).
-                      </AlertDescription>
+                      <div className="flex items-center justify-between gap-4">
+                        <AlertDescription>
+                          You currently support {activeProjectCount} student
+                          capacity. Please adjust the projects to keep the
+                          capacity between {controls?.minCapacity ?? 3} and {controls?.maxCapacity ?? 4} (inclusive).
+                        </AlertDescription>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setShowFixDialog(true)}
+                        >
+                          Fix Now
+                        </Button>
+                      </div>
                     </Alert>
                   )}
 
@@ -352,46 +485,9 @@ const ProfessorDashboard = () => {
                             {project.comments}
                           </p>
                           <div className="flex items-center gap-3 mb-4">
-                            <span className="text-muted-foreground">Capacity:</span>
-                            {maxCapacity > (controls?.maxCapacity ?? 4) && project.capacity === 2 && !dropProject[project.id] ? (
-                              <div className="inline-flex items-center rounded-md border p-0.5 gap-0.5">
-                                <button
-                                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                                    projectCapacity[project.id] === 1
-                                      ? "bg-primary text-primary-foreground"
-                                      : "hover:bg-muted"
-                                  }`}
-                                  onClick={() => handleCapacityToggle(project.id, 1)}
-                                >
-                                  1
-                                </button>
-                                <button
-                                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                                    projectCapacity[project.id] === 2
-                                      ? "bg-primary text-primary-foreground"
-                                      : "hover:bg-muted"
-                                  }`}
-                                  onClick={() => handleCapacityToggle(project.id, 2)}
-                                >
-                                  2
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">{projectCapacity[project.id] ?? project.capacity}</span>
-                            )}
+                            <span className="text-muted-foreground">Capacity: {projectCapacity[project.id] ?? project.capacity}</span>
                           </div>
                         </div>
-                        {maxCapacity > (controls?.maxCapacity ?? 4) && (
-                          <div className="flex items-center gap-4">
-                            <Switch
-                              checked={dropProject[project.id]}
-                              onCheckedChange={() =>
-                                handleSwitchChange(project.id)
-                              }
-                            />
-                            <Label>Drop this project</Label>
-                          </div>
-                        )}
                       </div>
                       {dropProject[project.id] ? (
                         <p className="text-muted-foreground">

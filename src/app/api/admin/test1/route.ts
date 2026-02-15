@@ -22,61 +22,139 @@ export async function GET() {
       include: { preferences: true },
     });
 
-    const projects = await prisma.project.findMany();
+    const projects = await prisma.project.findMany({
+      where: { dropProject: false },
+    });
 
-    // Fill professor preferences
-    for (const professor of professors) {
+    // Pair up ~40% of students randomly
+    const shuffledStudents = shuffleArray(students);
+    const pairCount = Math.floor(shuffledStudents.length * 0.2); // 20% of students = 40% involved in pairs
+    const pairs: { a: typeof students[0]; b: typeof students[0] }[] = [];
+    const pairedStudentIds = new Set<string>();
+
+    for (let i = 0; i < pairCount * 2 && i + 1 < shuffledStudents.length; i += 2) {
+      pairs.push({ a: shuffledStudents[i], b: shuffledStudents[i + 1] });
+      pairedStudentIds.add(shuffledStudents[i].id);
+      pairedStudentIds.add(shuffledStudents[i + 1].id);
+    }
+
+    // Build a map: studentId -> partnerRollNumber
+    const partnerMap = new Map<string, string>();
+    for (const pair of pairs) {
+      partnerMap.set(pair.a.id, pair.b.rollNo);
+      partnerMap.set(pair.b.id, pair.a.rollNo);
+    }
+
+    // Pre-decide which projects are group prefs for each pair
+    // Both partners must agree on the same projects for grouping to work
+    const pairGroupProjects = new Map<string, Set<string>>(); // pairKey -> set of projectIds
+    for (const pair of pairs) {
+      const groupProjectIds = new Set<string>();
+      for (const project of projects) {
+        if (Math.random() < 0.5) {
+          groupProjectIds.add(project.id);
+        }
+      }
+      // Store under both student IDs
+      pairGroupProjects.set(pair.a.id, groupProjectIds);
+      pairGroupProjects.set(pair.b.id, groupProjectIds);
+    }
+
+    // Fill student preferences (randomize project order) — wrapped in transaction
+    await prisma.$transaction(
+      students.flatMap((student) => {
+        const shuffledProjects = shuffleArray(projects);
+        const isPaired = pairedStudentIds.has(student.id);
+        const partnerRoll = partnerMap.get(student.id) || "";
+        const groupProjects = pairGroupProjects.get(student.id);
+
+        return [
+          prisma.preference.deleteMany({
+            where: { studentId: student.id },
+          }),
+          prisma.preference.createMany({
+            data: shuffledProjects.map((project, index) => {
+              const isGroup =
+                isPaired && groupProjects?.has(project.id) === true;
+              return {
+                studentId: student.id,
+                projectId: project.id,
+                orderIndex: index,
+                isGroup,
+                partnerRollNumber: isGroup ? partnerRoll : "",
+                status: isGroup ? "Success" : "Pending",
+              };
+            }),
+          }),
+          prisma.student.update({
+            where: { id: student.id },
+            data: { submitStatus: true },
+          }),
+        ];
+      })
+    );
+
+    // Re-fetch preferences to build professor rankings with group info
+    const allPreferences = await prisma.preference.findMany({
+      include: { student: true },
+    });
+
+    // Build rollNo -> student map for O(1) partner lookup
+    const studentsByRollNo = new Map(students.map((s) => [s.rollNo, s]));
+
+    // Fill professor preferences (aware of pairs) — wrapped in transaction
+    const professorUpdates = professors.map((professor) => {
       const studentsPreference: Record<string, string[][]> = {};
 
       for (const project of professor.projects) {
-        // Shuffle students for random ordering
-        const shuffledStudents = shuffleArray(students);
-        studentsPreference[project.id] = shuffledStudents.map((student) => [student.id]);
+        const prefsForProject = allPreferences.filter(
+          (p) => p.projectId === project.id
+        );
+        const shuffledPrefs = shuffleArray(prefsForProject);
+        const rankedStudents: string[][] = [];
+        const addedStudents = new Set<string>();
+
+        for (const pref of shuffledPrefs) {
+          if (addedStudents.has(pref.student.id)) continue;
+
+          if (pref.isGroup && pref.partnerRollNumber) {
+            const partner = studentsByRollNo.get(pref.partnerRollNumber);
+            if (partner && !addedStudents.has(partner.id)) {
+              rankedStudents.push([pref.student.id, partner.id]);
+              addedStudents.add(pref.student.id);
+              addedStudents.add(partner.id);
+            } else {
+              rankedStudents.push([pref.student.id]);
+              addedStudents.add(pref.student.id);
+            }
+          } else {
+            rankedStudents.push([pref.student.id]);
+            addedStudents.add(pref.student.id);
+          }
+        }
+
+        if (rankedStudents.length > 0) {
+          studentsPreference[project.id] = rankedStudents;
+        }
       }
 
-      await prisma.professor.update({
+      return prisma.professor.update({
         where: { id: professor.id },
         data: {
           studentsPreference: JSON.stringify(studentsPreference),
           submitStatus: true,
         },
       });
-    }
+    });
 
-    // Fill student preferences (randomize project order)
-    for (const student of students) {
-      // Shuffle projects to randomize preference order
-      const shuffledProjects = shuffleArray(projects);
-
-      // Delete existing preferences
-      await prisma.preference.deleteMany({
-        where: { studentId: student.id },
-      });
-
-      // Create new randomized preferences
-      await prisma.preference.createMany({
-        data: shuffledProjects.map((project, index) => ({
-          studentId: student.id,
-          projectId: project.id,
-          orderIndex: index,
-          isGroup: false,
-          partnerRollNumber: "",
-          status: "Pending",
-        })),
-      });
-
-      // Mark student as submitted
-      await prisma.student.update({
-        where: { id: student.id },
-        data: { submitStatus: true },
-      });
-    }
+    await prisma.$transaction(professorUpdates);
 
     return NextResponse.json({
       message: "Success - filled preferences for professors and students",
       data: {
         professors: professors.length,
         students: students.length,
+        pairs: pairs.length,
       },
     });
   } catch (error) {
