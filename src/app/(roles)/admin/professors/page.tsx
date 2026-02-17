@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ProfessorI, StudentI } from "@/types";
+import * as XLSX from "xlsx";
 import Loading from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import {
   Clock,
   Search,
   GraduationCap,
+  Download,
 } from "lucide-react";
 
 const ProfessorPage = () => {
@@ -60,6 +62,63 @@ const ProfessorPage = () => {
     return { name: s?.name || "Unknown", rollNo: s?.rollNo || "N/A" };
   };
 
+  const handleExportToExcel = () => {
+    const exportData: unknown[] = [];
+
+    professors.forEach((prof) => {
+      if (prof.projects && prof.projects.length > 0) {
+        prof.projects.forEach((project) => {
+          const rawPrefs = (prof.studentsPreference?.[project.id] || []).flat();
+          const studentPrefs = rawPrefs.map((entry: unknown) => {
+            if (typeof entry === "string") return { id: entry };
+            const obj = entry as { id?: string; _id?: string };
+            return { id: obj.id || obj._id || "" };
+          });
+
+          if (studentPrefs.length > 0) {
+            studentPrefs.forEach((s, index) => {
+              const student = getStudent(s.id);
+              exportData.push({
+                "Professor Name": prof.name,
+                "Professor Email": prof.email,
+                "Submit Status": prof.submitStatus ? "Submitted" : "Pending",
+                "Project Title": project.title,
+                "Student Rank": index + 1,
+                "Student Name": student.name,
+                "Student Roll No": student.rollNo,
+              });
+            });
+          } else {
+            exportData.push({
+              "Professor Name": prof.name,
+              "Professor Email": prof.email,
+              "Submit Status": prof.submitStatus ? "Submitted" : "Pending",
+              "Project Title": project.title,
+              "Student Rank": "-",
+              "Student Name": "No students ranked",
+              "Student Roll No": "-",
+            });
+          }
+        });
+      } else {
+        exportData.push({
+          "Professor Name": prof.name,
+          "Professor Email": prof.email,
+          "Submit Status": prof.submitStatus ? "Submitted" : "Pending",
+          "Project Title": "No projects",
+          "Student Rank": "-",
+          "Student Name": "-",
+          "Student Roll No": "-",
+        });
+      }
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Professors");
+    XLSX.writeFile(workbook, "ProfessorData.xlsx");
+  };
+
   const toggleSubmitStatus = async (profId: string, currentStatus: boolean) => {
     try {
       const res = await fetch("/api/professor/submit-status", {
@@ -92,11 +151,17 @@ const ProfessorPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Professors</h1>
-        <p className="text-muted-foreground">
-          Manage professor data and view their student preferences
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Professors</h1>
+          <p className="text-muted-foreground">
+            Manage professor data and view their student preferences
+          </p>
+        </div>
+        <Button onClick={handleExportToExcel} className="gap-2">
+          <Download className="h-4 w-4" />
+          Export to Excel
+        </Button>
       </div>
 
       {/* Stats Cards */}
