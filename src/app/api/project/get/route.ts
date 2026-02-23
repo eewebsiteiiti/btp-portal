@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const projects = await prisma.project.findMany({
       orderBy: { createdAt: "asc" },
+      include: { professor: { select: { id: true, name: true, email: true } } },
     });
 
     return NextResponse.json(

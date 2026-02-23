@@ -9,6 +9,8 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { ProjectI } from "@/types";
 import {
   Users,
   GraduationCap,
@@ -16,6 +18,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Loader2,
+  Mail,
+  Undo2,
 } from "lucide-react";
 
 type ConfirmDialogState = {
@@ -51,6 +55,8 @@ export default function AdminDashboard() {
   const [isResetting, setIsResetting] = useState(false);
   const [isDevFilling, setIsDevFilling] = useState(false);
   const [isClearingPreferences, setIsClearingPreferences] = useState(false);
+  const [droppedProjects, setDroppedProjects] = useState<ProjectI[]>([]);
+  const [localCapacity, setLocalCapacity] = useState<Record<string, number>>({});
 
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
     open: false,
@@ -91,9 +97,89 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchDroppedProjects = async () => {
+    try {
+      const res = await fetch("/api/project/get");
+      const data = await res.json();
+      const dropped = (data.projects as ProjectI[]).filter(
+        (p) => p.dropProject
+      );
+      setDroppedProjects(dropped);
+    } catch (error) {
+      console.error("Error fetching dropped projects:", error);
+    }
+  };
+
+  const handleUndropProject = (project: ProjectI) => {
+    showConfirmDialog({
+      title: "Undrop Project",
+      description: `Are you sure you want to undrop "${project.title}" (${project.projectNo})? This will make the project available for allocation again.`,
+      confirmText: "Undrop Project",
+      variant: "default",
+      onConfirm: async () => {
+        closeDialog();
+        try {
+          const res = await fetch("/api/project/update/drop", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ [project.id]: false }),
+          });
+          if (!res.ok) throw new Error("Failed to undrop project");
+          toast.success(`Project "${project.title}" has been undropped`);
+          fetchCounts();
+          fetchDroppedProjects();
+        } catch (error) {
+          console.error("Error undropping project:", error);
+          toast.error("Failed to undrop project");
+        }
+      },
+    });
+  };
+
+  const handleAdminCapacityChange = async (
+    project: ProjectI,
+    newCapacity: number
+  ) => {
+    if (project.capacity === 2 && newCapacity === 1) {
+      showConfirmDialog({
+        title: "Reduce Capacity",
+        description: `Reducing capacity from 2 to 1 for "${project.title}" will break all existing group pairings for this project. Are you sure?`,
+        confirmText: "Reduce Capacity",
+        variant: "destructive",
+        onConfirm: async () => {
+          closeDialog();
+          await updateProjectCapacity(project, newCapacity);
+        },
+      });
+    } else {
+      await updateProjectCapacity(project, newCapacity);
+    }
+  };
+
+  const updateProjectCapacity = async (
+    project: ProjectI,
+    newCapacity: number
+  ) => {
+    try {
+      const res = await fetch("/api/project/update/capacity", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: project.id, capacity: newCapacity }),
+      });
+      if (!res.ok) throw new Error("Failed to update capacity");
+      setLocalCapacity((prev) => ({ ...prev, [project.id]: newCapacity }));
+      toast.success(`Capacity updated to ${newCapacity}`);
+      fetchCounts();
+    } catch (error) {
+      console.error("Error updating capacity:", error);
+      toast.error("Failed to update capacity");
+    }
+  };
+
   useEffect(() => {
     fetchCounts();
     fetchAdminControls();
+    fetchDroppedProjects();
   }, []);
 
   const updateControl = async (type: string, enabled: boolean | number) => {
@@ -371,6 +457,87 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dropped Projects Section */}
+      {droppedProjects.length > 0 && (
+        <Card className={!capacityStatus ? "border-red-500 border-2" : ""}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Dropped Projects
+              <Badge variant="destructive">{droppedProjects.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {droppedProjects.map((project) => {
+              const capacity =
+                localCapacity[project.id] ?? project.capacity;
+              return (
+                <div
+                  key={project.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div className="space-y-1">
+                    <div className="font-medium">
+                      {project.projectNo} - {project.title}
+                    </div>
+                    {project.professor && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{project.professor.name}</span>
+                        <a
+                          href={`mailto:${project.professor.email}`}
+                          className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+                        >
+                          <Mail className="h-3 w-3" />
+                          {project.professor.email}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground mr-1">
+                        Capacity:
+                      </span>
+                      <Button
+                        size="sm"
+                        variant={capacity === 1 ? "default" : "outline"}
+                        className="h-7 w-7 p-0"
+                        onClick={() =>
+                          handleAdminCapacityChange(project, 1)
+                        }
+                        disabled={capacity === 1}
+                      >
+                        1
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={capacity === 2 ? "default" : "outline"}
+                        className="h-7 w-7 p-0"
+                        onClick={() =>
+                          handleAdminCapacityChange(project, 2)
+                        }
+                        disabled={capacity === 2}
+                      >
+                        2
+                      </Button>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleUndropProject(project)}
+                      className="gap-1"
+                    >
+                      <Undo2 className="h-4 w-4" />
+                      Undrop
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Controls Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

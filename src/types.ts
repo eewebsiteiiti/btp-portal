@@ -44,6 +44,7 @@ export interface ProjectI {
   supervisorEmail: string;
   dropProject: boolean;
   professorId?: string | null;
+  professor?: { id: string; name: string; email: string } | null;
 }
 
 export interface AssignedProjectI {
