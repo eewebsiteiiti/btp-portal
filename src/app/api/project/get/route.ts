@@ -4,8 +4,13 @@ import prisma from "@/lib/prisma";
 export async function GET() {
   try {
     const projects = await prisma.project.findMany({
-      orderBy: { createdAt: "asc" },
       include: { professor: { select: { id: true, name: true, email: true } } },
+    });
+
+    projects.sort((a, b) => {
+      const numA = parseInt(a.projectNo.replace(/\D/g, "")) || 0;
+      const numB = parseInt(b.projectNo.replace(/\D/g, "")) || 0;
+      return numA - numB;
     });
 
     return NextResponse.json(
