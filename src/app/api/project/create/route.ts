@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
         !title ||
         !capacity ||
         !natureOfWork ||
-        !comments ||
         !supervisor ||
         !supervisorEmail
       ) {
