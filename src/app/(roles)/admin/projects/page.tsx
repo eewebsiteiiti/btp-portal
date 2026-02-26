@@ -10,33 +10,90 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ProjectI } from "@/types";
 import Loading from "@/components/Loading";
+import { toast } from "sonner";
 
 const ProjectsPage = () => {
   const [projects, setProjects] = useState<ProjectI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "destructive" as "default" | "destructive",
+    onConfirm: () => {},
+  });
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch("/api/project/get");
+      if (!response.ok) throw new Error("Failed to fetch projects");
+      const data = await response.json();
+      setProjects(data.projects);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await fetch("/api/project/get");
-        if (!response.ok) throw new Error("Failed to fetch projects");
-        const data = await response.json();
-        setProjects(data.projects);
-      } catch (error) {
-        setError((error as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProjects();
   }, []);
 
+  const handleCapacityChange = async (project: ProjectI, newCapacity: number) => {
+    if (project.capacity === 2 && newCapacity === 1) {
+      setConfirmDialog({
+        open: true,
+        title: "Reduce Capacity",
+        description: `Reducing capacity from 2 to 1 for "${project.title}" will break all existing group pairings for this project. Are you sure?`,
+        confirmText: "Reduce Capacity",
+        variant: "destructive",
+        onConfirm: async () => {
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+          await updateCapacity(project.id, newCapacity);
+        },
+      });
+    } else {
+      await updateCapacity(project.id, newCapacity);
+    }
+  };
+
+  const updateCapacity = async (projectId: string, newCapacity: number) => {
+    try {
+      const res = await fetch("/api/project/update/capacity", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, capacity: newCapacity }),
+      });
+      if (!res.ok) throw new Error("Failed to update capacity");
+      setProjects((prev) =>
+        prev.map((p) => (p.id === projectId ? { ...p, capacity: newCapacity } : p))
+      );
+      toast.success(`Capacity updated to ${newCapacity}`);
+    } catch (error) {
+      console.error("Error updating capacity:", error);
+      toast.error("Failed to update capacity");
+    }
+  };
+
   return (
     <div className="p-6 space-y-8">
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmText={confirmDialog.confirmText}
+        onConfirm={confirmDialog.onConfirm}
+        variant={confirmDialog.variant}
+      />
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -117,8 +174,27 @@ const ProjectsPage = () => {
                       </TableCell>
 
                       {/* Capacity */}
-                      <TableCell className="py-4 px-4 text-gray-600">
-                        {project.capacity || "—"}
+                      <TableCell className="py-4 px-4">
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant={project.capacity === 1 ? "default" : "outline"}
+                            className="h-7 w-7 p-0"
+                            onClick={() => handleCapacityChange(project, 1)}
+                            disabled={project.capacity === 1}
+                          >
+                            1
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={project.capacity === 2 ? "default" : "outline"}
+                            className="h-7 w-7 p-0"
+                            onClick={() => handleCapacityChange(project, 2)}
+                            disabled={project.capacity === 2}
+                          >
+                            2
+                          </Button>
+                        </div>
                       </TableCell>
 
                       {/* Nature of Work */}
