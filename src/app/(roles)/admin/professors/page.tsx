@@ -280,11 +280,18 @@ const ProfessorPage = () => {
                         return (
                           <div
                             key={project.id}
-                            className="border rounded-lg p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+                            className={`border rounded-lg p-3 transition-colors ${project.dropProject ? "bg-red-50 border-red-200 hover:bg-red-100" : "bg-muted/30 hover:bg-muted/50"}`}
                           >
-                            <h4 className="font-medium text-sm mb-2 line-clamp-2">
-                              {project.title}
-                            </h4>
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-medium text-sm line-clamp-2 flex-1">
+                                {project.title}
+                              </h4>
+                              {project.dropProject && (
+                                <Badge variant="destructive" className="text-[10px] h-5 shrink-0">
+                                  Dropped
+                                </Badge>
+                              )}
+                            </div>
                             {studentPrefs.length > 0 ? (
                               <div className="space-y-1">
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
