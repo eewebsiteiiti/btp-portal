@@ -36,6 +36,9 @@ const StudentsPage = () => {
   const [projectIdNumberMap, setProjectIdNumberMap] = useState<{
     [key: string]: string;
   }>({});
+  const [projectIdTitleMap, setProjectIdTitleMap] = useState<{
+    [key: string]: string;
+  }>({});
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -57,11 +60,14 @@ const StudentsPage = () => {
       try {
         const response = await fetch("/api/project/get");
         const data = await response.json();
-        const tempMap: { [key: string]: string } = {};
+        const numMap: { [key: string]: string } = {};
+        const titleMap: { [key: string]: string } = {};
         for (const proj of data.projects) {
-          tempMap[proj.id] = proj.projectNo;
+          numMap[proj.id] = proj.projectNo;
+          titleMap[proj.id] = proj.title;
         }
-        setProjectIdNumberMap(tempMap);
+        setProjectIdNumberMap(numMap);
+        setProjectIdTitleMap(titleMap);
       } catch (error) {
         setError((error as Error).message);
       }
@@ -84,30 +90,47 @@ const StudentsPage = () => {
   };
 
   const handleExportToExcel = () => {
-    const formattedData = students.map((student) => ({
-      Roll_No: student.rollNo,
-      Name: student.name,
-      Email: student.email,
-      Top_3_Preferences: student.preferences
-        .slice(0, 3)
-        .map(
-          (pref, index) =>
-            `${index + 1}. Project No: ${
-              projectIdNumberMap[pref.projectId] || "N/A"
-            } ${pref.isGroup ? `(Group)` : `(Solo)`}`
-        )
-        .join(", "),
-      All_Preferences: student.preferences
-        .map(
-          (pref, index) =>
-            `${index + 1}. Project No: ${
-              projectIdNumberMap[pref.projectId] || "N/A"
-            } ${pref.isGroup ? `(Group)` : `(Solo)`}`
-        )
-        .join(", "),
-    }));
+    const maxPrefs = Math.max(...students.map((s) => s.preferences.length), 0);
+
+    const formattedData = students.map((student) => {
+      const row: Record<string, string | number | null> = {
+        Roll_No: student.rollNo,
+        Name: student.name,
+        Email: student.email,
+        CPI: student.cpi,
+        Submit_Status: student.submitStatus ? "Submitted" : "Pending",
+      };
+
+      for (let i = 0; i < maxPrefs; i++) {
+        const pref = student.preferences[i];
+        if (pref) {
+          const projNo = projectIdNumberMap[pref.projectId] || "N/A";
+          const title = projectIdTitleMap[pref.projectId] || "";
+          const type = pref.isGroup ? "Group" : "Solo";
+          const partner = pref.isGroup && pref.partnerRollNumber
+            ? ` | Partner: ${pref.partnerRollNumber}`
+            : "";
+          row[`Pref_${i + 1}`] = `${projNo} - ${title} (${type}${partner})`;
+        } else {
+          row[`Pref_${i + 1}`] = "";
+        }
+      }
+
+      return row;
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+    // Auto-fit column widths
+    const colWidths = Object.keys(formattedData[0] || {}).map((key) => {
+      const maxLen = Math.max(
+        key.length,
+        ...formattedData.map((row) => String(row[key] ?? "").length)
+      );
+      return { wch: Math.min(maxLen + 2, 50) };
+    });
+    worksheet["!cols"] = colWidths;
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
     XLSX.writeFile(workbook, "StudentData.xlsx");
