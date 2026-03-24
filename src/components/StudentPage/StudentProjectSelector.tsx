@@ -38,10 +38,14 @@ const StudentProjectSelector = ({
   student,
   setStudent,
   controls,
+  program = "BTP",
+  domain,
 }: {
   student: StudentI;
   setStudent: React.Dispatch<React.SetStateAction<StudentI | undefined>>;
   controls: ControlsI;
+  program?: string;
+  domain?: string | null;
 }) => {
   const { data: session } = useSession();
   const [allProjects, setAllProjects] = useState<ProjectI[]>([]);
@@ -63,7 +67,9 @@ const StudentProjectSelector = ({
   useEffect(() => {
     const fetchAllProjects = async () => {
       try {
-        const response = await fetch("/api/project/get");
+        const params = new URLSearchParams({ program });
+        if (domain) params.set("domain", domain);
+        const response = await fetch(`/api/project/get?${params}`);
         const data = await response.json();
         setAllProjects(data.projects || []);
       } catch {

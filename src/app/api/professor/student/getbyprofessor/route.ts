@@ -3,7 +3,9 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json();
+    const body = await req.json();
+    const { email } = body;
+    const program = body.program || "BTP";
 
     if (!email) {
       return NextResponse.json(
@@ -14,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const professor = await prisma.professor.findUnique({
       where: { email },
-      include: { projects: true },
+      include: { projects: { where: { program } } },
     });
 
     if (!professor) {
@@ -25,6 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const students = await prisma.student.findMany({
+      where: { program },
       include: {
         preferences: {
           orderBy: { orderIndex: "asc" },
@@ -35,6 +38,7 @@ export async function POST(req: NextRequest) {
     const projectDetails = await prisma.project.findMany({
       where: {
         id: { in: professor.projects.map((p) => p.id) },
+        program,
       },
     });
 

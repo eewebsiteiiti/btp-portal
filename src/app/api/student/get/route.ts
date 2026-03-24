@@ -5,6 +5,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get("email");
+    const program = searchParams.get("program") || "BTP";
+    const domain = searchParams.get("domain");
 
     if (email) {
       const student = await prisma.student.findUnique({
@@ -30,8 +32,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Build filter
+    const where: { program: string; domain?: string } = { program };
+    if (domain) where.domain = domain;
+
     // Get all students with their preferences
     const students = await prisma.student.findMany({
+      where,
       include: {
         preferences: {
           orderBy: { orderIndex: "asc" },
@@ -88,6 +95,7 @@ export async function GET(req: NextRequest) {
 
     // Refetch students after updates
     const updatedStudents = await prisma.student.findMany({
+      where,
       include: {
         preferences: {
           orderBy: { orderIndex: "asc" },

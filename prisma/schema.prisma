@@ -15,6 +15,8 @@ model Student {
   password        String
   submitStatus    Boolean          @default(false) @map("submit_status")
   cpi             Float?
+  program         String           @default("BTP")
+  domain          String?
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
   assignedProject AssignedProject?
@@ -24,16 +26,18 @@ model Student {
 }
 
 model Professor {
-  id                 String    @id @default(cuid())
-  name               String
-  email              String    @unique
-  password           String
-  studentLimit       Int       @default(4) @map("student_limit")
-  submitStatus       Boolean   @default(false) @map("submit_status")
-  studentsPreference String    @default("{}") @map("students_preference")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-  projects           Project[]
+  id                    String    @id @default(cuid())
+  name                  String
+  email                 String    @unique
+  password              String
+  studentLimit          Int       @default(4) @map("student_limit")
+  submitStatus          Boolean   @default(false) @map("submit_status")
+  studentsPreference    String    @default("{}") @map("students_preference")
+  mtpSubmitStatus       Boolean   @default(false) @map("mtp_submit_status")
+  mtpStudentsPreference String    @default("{}") @map("mtp_students_preference")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  projects              Project[]
 
   @@map("professors")
 }
@@ -50,6 +54,7 @@ model Project {
   cosupervisor     String?
   supervisorEmail  String            @map("supervisor_email")
   dropProject      Boolean           @default(false) @map("drop_project")
+  program          String            @default("BTP")
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
   professorId      String?           @map("professor_id")
@@ -100,4 +105,31 @@ model AdminControls {
   maxCapacity                   Int     @default(4) @map("max_capacity")
 
   @@map("admin_controls")
+}
+
+model MtpAdminControls {
+  id                            String  @id @default(cuid())
+  domain                        String  @unique
+  submitEnableStudentProjects   Boolean @default(false) @map("submit_enable_student_projects")
+  submitEnableProfessorStudents Boolean @default(false) @map("submit_enable_professor_students")
+  projectViewEnableStudent      Boolean @default(false) @map("project_view_enable_student")
+  studentViewEnableProfessor    Boolean @default(false) @map("student_view_enable_professor")
+  studentViewResult             Boolean @default(false) @map("student_view_result")
+  professorViewResult           Boolean @default(false) @map("professor_view_result")
+  minCapacity                   Int     @default(3) @map("min_capacity")
+  maxCapacity                   Int     @default(4) @map("max_capacity")
+
+  @@map("mtp_admin_controls")
+}
+
+model ProgramCoordinator {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  domain    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("program_coordinators")
 }

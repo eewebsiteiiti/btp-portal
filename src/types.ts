@@ -7,6 +7,8 @@ export interface ProfessorI {
   studentsPreference: Record<string, string[][]>;
   studentLimit: number;
   submitStatus: boolean;
+  mtpSubmitStatus: boolean;
+  mtpStudentsPreference: Record<string, string[][]>;
   projects?: ProjectI[];
 }
 
@@ -29,6 +31,8 @@ export interface StudentI {
   preferences: PreferenceI[];
   submitStatus: boolean;
   cpi: number | null;
+  program: string;
+  domain?: string | null;
 }
 
 export interface ProjectI {
@@ -43,6 +47,7 @@ export interface ProjectI {
   cosupervisor?: string | null;
   supervisorEmail: string;
   dropProject: boolean;
+  program: string;
   professorId?: string | null;
   professor?: { id: string; name: string; email: string } | null;
 }
@@ -67,12 +72,24 @@ export interface ControlsI {
   maxCapacity: number;
 }
 
+export interface MtpControlsI extends ControlsI {
+  domain: string;
+}
+
+export interface ProgramCoordinatorI {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  domain: string;
+}
+
 export interface UserI {
   id: string;
   name: string;
   email: string;
   password: string;
-  role: "admin" | "professor" | "student";
+  role: "admin" | "professor" | "student" | "mtp_student" | "dpgc" | "program_coordinator";
 }
 
 export interface SortableItemProps {
@@ -101,6 +118,8 @@ export interface StudentCreateInput {
   name: string;
   email: string;
   cpi?: number;
+  program?: string;
+  domain?: string;
 }
 
 export interface ProfessorCreateInput {
@@ -119,4 +138,5 @@ export interface ProjectCreateInput {
   supervisor: string;
   cosupervisor?: string;
   supervisorEmail: string;
+  program?: string;
 }

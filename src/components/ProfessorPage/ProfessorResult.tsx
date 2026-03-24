@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { StudentI, ProjectI } from "@/types";
 import Loading from "../Loading";
 
-const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
+const ProfessorResult = ({ professor_name, program = "BTP" }: { professor_name: string; program?: string }) => {
   const [projectStudents, setProjectStudents] = useState<
     Record<string, string[]>
   >({});
@@ -16,11 +16,14 @@ const ProfessorResult = ({ professor_name }: { professor_name: string }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        const assignedEndpoint = program === "MTP" ? "/api/dpgc/assigned-projects" : "/api/admin/assigned-projects";
+        const projectEndpoint = `/api/project/get?program=${program}`;
+        const studentEndpoint = `/api/student/get?program=${program}`;
         const [assignedProjectsRes, projectsRes, studentsRes] =
           await Promise.all([
-            fetch("/api/admin/assigned-projects").then((res) => res.json()),
-            fetch("/api/project/get").then((res) => res.json()),
-            fetch("/api/student/get").then((res) => res.json()),
+            fetch(assignedEndpoint).then((res) => res.json()),
+            fetch(projectEndpoint).then((res) => res.json()),
+            fetch(studentEndpoint).then((res) => res.json()),
           ]);
 
         setProjectStudents(assignedProjectsRes.data || {});

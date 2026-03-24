@@ -60,6 +60,7 @@ async function sendMail(mailOptions: MailOptions): Promise<void> {
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
+    const program = data.program || "BTP";
 
     if (!data.professor || !data.students) {
       return NextResponse.json(
@@ -91,14 +92,24 @@ export async function POST(req: NextRequest) {
       ).map(({ studentGroup }) => studentGroup);
     }
 
-    // Update professor's preferences
-    await prisma.professor.update({
-      where: { id: data.professor },
-      data: {
-        studentsPreference: JSON.stringify(studentsPreferenceFormatted),
-        submitStatus: data.submitStatus || false,
-      },
-    });
+    // Update professor's preferences (BTP or MTP field)
+    if (program === "MTP") {
+      await prisma.professor.update({
+        where: { id: data.professor },
+        data: {
+          mtpStudentsPreference: JSON.stringify(studentsPreferenceFormatted),
+          mtpSubmitStatus: data.submitStatus || false,
+        },
+      });
+    } else {
+      await prisma.professor.update({
+        where: { id: data.professor },
+        data: {
+          studentsPreference: JSON.stringify(studentsPreferenceFormatted),
+          submitStatus: data.submitStatus || false,
+        },
+      });
+    }
 
     // Generate Excel data
     const projects = await prisma.project.findMany({

@@ -5,9 +5,11 @@ import { StudentI, ProjectI } from "@/types";
 
 interface Props {
   rollNo: string;
+  program?: string;
+  domain?: string | null;
 }
 
-const StudentResult = ({ rollNo }: Props) => {
+const StudentResult = ({ rollNo, program = "BTP", domain }: Props) => {
   const [projectStudents, setProjectStudents] = useState<
     Record<string, string[]>
   >({});
@@ -15,9 +17,18 @@ const StudentResult = ({ rollNo }: Props) => {
   const [allStudents, setAllStudents] = useState<StudentI[]>([]);
 
   useEffect(() => {
+    const params = new URLSearchParams();
+    if (program !== "BTP") params.set("program", program);
+    if (domain) params.set("domain", domain);
+    const queryStr = params.toString();
+
+    const assignedEndpoint = program === "MTP" ? `/api/dpgc/assigned-projects${queryStr ? `?${queryStr}` : ""}` : "/api/admin/assigned-projects";
+    const projectEndpoint = `/api/project/get?${new URLSearchParams({ program, ...(domain ? { domain } : {}) })}`;
+    const studentEndpoint = `/api/student/get?${new URLSearchParams({ program, ...(domain ? { domain } : {}) })}`;
+
     const fetchAssignedProjects = async () => {
       try {
-        const data = await fetch("/api/admin/assigned-projects");
+        const data = await fetch(assignedEndpoint);
         const res = await data.json();
         setProjectStudents(res.data);
       } catch (error) {
@@ -27,7 +38,7 @@ const StudentResult = ({ rollNo }: Props) => {
 
     const fetchProjects = async () => {
       try {
-        const data = await fetch("/api/project/get");
+        const data = await fetch(projectEndpoint);
         const res = await data.json();
         setAllProjects(res.projects);
       } catch (error) {
@@ -37,7 +48,7 @@ const StudentResult = ({ rollNo }: Props) => {
 
     const fetchStudents = async () => {
       try {
-        const data = await fetch("/api/student/get");
+        const data = await fetch(studentEndpoint);
         const res = await data.json();
         setAllStudents(res.students);
       } catch (error) {

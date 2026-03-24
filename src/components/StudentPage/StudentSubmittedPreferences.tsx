@@ -6,13 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { StudentI, ProjectI } from "@/types";
 import { CheckCircle, Users, User } from "lucide-react";
 
-const StudentSubmittedPreferences = ({ student }: { student: StudentI }) => {
+const StudentSubmittedPreferences = ({ student, program = "BTP", domain }: { student: StudentI; program?: string; domain?: string | null }) => {
   const [projectMap, setProjectMap] = useState<Record<string, ProjectI>>({});
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await fetch("/api/project/get");
+        const params = new URLSearchParams({ program });
+        if (domain) params.set("domain", domain);
+        const res = await fetch(`/api/project/get?${params}`);
         const data = await res.json();
         const map: Record<string, ProjectI> = {};
         for (const project of data.projects) {

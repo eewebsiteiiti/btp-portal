@@ -1,9 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const program = searchParams.get("program") || "BTP";
+    const domain = searchParams.get("domain");
+
+    const where: { program: string; domain?: string } = { program };
+    if (domain) where.domain = domain;
+
     const projects = await prisma.project.findMany({
+      where,
       include: { professor: { select: { id: true, name: true, email: true } } },
     });
 

@@ -9,7 +9,16 @@ export default withAuth(
     if (url.startsWith("/admin") && token?.role !== "admin") {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
+    if (url.startsWith("/dpgc") && token?.role !== "dpgc") {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+    if (url.startsWith("/program-coordinator") && token?.role !== "program_coordinator") {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
     if (url.startsWith("/professor") && token?.role !== "professor") {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+    if (url.startsWith("/mtp-student") && token?.role !== "mtp_student") {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
     if (url.startsWith("/student") && token?.role !== "student") {
@@ -27,7 +36,10 @@ export default withAuth(
 export const config = {
   matcher: [
     "/admin/:path*",
+    "/dpgc/:path*",
+    "/program-coordinator/:path*",
     "/professor/:path*",
+    "/mtp-student/:path*",
     "/student/:path*",
     "/api/:path*",
   ],

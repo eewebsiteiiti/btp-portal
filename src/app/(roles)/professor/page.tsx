@@ -47,6 +47,7 @@ import { toast } from "sonner";
 
 const ProfessorDashboard = () => {
   const { data: session } = useSession();
+  const [activeProgram, setActiveProgram] = useState<"BTP" | "MTP">("BTP");
   const [professor, setProfessor] = useState<ProfessorI | null>(null);
   const [controls, setControls] = useState<ControlsI>();
   const [projects, setProjects] = useState<ProjectI[]>([]);
@@ -63,6 +64,8 @@ const ProfessorDashboard = () => {
   const [showCapacityConfirm, setShowCapacityConfirm] = useState(false);
   const [capacityToggleProjectId, setCapacityToggleProjectId] = useState<string | null>(null);
   const [showFixDialog, setShowFixDialog] = useState(false);
+  // For MTP, we need to know which domain the professor's MTP projects are in
+  const [mtpDomain, setMtpDomain] = useState<string | null>(null);
 
   // Calculate max capacity whenever projects change
   useEffect(() => {
@@ -111,12 +114,13 @@ const ProfessorDashboard = () => {
     if (!session?.user?.email) return;
 
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [studentsRes, professorRes] = await Promise.all([
           fetch("/api/professor/student/getbyprofessor", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: session.user.email }),
+            body: JSON.stringify({ email: session.user.email, program: activeProgram }),
           }).then((res) => res.json()),
           fetch(`/api/professor/get?email=${session.user.email}`).then((res) =>
             res.json()
@@ -141,6 +145,11 @@ const ProfessorDashboard = () => {
         setProjectWiseStudents(formattedData);
         setProjects(studentsRes.projectDetails);
         setProfessor(professorRes.professor);
+
+        // For MTP, detect the domain from the first project
+        if (activeProgram === "MTP" && studentsRes.projectDetails?.length > 0) {
+          setMtpDomain(studentsRes.projectDetails[0].domain);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -149,22 +158,32 @@ const ProfessorDashboard = () => {
     };
 
     fetchData();
-  }, [session]);
+  }, [session, activeProgram]);
 
   // Fetch admin controls
   useEffect(() => {
     const fetchAdminControls = async () => {
       try {
-        const res = await fetch("/api/admin/submit-control");
-        const data = await res.json();
-        setControls(data);
+        if (activeProgram === "BTP") {
+          const res = await fetch("/api/admin/submit-control");
+          const data = await res.json();
+          setControls(data);
+        } else {
+          // For MTP, we need domain - fetch controls for the first available domain
+          // or use a general check across all domains
+          if (mtpDomain) {
+            const res = await fetch(`/api/dpgc/submit-control?domain=${mtpDomain}`);
+            const data = await res.json();
+            setControls(data);
+          }
+        }
       } catch (error) {
         console.error("Error fetching admin controls:", error);
       }
     };
 
     fetchAdminControls();
-  }, []);
+  }, [activeProgram, mtpDomain]);
 
   const handleSwitchChange = async (projectId: string) => {
     setDropProject((prev) => ({
@@ -291,6 +310,7 @@ const ProfessorDashboard = () => {
             students: projectWiseStudents,
             professor: professor?.id,
             submitStatus: true,
+            program: activeProgram,
           }),
         }),
       ]);
@@ -428,11 +448,19 @@ const ProfessorDashboard = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Program Switcher */}
+      <Tabs value={activeProgram} onValueChange={(v) => setActiveProgram(v as "BTP" | "MTP")} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-xs">
+          <TabsTrigger value="BTP">BTP</TabsTrigger>
+          <TabsTrigger value="MTP">MTP</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Professor Info */}
       <ProfessorHeader professor={professor as ProfessorI} projectCount={projects.length} />
 
       {controls?.professorViewResult ? (
-        <ProfessorResult professor_name={professor?.name || ""} />
+        <ProfessorResult professor_name={professor?.name || ""} program={activeProgram} />
       ) : (
         <>
           {controls?.studentViewEnableProfessor ? (

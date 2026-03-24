@@ -15,8 +15,9 @@ interface ProjectInput {
 
 export async function POST(req: NextRequest) {
   try {
-    let data = await req.json();
-    data = data.data;
+    const body = await req.json();
+    const data = body.data;
+    const program = body.program || "BTP";
 
     if (!Array.isArray(data)) {
       return NextResponse.json(
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
           supervisorEmail,
           dropProject: false,
           professorId: professor?.id || null,
+          program,
         },
       });
 

@@ -1,13 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const program = searchParams.get("program") || "BTP";
+    const domain = searchParams.get("domain");
+
+    const studentWhere: { program: string; domain?: string } = { program };
+    if (domain) studentWhere.domain = domain;
+
+    const projectWhere: { program: string; domain?: string } = { program };
+    if (domain) projectWhere.domain = domain;
+
     const [students, professors, projects, projectDetails] = await Promise.all([
-      prisma.student.count(),
+      prisma.student.count({ where: studentWhere }),
       prisma.professor.count(),
-      prisma.project.count(),
+      prisma.project.count({ where: projectWhere }),
       prisma.project.findMany({
+        where: projectWhere,
         select: { dropProject: true, capacity: true },
       }),
     ]);

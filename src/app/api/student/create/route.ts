@@ -72,6 +72,7 @@ interface StudentInput {
   name: string;
   email: string;
   cpi?: number;
+  domain?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = body.data;
     const sendEmails = body.sendEmails ?? false;
+    const program = body.program || "BTP";
 
     if (!Array.isArray(data)) {
       return NextResponse.json(
@@ -124,6 +126,8 @@ export async function POST(req: NextRequest) {
           email,
           password: hashedPassword,
           cpi: student.cpi ? Number(student.cpi) : null,
+          program,
+          domain: program === "MTP" ? String(student.domain ?? "").trim() || null : null,
         },
       });
 
